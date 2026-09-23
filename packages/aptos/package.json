@@ -1,0 +1,1 @@
+{"name":"@veytos/aptos","private":true,"version":"0.1.0","type":"module","exports":{"./domain":"./src/domain.ts","./client":"./src/client.ts","./types":"./src/types.ts"}}

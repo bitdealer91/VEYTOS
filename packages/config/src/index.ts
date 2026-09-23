@@ -1,10 +1,10 @@
 import { z } from "zod";
 
 export const brand = Object.freeze({
-  name: "Mintos",
-  tagline: "The NFT home of Aptos.",
+  name: "VEYTOS",
+  tagline: "The home of Aptos NFTs.",
   marketingLine: "Launch. Collect. Trade.",
-  metadata: Object.freeze({ title: "Mintos — The NFT home of Aptos.", description: "Discover Aptos NFTs, launch collections and collect native digital assets." }),
+  metadata: Object.freeze({ title: "VEYTOS — The home of Aptos NFTs.", description: "Discover Aptos NFTs, launch collections and collect native digital assets." }),
   // No invented social handles or support destinations.
   socialLinks: Object.freeze({ x: null, discord: null }),
   supportLinks: Object.freeze({ help: null, security: null }),

@@ -1,5 +1,5 @@
 {
-  "name": "mintos",
+  "name": "veytos",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -17,7 +17,7 @@
   },
   "scripts": {
     "test": "node --import tsx --test packages/*/test/*.test.ts scripts/test/*.test.ts",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && npm run typecheck --workspace @veytos/web",
     "check": "npm run typecheck && npm test",
     "testnet:accounts": "node --import tsx scripts/testnet-accounts.ts",
     "testnet:preflight": "node --import tsx scripts/testnet-acceptance.ts --preflight",
@@ -25,7 +25,10 @@
     "move:compile": "node scripts/move.mjs compile",
     "move:test": "node scripts/move.mjs test",
     "db:generate": "drizzle-kit generate --config packages/database/drizzle.config.ts",
-    "db:migrate": "drizzle-kit migrate --config packages/database/drizzle.config.ts"
+    "db:migrate": "drizzle-kit migrate --config packages/database/drizzle.config.ts",
+    "dev": "npm run dev --workspace @veytos/web",
+    "build": "npm run build --workspace @veytos/web",
+    "start": "npm run start --workspace @veytos/web"
   },
   "dependencies": {
     "@aptos-labs/ts-sdk": "7.3.0",
@@ -38,6 +41,8 @@
   "devDependencies": {
     "@types/node": "26.6.2",
     "@types/pg": "8.23.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
     "drizzle-kit": "0.31.11",
     "tsx": "4.23.15",
     "typescript": "7.0.2"
