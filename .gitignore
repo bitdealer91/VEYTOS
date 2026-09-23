@@ -11,3 +11,5 @@ coverage/
 move/**/build/
 *.log
 .DS_Store
+
+*.tsbuildinfo

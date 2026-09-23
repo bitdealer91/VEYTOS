@@ -1,12 +1,12 @@
 import { Aptos, AptosConfig, Network, type UserTransactionResponse } from '@aptos-labs/ts-sdk';
 import { z } from 'zod';
-import { canonical } from './domain.js';
-import type { Asset, Drop, MintEvent, PendingMint } from './types.js';
+import { canonical } from './domain.ts';
+import type { Asset, Drop, MintEvent, PendingMint } from './types.ts';
 const u64 = z.string().regex(/^\d+$/).refine(v => BigInt(v) <= (1n << 64n) - 1n);
 const addr = z.string().transform(canonical);
 const dropSchema = z.object({ collection: addr, finalized: z.boolean(), creator_paused: z.boolean(), admin_paused: z.boolean(), uploaded: u64, minted: u64,
   terms: z.object({ creator: addr, name: z.string(), description: z.string(), collection_uri: z.string(), max_supply: u64, unit_price: u64, wallet_limit: u64, transaction_limit: u64, start_seconds: u64, end_seconds: u64, royalty_bps: u64, fee_bps: u64 }) });
-export function makeAptos(network: 'testnet'|'mainnet'|'devnet') { return new Aptos(new AptosConfig({ network: network as Network, clientConfig: { timeout: 12000 } })); }
+export function makeAptos(network: 'testnet'|'mainnet'|'devnet') { return new Aptos(new AptosConfig({ network: { testnet: Network.TESTNET, mainnet: Network.MAINNET, devnet: Network.DEVNET }[network] })); }
 export function launchpad(aptos: Aptos, packageAddress: string) {
   const module = canonical(packageAddress);
   const fn = (name: string) => `${module}::launchpad::${name}` as const;
@@ -27,11 +27,12 @@ export function launchpad(aptos: Aptos, packageAddress: string) {
   }
   async function asset(address: string, version?: bigint): Promise<Asset> {
     const options = version === undefined ? {} : { ledgerVersion: version };
-    const [token, object] = await Promise.all([
+    const [token, object, names] = await Promise.all([
       aptos.getAccountResource<{ name: string; uri: string; collection: { inner: string } }>({ accountAddress: canonical(address), resourceType: '0x4::token::Token', options }),
       aptos.getAccountResource<{ owner: string }>({ accountAddress: canonical(address), resourceType: '0x1::object::ObjectCore', options }),
+      aptos.view<[string]>({payload:{function:'0x4::token::name',typeArguments:['0x4::token::Token'],functionArguments:[canonical(address)]},options}),
     ]);
-    return { identity: {standard:'v2', address: canonical(address)}, address: canonical(address), name: token.name, uri: token.uri, owner: canonical(object.owner), collection: canonical(token.collection.inner) };
+    return { identity: {standard:'v2', address: canonical(address)}, address: canonical(address), name: names[0], uri: token.uri, owner: canonical(object.owner), collection: canonical(token.collection.inner) };
   }
   async function items(data: Drop, offset = 0) {
     const count = Math.min(12, Math.max(0, Number(data.minted) - offset));

@@ -21,7 +21,7 @@ show honest empty states; RPC failures show errors, never fake fallback rows.
 
 Minting reads fresh terms, pauses, wallet counts and chain ID before signing, then
 uses the official Aptos wallet adapter with explicit expected price/max total.
-Submitted hashes are persisted per network/package/drop/wallet and reconciled from
+Submitted hashes are persisted per network/package/drop (the submitting wallet is recorded in the value) and reconciled from
 committed receipts and native ownership. Timeouts remain unknown. A hash is never
 accepted as success without sender, entry function, arguments and mint event checks.
 
@@ -29,10 +29,26 @@ Metadata stays canonical ipfs://; bounded reads only through the configured publ
 HTTPS gateway, no server-side arbitrary URI proxy. Missing/unpinned metadata leaves
 a labelled fallback. Production has no test fixtures, local signer or private keys.
 
-Routes now: /, /explore, /drops, /collection/[drop], /activity, /nft/[token]. Studio
-and profiles expose clear scope boundaries; full creation is the next frontend
-milestone and historical holdings require Phase 1B. No fake buy/list actions.
+Implemented routes: /, /explore, /drops and /collection/[id]. Activity, NFT detail,
+Studio and profile routes do not exist yet and are absent from primary navigation.
+Token links use Aptos Explorer. Historical holdings require Phase 1B. No buy/list actions.
 
 Validation: preserve Gate A, add domain/state/error tests, production build,
 responsive browser checks, native wallet selector and real testnet reads. Actual
 wallet signature acceptance is reported separately from test doubles and SDK tests.
+
+Stabilization: CSS tokens are implemented in globals.css. SDK 7.3.0 uses its
+supported default HTTP client configuration, not an unsupported timeout field.
+Workspace source exports use explicit .ts imports with allowImportingTsExtensions
+and noEmit, supported by TypeScript, Next.js and tsx.
+
+Mint rendering uses non-throwing previews; submission retains strict validation.
+No-hash interruptions are labelled unconfirmed, not submitted. Recovery accepts a
+wallet transaction hash for chain validation or an explicit user acknowledgement
+that the wallet request is closed and no transaction was signed/submitted. There is
+no automatic re-signing. Known hashes remain blocked until chain reconciliation.
+Browser wallet and mint acceptance are pending until recorded in stabilization evidence.
+
+Local setup: copy apps/web/.env.example to apps/web/.env.local, npm ci, npm run dev.
+Network/package values are public build-time configuration; rebuild after changes.
+Discovery seeds are server-only and bounded; empty configuration produces empty states.

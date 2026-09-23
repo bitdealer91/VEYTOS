@@ -1,6 +1,6 @@
 import { AccountAddress } from '@aptos-labs/ts-sdk';
-import { quoteMint } from '../../domain/src/money.js';
-import type { Drop, TransactionPhase } from './types.js';
+import { quoteMint } from '../../domain/src/money.ts';
+import type { Drop, TransactionPhase } from './types.ts';
 export const canonical = (address: string) => AccountAddress.from(address).toStringLong();
 export function dropStatus(drop: Drop, now: bigint) {
   if (BigInt(drop.minted) >= BigInt(drop.terms.max_supply)) return 'SOLD OUT';
@@ -38,4 +38,12 @@ export function readableError(error: unknown): string {
   if (/network|chain.*mismatch/i.test(message)) return 'Switch your wallet to the network shown in the header.';
   if (/EPRICE_CHANGED|EMAX_TOTAL/i.test(message)) return 'The transaction did not match your reviewed price. Review again.';
   return 'We could not complete this request. Check your connection and try again.';
+}
+
+/** Product states are data, not render exceptions. Assertions stay in transaction paths. */
+export function previewMint(drop: Drop, quantity: number, walletMinted: bigint, loaded = true) {
+  const max = Math.max(0, Math.min(Number(drop.terms.transaction_limit), Number(drop.terms.max_supply) - Number(drop.minted), Number(drop.terms.wallet_limit) - Number(walletMinted)));
+  if (!loaded) return { max, quote: null, error: 'Loading mint eligibility…' };
+  try { return { max, quote: validateQuantity(drop, quantity, walletMinted), error: null }; }
+  catch (error) { return { max, quote: null, error: error instanceof Error ? error.message : 'Choose a valid quantity.' }; }
 }
