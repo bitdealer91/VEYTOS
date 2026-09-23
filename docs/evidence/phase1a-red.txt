@@ -1,0 +1,586 @@
+
+> mintos@0.0.1 move:test
+> node scripts/move.mjs test
+
+INCLUDING DEPENDENCY AptosFramework
+INCLUDING DEPENDENCY AptosStdlib
+INCLUDING DEPENDENCY AptosTokenObjects
+INCLUDING DEPENDENCY MoveStdlib
+BUILDING MintosLaunchpad
+error: unbound module
+   ┌─ move/launchpad/tests/launchpad_tests.move:17:9
+   │
+17 │     use launchpad::launchpad;
+   │         ^^^^^^^^^^^^^^^^^^^^ Invalid 'use'. Unbound module: '(launchpad=0xCAFE)::launchpad'
+
+error: unbound module
+   ┌─ move/launchpad/tests/launchpad_tests.move:39:9
+   │
+39 │         launchpad::prepare_drop(creator, b"test", string::utf8(b"Collection"), string::utf8(b"Description"),
+   │         ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+   ┌─ move/launchpad/tests/launchpad_tests.move:41:9
+   │
+41 │         launchpad::drop_address(signer::address_of(creator), b"test")
+   │         ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+   ┌─ move/launchpad/tests/launchpad_tests.move:52:13
+   │
+52 │             vector::push_back(&mut names, name);
+   │             ^^^^^^ Unbound module or type alias 'vector'
+
+error: unbound module
+   ┌─ move/launchpad/tests/launchpad_tests.move:53:13
+   │
+53 │             vector::push_back(&mut uris, uri(id));
+   │             ^^^^^^ Unbound module or type alias 'vector'
+
+error: unbound module
+   ┌─ move/launchpad/tests/launchpad_tests.move:56:9
+   │
+56 │         launchpad::append_metadata(creator, drop, offset, names, uris);
+   │         ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+   ┌─ move/launchpad/tests/launchpad_tests.move:62:9
+   │
+62 │         launchpad::finalize_drop(creator, drop, 500);
+   │         ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+   ┌─ move/launchpad/tests/launchpad_tests.move:71:17
+   │
+71 │         assert!(launchpad::progress(drop) == vector[0, 0, 3], 100);
+   │                 ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+   ┌─ move/launchpad/tests/launchpad_tests.move:74:9
+   │
+74 │         launchpad::finalize_drop(&creator, drop, 500);
+   │         ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+   ┌─ move/launchpad/tests/launchpad_tests.move:75:57
+   │
+75 │         let col = object::address_to_object<Collection>(launchpad::collection_address(drop));
+   │                                                         ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+   ┌─ move/launchpad/tests/launchpad_tests.move:81:17
+   │
+81 │         assert!(launchpad::progress(drop) == vector[3, 0, 3], 105);
+   │                 ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+   ┌─ move/launchpad/tests/launchpad_tests.move:88:9
+   │
+88 │         launchpad::mint(&buyer, drop, 2, 1000000000, 2000000000);
+   │         ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+   ┌─ move/launchpad/tests/launchpad_tests.move:92:17
+   │
+92 │         assert!(launchpad::progress(drop) == vector[3, 2, 3], 103);
+   │                 ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+   ┌─ move/launchpad/tests/launchpad_tests.move:93:17
+   │
+93 │         assert!(launchpad::minted_by(drop, @0xb) == 2, 104);
+   │                 ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+   ┌─ move/launchpad/tests/launchpad_tests.move:96:56
+   │
+96 │             let nft = object::address_to_object<Token>(launchpad::token_address(drop, i));
+   │                                                        ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+   ┌─ move/launchpad/tests/launchpad_tests.move:98:79
+   │
+98 │             assert!(object::object_address(&token::collection_object(nft)) == launchpad::collection_address(drop), 106);
+   │                                                                               ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:110:9
+    │
+110 │         launchpad::mint(&buyer, drop, 1, 0, 0);
+    │         ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:113:64
+    │
+113 │         assert!(object::owner(object::address_to_object<Token>(launchpad::token_address(drop, 1))) == @0xb, 102);
+    │                                                                ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:122:9
+    │
+122 │         launchpad::finalize_drop(&creator, drop, 500);
+    │         ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:125:9
+    │
+125 │         launchpad::mint(&buyer, drop, 2, 999, 1998);
+    │         ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:135:9
+    │
+135 │         launchpad::mint(&buyer, drop, 1, 0, 0);
+    │         ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:137:52
+    │
+137 │         let nft = object::address_to_object<Token>(launchpad::token_address(drop, 1));
+    │                                                    ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:140:17
+    │
+140 │         assert!(launchpad::minted_by(drop, @0xb) == 1, 101);
+    │                 ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:144:51
+    │
+144 │     #[expected_failure(abort_code = 9, location = launchpad::launchpad)]
+    │                                                   ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:147:92
+    │
+147 │         let drop = prepare(&creator, 2, 10, 2, 2, 110, 200); append(&creator, drop, 0, 2); launchpad::finalize_drop(&creator, drop, 500); launchpad::mint(&buyer, drop, 1, 10, 10);
+    │                                                                                            ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:147:139
+    │
+147 │         let drop = prepare(&creator, 2, 10, 2, 2, 110, 200); append(&creator, drop, 0, 2); launchpad::finalize_drop(&creator, drop, 500); launchpad::mint(&buyer, drop, 1, 10, 10);
+    │                                                                                                                                           ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:151:52
+    │
+151 │     #[expected_failure(abort_code = 10, location = launchpad::launchpad)]
+    │                                                    ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:154:100
+    │
+154 │         let drop = ready(&creator, 2, 10, 2, 2); timestamp::update_global_time_for_test_secs(200); launchpad::mint(&buyer, drop, 1, 10, 10);
+    │                                                                                                    ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:158:52
+    │
+158 │     #[expected_failure(abort_code = 10, location = launchpad::launchpad)]
+    │                                                    ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:161:100
+    │
+161 │         let drop = ready(&creator, 2, 10, 2, 2); timestamp::update_global_time_for_test_secs(201); launchpad::mint(&buyer, drop, 1, 10, 10);
+    │                                                                                                    ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:165:51
+    │
+165 │     #[expected_failure(abort_code = 7, location = launchpad::launchpad)]
+    │                                                   ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:168:62
+    │
+168 │         let drop = prepare(&creator, 2, 10, 2, 2, 110, 200); launchpad::mint(&buyer, drop, 1, 10, 10);
+    │                                                              ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:172:51
+    │
+172 │     #[expected_failure(abort_code = 8, location = launchpad::launchpad)]
+    │                                                   ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:175:88
+    │
+175 │         let drop = ready(&creator, 2, 10, 2, 2); fee_policy::set_paused(&admin, true); launchpad::mint(&buyer, drop, 1, 10, 10);
+    │                                                                                        ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:179:51
+    │
+179 │     #[expected_failure(abort_code = 8, location = launchpad::launchpad)]
+    │                                                   ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:182:50
+    │
+182 │         let drop = ready(&creator, 2, 10, 2, 2); launchpad::set_creator_paused(&creator, drop, true); launchpad::mint(&buyer, drop, 1, 10, 10);
+    │                                                  ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:182:103
+    │
+182 │         let drop = ready(&creator, 2, 10, 2, 2); launchpad::set_creator_paused(&creator, drop, true); launchpad::mint(&buyer, drop, 1, 10, 10);
+    │                                                                                                       ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:186:51
+    │
+186 │     #[expected_failure(abort_code = 8, location = launchpad::launchpad)]
+    │                                                   ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:189:50
+    │
+189 │         let drop = ready(&creator, 2, 10, 2, 2); launchpad::set_admin_paused(&admin, drop, true); launchpad::set_creator_paused(&creator, drop, false); launchpad::mint(&buyer, drop, 1, 10, 10);
+    │                                                  ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:189:99
+    │
+189 │         let drop = ready(&creator, 2, 10, 2, 2); launchpad::set_admin_paused(&admin, drop, true); launchpad::set_creator_paused(&creator, drop, false); launchpad::mint(&buyer, drop, 1, 10, 10);
+    │                                                                                                   ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:189:153
+    │
+189 │         let drop = ready(&creator, 2, 10, 2, 2); launchpad::set_admin_paused(&admin, drop, true); launchpad::set_creator_paused(&creator, drop, false); launchpad::mint(&buyer, drop, 1, 10, 10);
+    │                                                                                                                                                         ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:193:51
+    │
+193 │     #[expected_failure(abort_code = 8, location = launchpad::launchpad)]
+    │                                                   ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:196:50
+    │
+196 │         let drop = ready(&creator, 2, 10, 2, 2); launchpad::set_creator_paused(&creator, drop, true); launchpad::set_admin_paused(&admin, drop, false); launchpad::mint(&buyer, drop, 1, 10, 10);
+    │                                                  ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:196:103
+    │
+196 │         let drop = ready(&creator, 2, 10, 2, 2); launchpad::set_creator_paused(&creator, drop, true); launchpad::set_admin_paused(&admin, drop, false); launchpad::mint(&buyer, drop, 1, 10, 10);
+    │                                                                                                       ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:196:153
+    │
+196 │         let drop = ready(&creator, 2, 10, 2, 2); launchpad::set_creator_paused(&creator, drop, true); launchpad::set_admin_paused(&admin, drop, false); launchpad::mint(&buyer, drop, 1, 10, 10);
+    │                                                                                                                                                         ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:200:52
+    │
+200 │     #[expected_failure(abort_code = 12, location = launchpad::launchpad)]
+    │                                                    ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:203:49
+    │
+203 │         let drop = ready(&creator, 3, 0, 1, 1); launchpad::mint(&buyer, drop, 1, 0, 0); object::transfer(&buyer, object::address_to_object<Token>(launchpad::token_address(drop, 1)), @0xe); launchpad::mint(&buyer, drop, 1, 0, 0);
+    │                                                 ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:203:147
+    │
+203 │         let drop = ready(&creator, 3, 0, 1, 1); launchpad::mint(&buyer, drop, 1, 0, 0); object::transfer(&buyer, object::address_to_object<Token>(launchpad::token_address(drop, 1)), @0xe); launchpad::mint(&buyer, drop, 1, 0, 0);
+    │                                                                                                                                                   ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:203:190
+    │
+203 │         let drop = ready(&creator, 3, 0, 1, 1); launchpad::mint(&buyer, drop, 1, 0, 0); object::transfer(&buyer, object::address_to_object<Token>(launchpad::token_address(drop, 1)), @0xe); launchpad::mint(&buyer, drop, 1, 0, 0);
+    │                                                                                                                                                                                              ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:207:52
+    │
+207 │     #[expected_failure(abort_code = 13, location = launchpad::launchpad)]
+    │                                                    ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:210:49
+    │
+210 │         let drop = ready(&creator, 3, 0, 3, 2); launchpad::mint(&buyer, drop, 2, 0, 0); launchpad::mint(&creator, drop, 2, 0, 0);
+    │                                                 ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:210:89
+    │
+210 │         let drop = ready(&creator, 3, 0, 3, 2); launchpad::mint(&buyer, drop, 2, 0, 0); launchpad::mint(&creator, drop, 2, 0, 0);
+    │                                                                                         ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:214:52
+    │
+214 │     #[expected_failure(abort_code = 13, location = launchpad::launchpad)]
+    │                                                    ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:217:49
+    │
+217 │         let drop = ready(&creator, 1, 0, 1, 1); launchpad::mint(&buyer, drop, 1, 0, 0); launchpad::mint(&creator, drop, 1, 0, 0);
+    │                                                 ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:217:89
+    │
+217 │         let drop = ready(&creator, 1, 0, 1, 1); launchpad::mint(&buyer, drop, 1, 0, 0); launchpad::mint(&creator, drop, 1, 0, 0);
+    │                                                                                         ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:221:52
+    │
+221 │     #[expected_failure(abort_code = 11, location = launchpad::launchpad)]
+    │                                                    ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:224:49
+    │
+224 │         let drop = ready(&creator, 2, 0, 2, 2); launchpad::mint(&buyer, drop, 0, 0, 0);
+    │                                                 ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:228:52
+    │
+228 │     #[expected_failure(abort_code = 11, location = launchpad::launchpad)]
+    │                                                    ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:231:49
+    │
+231 │         let drop = ready(&creator, 3, 0, 3, 2); launchpad::mint(&buyer, drop, 3, 0, 0);
+    │                                                 ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:235:52
+    │
+235 │     #[expected_failure(abort_code = 14, location = launchpad::launchpad)]
+    │                                                    ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:238:50
+    │
+238 │         let drop = ready(&creator, 2, 10, 2, 2); launchpad::mint(&buyer, drop, 1, 9, 10);
+    │                                                  ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:242:52
+    │
+242 │     #[expected_failure(abort_code = 15, location = launchpad::launchpad)]
+    │                                                    ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:245:50
+    │
+245 │         let drop = ready(&creator, 2, 10, 2, 2); launchpad::mint(&buyer, drop, 2, 10, 19);
+    │                                                  ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:249:51
+    │
+249 │     #[expected_failure(abort_code = 1, location = launchpad::launchpad)]
+    │                                                   ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:256:51
+    │
+256 │     #[expected_failure(abort_code = 1, location = launchpad::launchpad)]
+    │                                                   ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:259:92
+    │
+259 │         let drop = prepare(&creator, 2, 10, 2, 2, 110, 200); append(&creator, drop, 0, 2); launchpad::finalize_drop(&buyer, drop, 500);
+    │                                                                                            ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:263:51
+    │
+263 │     #[expected_failure(abort_code = 1, location = launchpad::launchpad)]
+    │                                                   ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:266:49
+    │
+266 │         let drop = ready(&creator, 2, 0, 2, 2); launchpad::set_creator_paused(&buyer, drop, true);
+    │                                                 ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:270:51
+    │
+270 │     #[expected_failure(abort_code = 1, location = launchpad::launchpad)]
+    │                                                   ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:273:49
+    │
+273 │         let drop = ready(&creator, 2, 0, 2, 2); launchpad::set_admin_paused(&buyer, drop, true);
+    │                                                 ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:277:51
+    │
+277 │     #[expected_failure(abort_code = 4, location = launchpad::launchpad)]
+    │                                                   ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:284:51
+    │
+284 │     #[expected_failure(abort_code = 4, location = launchpad::launchpad)]
+    │                                                   ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:291:51
+    │
+291 │     #[expected_failure(abort_code = 5, location = launchpad::launchpad)]
+    │                                                   ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:294:62
+    │
+294 │         let drop = prepare(&creator, 2, 10, 2, 2, 110, 200); launchpad::append_metadata(&creator, drop, 0, vector[string::utf8(b"A"), string::utf8(b"B")], vector[uri(1), uri(1)]);
+    │                                                              ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:298:51
+    │
+298 │     #[expected_failure(abort_code = 5, location = launchpad::launchpad)]
+    │                                                   ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:301:62
+    │
+301 │         let drop = prepare(&creator, 2, 10, 2, 2, 110, 200); launchpad::append_metadata(&creator, drop, 0, vector[string::utf8(b"A"), string::utf8(b"A")], vector[uri(1), uri(2)]);
+    │                                                              ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:305:51
+    │
+305 │     #[expected_failure(abort_code = 6, location = launchpad::launchpad)]
+    │                                                   ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:308:92
+    │
+308 │         let drop = prepare(&creator, 2, 10, 2, 2, 110, 200); append(&creator, drop, 0, 1); launchpad::finalize_drop(&creator, drop, 500);
+    │                                                                                            ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:312:51
+    │
+312 │     #[expected_failure(abort_code = 4, location = launchpad::launchpad)]
+    │                                                   ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:319:51
+    │
+319 │     #[expected_failure(abort_code = 3, location = launchpad::launchpad)]
+    │                                                   ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:326:51
+    │
+326 │     #[expected_failure(abort_code = 3, location = launchpad::launchpad)]
+    │                                                   ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:329:49
+    │
+329 │         let drop = ready(&creator, 2, 0, 2, 2); launchpad::finalize_drop(&creator, drop, 500);
+    │                                                 ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:333:51
+    │
+333 │     #[expected_failure(abort_code = 2, location = launchpad::launchpad)]
+    │                                                   ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:340:51
+    │
+340 │     #[expected_failure(abort_code = 2, location = launchpad::launchpad)]
+    │                                                   ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:347:51
+    │
+347 │     #[expected_failure(abort_code = 2, location = launchpad::launchpad)]
+    │                                                   ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:354:51
+    │
+354 │     #[expected_failure(abort_code = 2, location = launchpad::launchpad)]
+    │                                                   ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:361:51
+    │
+361 │     #[expected_failure(abort_code = 2, location = launchpad::launchpad)]
+    │                                                   ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:368:51
+    │
+368 │     #[expected_failure(abort_code = 2, location = launchpad::launchpad)]
+    │                                                   ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:375:52
+    │
+375 │     #[expected_failure(abort_code = 10, location = launchpad::launchpad)]
+    │                                                    ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:378:142
+    │
+378 │         let drop = prepare(&creator, 2, 10, 2, 2, 110, 200); append(&creator, drop, 0, 2); timestamp::update_global_time_for_test_secs(200); launchpad::finalize_drop(&creator, drop, 500);
+    │                                                                                                                                              ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:382:52
+    │
+382 │     #[expected_failure(abort_code = 16, location = launchpad::launchpad)]
+    │                                                    ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:385:92
+    │
+385 │         let drop = prepare(&creator, 2, 10, 2, 2, 110, 200); append(&creator, drop, 0, 2); launchpad::finalize_drop(&creator, drop, 250);
+    │                                                                                            ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:389:51
+    │
+389 │     #[expected_failure(abort_code = 8, location = launchpad::launchpad)]
+    │                                                   ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:396:52
+    │
+396 │     #[expected_failure(abort_code = 17, location = launchpad::launchpad)]
+    │                                                    ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+error: unbound module
+    ┌─ move/launchpad/tests/launchpad_tests.move:399:62
+    │
+399 │         let drop = prepare(&creator, 1, 10, 1, 1, 110, 200); launchpad::append_metadata(&creator, drop, 0, vector[string::utf8(b"A")], vector[string::utf8(b"https://attacker.test/a")]);
+    │                                                              ^^^^^^^^^ Unbound module or type alias 'launchpad'
+
+
+thread 'tokio-rt-worker' (2743477) panicked at /Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/system-configuration-0.5.1/src/dynamic_store.rs:154:1:
+Attempted to create a NULL object.
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+{
+  "Error": "Unexpected error: Failed to run tests: exiting with context checking errors"
+}

@@ -1,0 +1,156 @@
+
+> mintos@0.0.1 testnet:acceptance
+> npm run check && node --import tsx scripts/testnet-acceptance.ts
+
+
+> mintos@0.0.1 check
+> npm run typecheck && npm test
+
+
+> mintos@0.0.1 typecheck
+> tsc --noEmit
+
+
+> mintos@0.0.1 test
+> node --import tsx --test packages/*/test/*.test.ts scripts/test/*.test.ts
+
+✔ development has no invented contract address (0.933292ms)
+✔ mainnet fails closed without an address and HTTPS origin (0.307875ms)
+✔ network mismatch, unknown networks and zero addresses are rejected (0.261834ms)
+✔ manifest validates all IDs and sorts their deployment order (2.364ms)
+✔ rejects missing images, malformed attributes, supply gaps and duplicates (0.940541ms)
+✔ content URIs require a real CID and reject ambiguous paths (0.125333ms)
+✔ APT parsing preserves octas and the full u64 range (0.386375ms)
+✔ invalid and overflowing monetary inputs are rejected (0.142292ms)
+✔ fees conserve payment and are independent of batch partitioning (0.320625ms)
+✔ acceptance rejects mainnet or mismatched browser network (0.933666ms)
+✔ acceptance requires explicit key path and rejects endpoint drift (0.328917ms)
+✔ keys cannot be kept inside the repository even in ignored directories (0.284ms)
+✔ transaction retries stop on ambiguous server failures (0.141917ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 150.337708
+◇ injected env (0) from .env
+INCLUDING DEPENDENCY AptosFramework
+INCLUDING DEPENDENCY AptosStdlib
+INCLUDING DEPENDENCY AptosTokenObjects
+INCLUDING DEPENDENCY MoveStdlib
+BUILDING MintosLaunchpad
+Running Move unit tests
+[ PASS    ] 0xcafe::fee_policy_tests::acceptance_without_nomination_rejected
+[ PASS    ] 0xcafe::fee_policy_tests::admin_can_update_fee_recipient_and_pause
+[ PASS    ] 0xcafe::fee_policy::configuration_events
+[ PASS    ] 0xcafe::fee_policy_tests::admin_cannot_exceed_fee_cap
+[ PASS    ] 0xcafe::fee_policy_tests::admin_transfer_requires_acceptance
+[ PASS    ] 0xcafe::fee_policy_tests::cannot_reinitialize
+[ PASS    ] 0xcafe::fee_policy_tests::fee_rounding_is_batch_invariant
+[ PASS    ] 0xcafe::fee_policy_tests::fee_split_conserves_revenue
+[ PASS    ] 0xcafe::fee_policy_tests::full_u64_range_uses_wide_intermediate
+[ PASS    ] 0xcafe::fee_policy_tests::initializes_fee_and_recipient
+[ PASS    ] 0xcafe::fee_policy_tests::old_admin_loses_authority
+[ PASS    ] 0xcafe::fee_policy_tests::quote_fee_cap
+[ PASS    ] 0xcafe::fee_policy_tests::total_overflow_rejected
+[ PASS    ] 0xcafe::fee_policy_tests::unauthorized_admin_proposal
+[ PASS    ] 0xcafe::fee_policy_tests::unauthorized_fee_update
+[ PASS    ] 0xcafe::fee_policy_tests::unauthorized_initialization
+[ PASS    ] 0xcafe::fee_policy_tests::unauthorized_pause
+[ PASS    ] 0xcafe::fee_policy_tests::unauthorized_recipient_update
+[ PASS    ] 0xcafe::fee_policy_tests::wrong_account_cannot_accept
+[ PASS    ] 0xcafe::fee_policy_tests::zero_nominee_rejected
+[ PASS    ] 0xcafe::fee_policy_tests::zero_price_and_zero_fee
+[ PASS    ] 0xcafe::fee_policy_tests::zero_quantity_rejected
+[ PASS    ] 0xcafe::fee_policy_tests::zero_recipient_rejected
+[ PASS    ] 0xcafe::fee_policy_tests::zero_recipient_update_rejected
+[ PASS    ] 0xcafe::launchpad_tests::admin_cannot_clear_creator_pause
+[ PASS    ] 0xcafe::launchpad_tests::admin_cannot_seize_holder_nft
+[ PASS    ] 0xcafe::launchpad_tests::changed_fee_before_preparation_requires_review
+[ PASS    ] 0xcafe::launchpad_tests::creator_cannot_mint_as_native_collection_owner
+[ PASS    ] 0xcafe::launchpad_tests::creator_cannot_mint_as_native_creator
+[ PASS    ] 0xcafe::launchpad_tests::creator_cannot_transfer_authority
+[ PASS    ] 0xcafe::launchpad_tests::creator_cannot_transfer_native_collection
+[ PASS    ] 0xcafe::launchpad_tests::double_finalize
+[ PASS    ] 0xcafe::launchpad_tests::duplicate_metadata_name
+[ PASS    ] 0xcafe::launchpad_tests::duplicate_metadata_uri
+[ PASS    ] 0xcafe::launchpad_tests::duplicate_uri_across_chunks
+[ PASS    ] 0xcafe::launchpad_tests::exact_maximum_supply_and_open_ended_schedule
+[ PASS    ] 0xcafe::launchpad_tests::excessive_supply
+[ PASS    ] 0xcafe::launchpad_tests::expired_finalize
+[ PASS    ] 0xcafe::launchpad_tests::fee_review_mismatch
+[ PASS    ] 0xcafe::launchpad_tests::fee_snapshot_rounding_and_treasury_rotation
+[ PASS    ] 0xcafe::launchpad_tests::finalize_platform_paused
+[ PASS    ] 0xcafe::launchpad_tests::holder_transfers_while_platform_paused
+[ PASS    ] 0xcafe::launchpad_tests::incomplete_finalize
+[ PASS    ] 0xcafe::launchpad_tests::insufficient_apt
+[ PASS    ] 0xcafe::launchpad_tests::invalid_metadata_uri
+[ PASS    ] 0xcafe::launchpad_tests::invalid_royalty
+[ PASS    ] 0xcafe::launchpad_tests::invalid_schedule
+[ PASS    ] 0xcafe::launchpad_tests::invalid_transaction_limit
+[ PASS    ] 0xcafe::launchpad_tests::invalid_wallet_limit
+[ PASS    ] 0xcafe::launchpad_tests::max_price_uses_u128_and_pays_native_apt
+[ PASS    ] 0xcafe::launchpad_tests::max_total_protection
+[ PASS    ] 0xcafe::launchpad_tests::metadata_array_length_mismatch
+[ PASS    ] 0xcafe::launchpad_tests::metadata_chunk_bound
+[ PASS    ] 0xcafe::launchpad_tests::metadata_gap
+[ PASS    ] 0xcafe::launchpad_tests::metadata_overwrite
+[ PASS    ] 0xcafe::launchpad_tests::metadata_supply_mismatch
+[ PASS    ] 0xcafe::launchpad_tests::mint_admin_paused
+[ PASS    ] 0xcafe::launchpad_tests::mint_after_end
+[ PASS    ] 0xcafe::launchpad_tests::mint_at_end
+[ PASS    ] 0xcafe::launchpad_tests::mint_before_start
+[ PASS    ] 0xcafe::launchpad_tests::mint_creator_paused
+[ PASS    ] 0xcafe::launchpad_tests::mint_not_finalized
+[ PASS    ] 0xcafe::launchpad_tests::mint_platform_paused
+[ PASS    ] 0xcafe::launchpad_tests::mint_total_overflow
+[ PASS    ] 0xcafe::launchpad_tests::multi_mint_transfers_native_tokens_and_exact_payments
+[ PASS    ] 0xcafe::launchpad_tests::past_schedule
+[ PASS    ] 0xcafe::launchpad_tests::pause_unpause_restores_minting
+[ PASS    ] 0xcafe::launchpad_tests::post_finalize_append
+[ PASS    ] 0xcafe::launchpad_tests::prepare_append_finalize_native_collection
+[ PASS    ] 0xcafe::launchpad_tests::prepare_paused
+[ PASS    ] 0xcafe::launchpad_tests::quantity_over_limit
+[ PASS    ] 0xcafe::launchpad_tests::quantity_zero
+[ PASS    ] 0xcafe::launchpad_tests::remaining_supply_limit
+[ PASS    ] 0xcafe::launchpad_tests::single_mint_and_free_mint
+[ PASS    ] 0xcafe::launchpad_tests::sold_out
+[ PASS    ] 0xcafe::launchpad_tests::unauthorized_admin_pause
+[ PASS    ] 0xcafe::launchpad_tests::unauthorized_append
+[ PASS    ] 0xcafe::launchpad_tests::unauthorized_creator_pause
+[ PASS    ] 0xcafe::launchpad_tests::unauthorized_finalize
+[ PASS    ] 0xcafe::launchpad_tests::wallet_lifetime_limit
+[ PASS    ] 0xcafe::launchpad_tests::wrong_expected_price
+[ PASS    ] 0xcafe::launchpad_tests::zero_supply
+Test result: OK. Total tests: 82; passed: 82; failed: 0
+{
+  "Result": "Success"
+}
+Compiling, may take a little while to download git dependencies...
+INCLUDING DEPENDENCY AptosFramework
+INCLUDING DEPENDENCY AptosStdlib
+INCLUDING DEPENDENCY AptosTokenObjects
+INCLUDING DEPENDENCY MoveStdlib
+BUILDING MintosLaunchpad
+{
+  "Result": [
+    "5e802dc2d3105fbf967541d9cd64f5d34a18ebb473a4d40ddb26c8f727e9db28::fee_policy",
+    "5e802dc2d3105fbf967541d9cd64f5d34a18ebb473a4d40ddb26c8f727e9db28::launchpad"
+  ]
+}
+publish: 0x8a2cb1e2f211d9519f88fad8a5e2566694e6d558026d4a5695968fe35e217506 (committed)
+initialize: 0xdf3af891ebb851543ea41bb815c0ad455f419cc5da86d2173c000efb631defef (committed)
+fund-creator: 0xfb895d2dd2d57f3a12f46812745c9b6f432d532701784d5cb9140e94879933af (committed)
+fund-buyer: 0x9ae19a71fd8e3b5cfb3d18fb76657960e31f6b5a87f7a24ef298b51f73ac7f4d (committed)
+fund-creator-storage: 0xbf3a6cde342a1bcaa19d5e2b033b3edff9c317575306fb9c2958824141cbb94d (committed)
+prepare: 0xd2028357799b917ed7ab480c3c32f1d238a11af347d4893f35bfb53788d1b986 (committed)
+metadata-0: 0xf86bae59c650f572cc51434a514276e59b5ae8b1acb1068ed98b4333baee2390 (committed)
+metadata-25: 0xe3ae0483273bb34cec521082aba11a6137fd4fae10a8936c2d3df975c871bdd5 (committed)
+metadata-50: 0x235573840b8d22a0e9fe9f4cc33da15ecd73bdb57cdf78381389baeed36f05f6 (committed)
+metadata-75: 0x1f09c7f3e8c589138856cbafd4f1ded2e7bbcf5a68ce5b6363fd4c01aa689155 (committed)
+finalize: 0x73a69de7bcf500af5754e0c8e3987d8de29bd24cd636504f97a3767c6a05ab8d (committed)
+mint-two: 0xba83fc58615f823a51deb52717a0c1426a85ac79ba6a528f8b018e5099016d7d (committed)
+reject-max-total: 0x38bf4627d1612ea35bfb992095aed0151b7718ef032a25f669bba1120ab5c9a9 (expected abort)
+Gate A contract acceptance verified. Evidence: docs/evidence/testnet-acceptance.json

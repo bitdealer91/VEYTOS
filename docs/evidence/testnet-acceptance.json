@@ -1,0 +1,278 @@
+{
+  "network": "testnet",
+  "chainId": 2,
+  "verifiedAt": "2026-09-23T16:21:45.592Z",
+  "sourceDigest": "e6b00c5a4f6103bce688c85bd1231ca6e1774a4914580996361265d6c82faf7a",
+  "frameworkRevision": "1b116b414ccc1d860fa72160d9b9a770e8d8e88f",
+  "sdk": "7.3.0",
+  "moduleAddress": "0x5e802dc2d3105fbf967541d9cd64f5d34a18ebb473a4d40ddb26c8f727e9db28",
+  "roles": {
+    "admin": "0x5e802dc2d3105fbf967541d9cd64f5d34a18ebb473a4d40ddb26c8f727e9db28",
+    "creator": "0xdf06f553f91c6f861b1569da5b89d0c436fe3885310da962053386e678d972d9",
+    "buyer": "0xc2c1bf1b5e5413aa466c7edd7fb196be10e052d949eb8056a61e2badd91d54d5",
+    "treasury": "0x5e802dc2d3105fbf967541d9cd64f5d34a18ebb473a4d40ddb26c8f727e9db28"
+  },
+  "deploymentVersion": "11370375847",
+  "deployedModules": [
+    {
+      "name": "fee_policy",
+      "sha256": "ade05e4acc53eda9fd721b0c93fd6b7bf17c2ae21562952e627a119d972da82b",
+      "matchesPublished": true
+    },
+    {
+      "name": "launchpad",
+      "sha256": "1ddff3439657d5b75a359b75f2ea1da212bbda45b5387a6fa9861e97fada64d2",
+      "matchesPublished": true
+    }
+  ],
+  "publishedPackage": {
+    "name": "MintosLaunchpad",
+    "upgrade_policy": {
+      "policy": 1
+    },
+    "upgrade_number": "0",
+    "source_digest": "08BBB50C7E2AAE3F73F1234C796F00968874068C77EC90D2E588CC4AA6AEDB0E"
+  },
+  "drop": "0xa9ff8a00fda26cbb50c1b32ac198fe8f1c8128587f7ec822a9202cd2c8600e3",
+  "terms": {
+    "collection_uri": "ipfs://bafkreiblmldnffjlohwygjwcir4docspibogmkady7wqvy57kjqt7pxjxq",
+    "creator": "0xdf06f553f91c6f861b1569da5b89d0c436fe3885310da962053386e678d972d9",
+    "description": "Disposable testnet collection",
+    "end_seconds": "0",
+    "fee_bps": "500",
+    "max_supply": "100",
+    "name": "Gate A acceptance",
+    "royalty_bps": "750",
+    "start_seconds": "1790180342",
+    "transaction_limit": "5",
+    "unit_price": "10000000",
+    "wallet_limit": "10"
+  },
+  "collection": "0x287dea5ae1c96817a211877faf19b38d1884fb4a59305101db44fc32fb609e61",
+  "nativeCollection": {
+    "creator": "0xa9ff8a00fda26cbb50c1b32ac198fe8f1c8128587f7ec822a9202cd2c8600e3",
+    "description": "Disposable testnet collection",
+    "mutation_events": {
+      "counter": "0",
+      "guid": {
+        "id": {
+          "addr": "0x287dea5ae1c96817a211877faf19b38d1884fb4a59305101db44fc32fb609e61",
+          "creation_num": "1125899906842625"
+        }
+      }
+    },
+    "name": "Gate A acceptance",
+    "uri": "ipfs://bafkreiblmldnffjlohwygjwcir4docspibogmkady7wqvy57kjqt7pxjxq"
+  },
+  "nativeSupply": {
+    "vec": [
+      "2"
+    ]
+  },
+  "royalties": {
+    "denominator": "10000",
+    "numerator": "750",
+    "payee_address": "0xdf06f553f91c6f861b1569da5b89d0c436fe3885310da962053386e678d972d9"
+  },
+  "progress": [
+    "100",
+    "2",
+    "100"
+  ],
+  "walletMints": "2",
+  "unitPriceOctas": "10000000",
+  "quantity": 2,
+  "grossOctas": "20000000",
+  "platformOctas": "1000000",
+  "creatorOctas": "19000000",
+  "buyerGasOctas": "2184300",
+  "before": [
+    "100000000",
+    "146857700",
+    "590685900"
+  ],
+  "after": [
+    "77815700",
+    "165857700",
+    "591685900"
+  ],
+  "minted": [
+    {
+      "address": "0x9d7c6696d0aada3a845f38b91c1faa8d5c24568cefa79dee82a71d717155026e",
+      "owner": "0xc2c1bf1b5e5413aa466c7edd7fb196be10e052d949eb8056a61e2badd91d54d5",
+      "collection": "0x287dea5ae1c96817a211877faf19b38d1884fb4a59305101db44fc32fb609e61",
+      "metadataUri": "ipfs://bafkreictkgbn5ugu4bdg3nmgqkarigdml74iafgu4h5denh3b6d7wemd6q"
+    },
+    {
+      "address": "0x1a7f1b695ac25dd538135b526729fbf504ed7187215fbb0ebfd5d53c2b862a9",
+      "owner": "0xc2c1bf1b5e5413aa466c7edd7fb196be10e052d949eb8056a61e2badd91d54d5",
+      "collection": "0x287dea5ae1c96817a211877faf19b38d1884fb4a59305101db44fc32fb609e61",
+      "metadataUri": "ipfs://bafkreieqxj2pm5oii5uj7wqwzb6p4zbhf2ux6moidz4xzrulyfaero2pvm"
+    }
+  ],
+  "canonicalEvents": [
+    {
+      "guid": {
+        "creation_number": "0",
+        "account_address": "0x0"
+      },
+      "sequence_number": "0",
+      "type": "0x5e802dc2d3105fbf967541d9cd64f5d34a18ebb473a4d40ddb26c8f727e9db28::launchpad::NFTMinted",
+      "data": {
+        "buyer": "0xc2c1bf1b5e5413aa466c7edd7fb196be10e052d949eb8056a61e2badd91d54d5",
+        "collection": "0x287dea5ae1c96817a211877faf19b38d1884fb4a59305101db44fc32fb609e61",
+        "creator": "0xdf06f553f91c6f861b1569da5b89d0c436fe3885310da962053386e678d972d9",
+        "creator_revenue": "9500000",
+        "drop": "0xa9ff8a00fda26cbb50c1b32ac198fe8f1c8128587f7ec822a9202cd2c8600e3",
+        "fee": "500000",
+        "serial": "1",
+        "timestamp": "1790180432",
+        "token": "0x9d7c6696d0aada3a845f38b91c1faa8d5c24568cefa79dee82a71d717155026e",
+        "treasury": "0x5e802dc2d3105fbf967541d9cd64f5d34a18ebb473a4d40ddb26c8f727e9db28",
+        "unit_price": "10000000"
+      }
+    },
+    {
+      "guid": {
+        "creation_number": "0",
+        "account_address": "0x0"
+      },
+      "sequence_number": "0",
+      "type": "0x5e802dc2d3105fbf967541d9cd64f5d34a18ebb473a4d40ddb26c8f727e9db28::launchpad::NFTMinted",
+      "data": {
+        "buyer": "0xc2c1bf1b5e5413aa466c7edd7fb196be10e052d949eb8056a61e2badd91d54d5",
+        "collection": "0x287dea5ae1c96817a211877faf19b38d1884fb4a59305101db44fc32fb609e61",
+        "creator": "0xdf06f553f91c6f861b1569da5b89d0c436fe3885310da962053386e678d972d9",
+        "creator_revenue": "9500000",
+        "drop": "0xa9ff8a00fda26cbb50c1b32ac198fe8f1c8128587f7ec822a9202cd2c8600e3",
+        "fee": "500000",
+        "serial": "2",
+        "timestamp": "1790180432",
+        "token": "0x1a7f1b695ac25dd538135b526729fbf504ed7187215fbb0ebfd5d53c2b862a9",
+        "treasury": "0x5e802dc2d3105fbf967541d9cd64f5d34a18ebb473a4d40ddb26c8f727e9db28",
+        "unit_price": "10000000"
+      }
+    }
+  ],
+  "transactions": {
+    "publish": {
+      "hash": "0x8a2cb1e2f211d9519f88fad8a5e2566694e6d558026d4a5695968fe35e217506",
+      "version": "11370375847",
+      "success": true,
+      "gasUsed": "77584",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "initialize": {
+      "hash": "0xdf3af891ebb851543ea41bb815c0ad455f419cc5da86d2173c000efb631defef",
+      "version": "11370376241",
+      "success": true,
+      "gasUsed": "4667",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "fund-creator": {
+      "hash": "0xfb895d2dd2d57f3a12f46812745c9b6f432d532701784d5cb9140e94879933af",
+      "version": "11370376442",
+      "success": true,
+      "gasUsed": "5414",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "fund-buyer": {
+      "hash": "0x9ae19a71fd8e3b5cfb3d18fb76657960e31f6b5a87f7a24ef298b51f73ac7f4d",
+      "version": "11370376659",
+      "success": true,
+      "gasUsed": "5414",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "prepare": {
+      "hash": "0xd2028357799b917ed7ab480c3c32f1d238a11af347d4893f35bfb53788d1b986",
+      "version": "11370376974",
+      "success": true,
+      "gasUsed": "15940",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "metadata-0-aborted-out-of-gas": {
+      "hash": "0x96c3b8f1213ef72e77c802dcc0ffc509c8364248128a009b9e44f83968817c20",
+      "version": "11370377242",
+      "success": false
+    },
+    "fund-creator-storage": {
+      "hash": "0xbf3a6cde342a1bcaa19d5e2b033b3edff9c317575306fb9c2958824141cbb94d",
+      "version": "11370401581",
+      "success": true,
+      "gasUsed": "62",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "metadata-0": {
+      "hash": "0xf86bae59c650f572cc51434a514276e59b5ae8b1acb1068ed98b4333baee2390",
+      "version": "11370401941",
+      "success": true,
+      "gasUsed": "327122",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "metadata-25": {
+      "hash": "0xe3ae0483273bb34cec521082aba11a6137fd4fae10a8936c2d3df975c871bdd5",
+      "version": "11370402143",
+      "success": true,
+      "gasUsed": "327193",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "metadata-50": {
+      "hash": "0x235573840b8d22a0e9fe9f4cc33da15ecd73bdb57cdf78381389baeed36f05f6",
+      "version": "11370402631",
+      "success": true,
+      "gasUsed": "327194",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "metadata-75": {
+      "hash": "0x1f09c7f3e8c589138856cbafd4f1ded2e7bbcf5a68ce5b6363fd4c01aa689155",
+      "version": "11370402920",
+      "success": true,
+      "gasUsed": "327202",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "finalize": {
+      "hash": "0x73a69de7bcf500af5754e0c8e3987d8de29bd24cd636504f97a3767c6a05ab8d",
+      "version": "11370403196",
+      "success": true,
+      "gasUsed": "6772",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "mint-two": {
+      "hash": "0xba83fc58615f823a51deb52717a0c1426a85ac79ba6a528f8b018e5099016d7d",
+      "version": "11370403456",
+      "success": true,
+      "gasUsed": "21843",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "reject-max-total": {
+      "hash": "0x38bf4627d1612ea35bfb992095aed0151b7718ef032a25f669bba1120ab5c9a9",
+      "version": "11370404040",
+      "success": false,
+      "gasUsed": "73",
+      "gasUnitPrice": "100",
+      "vmStatus": "Move abort in 0x5e802dc2d3105fbf967541d9cd64f5d34a18ebb473a4d40ddb26c8f727e9db28::launchpad: EMAX_TOTAL(0xf): "
+    }
+  },
+  "finalizeHash": "0x73a69de7bcf500af5754e0c8e3987d8de29bd24cd636504f97a3767c6a05ab8d",
+  "mintHash": "0xba83fc58615f823a51deb52717a0c1426a85ac79ba6a528f8b018e5099016d7d",
+  "rejectedHash": "0x38bf4627d1612ea35bfb992095aed0151b7718ef032a25f669bba1120ab5c9a9",
+  "metadataAvailability": "Content-addressed fixtures saved locally in .testnet/metadata; no public IPFS pinning claimed",
+  "limitations": [
+    "No wallet UI",
+    "No external audit",
+    "Compatible upgrades; testnet only",
+    "Database not required or migrated"
+  ]
+}

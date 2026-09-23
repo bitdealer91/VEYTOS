@@ -1,0 +1,96 @@
+
+> mintos@0.0.1 move:test
+> node scripts/move.mjs test
+
+INCLUDING DEPENDENCY AptosFramework
+INCLUDING DEPENDENCY AptosStdlib
+INCLUDING DEPENDENCY AptosTokenObjects
+INCLUDING DEPENDENCY MoveStdlib
+BUILDING MintosLaunchpad
+Running Move unit tests
+[ PASS    ] 0xcafe::fee_policy_tests::acceptance_without_nomination_rejected
+[ PASS    ] 0xcafe::fee_policy_tests::admin_can_update_fee_recipient_and_pause
+[ PASS    ] 0xcafe::fee_policy::configuration_events
+[ PASS    ] 0xcafe::fee_policy_tests::admin_cannot_exceed_fee_cap
+[ PASS    ] 0xcafe::fee_policy_tests::admin_transfer_requires_acceptance
+[ PASS    ] 0xcafe::fee_policy_tests::cannot_reinitialize
+[ PASS    ] 0xcafe::fee_policy_tests::fee_rounding_is_batch_invariant
+[ PASS    ] 0xcafe::fee_policy_tests::fee_split_conserves_revenue
+[ PASS    ] 0xcafe::fee_policy_tests::full_u64_range_uses_wide_intermediate
+[ PASS    ] 0xcafe::fee_policy_tests::initializes_fee_and_recipient
+[ PASS    ] 0xcafe::fee_policy_tests::old_admin_loses_authority
+[ PASS    ] 0xcafe::fee_policy_tests::quote_fee_cap
+[ PASS    ] 0xcafe::fee_policy_tests::total_overflow_rejected
+[ PASS    ] 0xcafe::fee_policy_tests::unauthorized_admin_proposal
+[ PASS    ] 0xcafe::fee_policy_tests::unauthorized_fee_update
+[ PASS    ] 0xcafe::fee_policy_tests::unauthorized_initialization
+[ PASS    ] 0xcafe::fee_policy_tests::unauthorized_pause
+[ PASS    ] 0xcafe::fee_policy_tests::unauthorized_recipient_update
+[ PASS    ] 0xcafe::fee_policy_tests::wrong_account_cannot_accept
+[ PASS    ] 0xcafe::fee_policy_tests::zero_nominee_rejected
+[ PASS    ] 0xcafe::fee_policy_tests::zero_price_and_zero_fee
+[ PASS    ] 0xcafe::fee_policy_tests::zero_quantity_rejected
+[ PASS    ] 0xcafe::fee_policy_tests::zero_recipient_rejected
+[ PASS    ] 0xcafe::fee_policy_tests::zero_recipient_update_rejected
+[ PASS    ] 0xcafe::launchpad_tests::admin_cannot_clear_creator_pause
+[ PASS    ] 0xcafe::launchpad_tests::admin_cannot_seize_holder_nft
+[ PASS    ] 0xcafe::launchpad_tests::changed_fee_before_preparation_requires_review
+[ PASS    ] 0xcafe::launchpad_tests::creator_cannot_mint_as_native_collection_owner
+[ PASS    ] 0xcafe::launchpad_tests::creator_cannot_mint_as_native_creator
+[ PASS    ] 0xcafe::launchpad_tests::creator_cannot_transfer_authority
+[ PASS    ] 0xcafe::launchpad_tests::creator_cannot_transfer_native_collection
+[ PASS    ] 0xcafe::launchpad_tests::double_finalize
+[ PASS    ] 0xcafe::launchpad_tests::duplicate_metadata_name
+[ PASS    ] 0xcafe::launchpad_tests::duplicate_metadata_uri
+[ PASS    ] 0xcafe::launchpad_tests::duplicate_uri_across_chunks
+[ PASS    ] 0xcafe::launchpad_tests::exact_maximum_supply_and_open_ended_schedule
+[ PASS    ] 0xcafe::launchpad_tests::excessive_supply
+[ PASS    ] 0xcafe::launchpad_tests::expired_finalize
+[ PASS    ] 0xcafe::launchpad_tests::fee_review_mismatch
+[ PASS    ] 0xcafe::launchpad_tests::fee_snapshot_rounding_and_treasury_rotation
+[ PASS    ] 0xcafe::launchpad_tests::finalize_platform_paused
+[ PASS    ] 0xcafe::launchpad_tests::holder_transfers_while_platform_paused
+[ PASS    ] 0xcafe::launchpad_tests::incomplete_finalize
+[ PASS    ] 0xcafe::launchpad_tests::insufficient_apt
+[ PASS    ] 0xcafe::launchpad_tests::invalid_metadata_uri
+[ PASS    ] 0xcafe::launchpad_tests::invalid_royalty
+[ PASS    ] 0xcafe::launchpad_tests::invalid_schedule
+[ PASS    ] 0xcafe::launchpad_tests::invalid_transaction_limit
+[ PASS    ] 0xcafe::launchpad_tests::invalid_wallet_limit
+[ PASS    ] 0xcafe::launchpad_tests::max_price_uses_u128_and_pays_native_apt
+[ PASS    ] 0xcafe::launchpad_tests::max_total_protection
+[ PASS    ] 0xcafe::launchpad_tests::metadata_array_length_mismatch
+[ PASS    ] 0xcafe::launchpad_tests::metadata_chunk_bound
+[ PASS    ] 0xcafe::launchpad_tests::metadata_gap
+[ PASS    ] 0xcafe::launchpad_tests::metadata_overwrite
+[ PASS    ] 0xcafe::launchpad_tests::metadata_supply_mismatch
+[ PASS    ] 0xcafe::launchpad_tests::mint_admin_paused
+[ PASS    ] 0xcafe::launchpad_tests::mint_after_end
+[ PASS    ] 0xcafe::launchpad_tests::mint_at_end
+[ PASS    ] 0xcafe::launchpad_tests::mint_before_start
+[ PASS    ] 0xcafe::launchpad_tests::mint_creator_paused
+[ PASS    ] 0xcafe::launchpad_tests::mint_not_finalized
+[ PASS    ] 0xcafe::launchpad_tests::mint_platform_paused
+[ PASS    ] 0xcafe::launchpad_tests::mint_total_overflow
+[ PASS    ] 0xcafe::launchpad_tests::multi_mint_transfers_native_tokens_and_exact_payments
+[ PASS    ] 0xcafe::launchpad_tests::past_schedule
+[ PASS    ] 0xcafe::launchpad_tests::pause_unpause_restores_minting
+[ PASS    ] 0xcafe::launchpad_tests::post_finalize_append
+[ PASS    ] 0xcafe::launchpad_tests::prepare_append_finalize_native_collection
+[ PASS    ] 0xcafe::launchpad_tests::prepare_paused
+[ PASS    ] 0xcafe::launchpad_tests::quantity_over_limit
+[ PASS    ] 0xcafe::launchpad_tests::quantity_zero
+[ PASS    ] 0xcafe::launchpad_tests::remaining_supply_limit
+[ PASS    ] 0xcafe::launchpad_tests::single_mint_and_free_mint
+[ PASS    ] 0xcafe::launchpad_tests::sold_out
+[ PASS    ] 0xcafe::launchpad_tests::unauthorized_admin_pause
+[ PASS    ] 0xcafe::launchpad_tests::unauthorized_append
+[ PASS    ] 0xcafe::launchpad_tests::unauthorized_creator_pause
+[ PASS    ] 0xcafe::launchpad_tests::unauthorized_finalize
+[ PASS    ] 0xcafe::launchpad_tests::wallet_lifetime_limit
+[ PASS    ] 0xcafe::launchpad_tests::wrong_expected_price
+[ PASS    ] 0xcafe::launchpad_tests::zero_supply
+Test result: OK. Total tests: 82; passed: 82; failed: 0
+{
+  "Result": "Success"
+}

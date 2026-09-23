@@ -1,0 +1,165 @@
+{
+  "0x4::collection": [
+    {
+      "name": "create_fixed_collection",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::string::String",
+        "u64",
+        "0x1::string::String",
+        "0x1::option::Option<0x4::royalty::Royalty>",
+        "0x1::string::String"
+      ],
+      "return": [
+        "0x1::object::ConstructorRef"
+      ]
+    }
+  ],
+  "0x4::token": [
+    {
+      "name": "create",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::string::String",
+        "0x1::string::String",
+        "0x1::string::String",
+        "0x1::option::Option<0x4::royalty::Royalty>",
+        "0x1::string::String"
+      ],
+      "return": [
+        "0x1::object::ConstructorRef"
+      ]
+    },
+    {
+      "name": "create_named_token",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "0x1::string::String",
+        "0x1::string::String",
+        "0x1::string::String",
+        "0x1::option::Option<0x4::royalty::Royalty>",
+        "0x1::string::String"
+      ],
+      "return": [
+        "0x1::object::ConstructorRef"
+      ]
+    }
+  ],
+  "0x4::royalty": [
+    {
+      "name": "create",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "u64",
+        "u64",
+        "address"
+      ],
+      "return": [
+        "0x4::royalty::Royalty"
+      ]
+    }
+  ],
+  "0x1::aptos_account": [
+    {
+      "name": "transfer",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "address",
+        "u64"
+      ],
+      "return": []
+    }
+  ],
+  "0x1::object": [
+    {
+      "name": "create_named_object",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&signer",
+        "vector<u8>"
+      ],
+      "return": [
+        "0x1::object::ConstructorRef"
+      ]
+    },
+    {
+      "name": "generate_extend_ref",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&0x1::object::ConstructorRef"
+      ],
+      "return": [
+        "0x1::object::ExtendRef"
+      ]
+    },
+    {
+      "name": "generate_signer_for_extending",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&0x1::object::ExtendRef"
+      ],
+      "return": [
+        "signer"
+      ]
+    },
+    {
+      "name": "transfer",
+      "visibility": "public",
+      "is_entry": true,
+      "is_view": false,
+      "generic_type_params": [
+        {
+          "constraints": [
+            "key"
+          ]
+        }
+      ],
+      "params": [
+        "&signer",
+        "0x1::object::Object<T0>",
+        "address"
+      ],
+      "return": []
+    },
+    {
+      "name": "transfer_with_constructor_ref",
+      "visibility": "public",
+      "is_entry": false,
+      "is_view": false,
+      "generic_type_params": [],
+      "params": [
+        "&0x1::object::ConstructorRef",
+        "address"
+      ],
+      "return": []
+    }
+  ]
+}
