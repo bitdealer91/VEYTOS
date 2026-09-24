@@ -187,7 +187,7 @@ module marketplace::marketplace_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = 1, location = marketplace::marketplace_fee_policy)]
+    #[expected_failure(abort_code = 11, location = marketplace::marketplace_fee_policy)]
     fun g17_global_pause() {
         let (admin, seller, buyer, _) = setup();
         let id = list(&seller, 1);
@@ -196,7 +196,7 @@ module marketplace::marketplace_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = 1, location = marketplace::marketplace_fee_policy)]
+    #[expected_failure(abort_code = 11, location = marketplace::marketplace_fee_policy)]
     fun g18_v1_adapter_pause() {
         let (admin, seller, _, _) = setup();
         marketplace_fee_policy::set_v1_paused(&admin, true);
@@ -204,7 +204,7 @@ module marketplace::marketplace_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = 1, location = marketplace::marketplace_fee_policy)]
+    #[expected_failure(abort_code = 11, location = marketplace::marketplace_fee_policy)]
     fun g19_v2_adapter_pause() {
         let (admin, _, _, _) = setup();
         marketplace::set_v2_reviewed_for_test(@0xe, 1);

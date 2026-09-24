@@ -15,6 +15,7 @@ module marketplace::marketplace_fee_policy {
     const EALREADY_INITIALIZED: u64 = 8;
     const EZERO_PRICE: u64 = 9;
     const EINVALID_DEDUCTIONS: u64 = 10;
+    const EPAUSED: u64 = 11;
 
     const INITIAL_FEE_BPS: u64 = 200;
     const MAX_FEE_BPS: u64 = 500;
@@ -196,13 +197,13 @@ module marketplace::marketplace_fee_policy {
     public(package) fun assert_v1_open() acquires Config {
         assert!(exists<Config>(@marketplace), ENOT_INITIALIZED);
         let config = borrow_global<Config>(@marketplace);
-        assert!(!config.global_paused && !config.v1_paused, EUNAUTHORIZED);
+        assert!(!config.global_paused && !config.v1_paused, EPAUSED);
     }
 
     public(package) fun assert_v2_open() acquires Config {
         assert!(exists<Config>(@marketplace), ENOT_INITIALIZED);
         let config = borrow_global<Config>(@marketplace);
-        assert!(!config.global_paused && !config.v2_paused, EUNAUTHORIZED);
+        assert!(!config.global_paused && !config.v2_paused, EPAUSED);
     }
 
     /// Quotes deductions from an immutable gross sale price. The royalty fraction
