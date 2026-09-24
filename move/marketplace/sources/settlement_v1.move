@@ -172,4 +172,18 @@ module marketplace::settlement_v1 {
         assert!(table::contains(entries, listing_id), EESCROW_NOT_FOUND);
         token::get_token_amount(table::borrow(entries, listing_id))
     }
+
+    #[view]
+    public fun token_balance(
+        owner: address,
+        creator: address,
+        collection_name: String,
+        token_name: String,
+        property_version: u64,
+    ): u64 {
+        token::balance_of(
+            owner,
+            token::create_token_id_raw(creator, collection_name, token_name, property_version),
+        )
+    }
 }

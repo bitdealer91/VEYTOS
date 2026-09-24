@@ -89,7 +89,7 @@ Remaining limitations:
   incorrectly approved collection;
 - the original Gate D package gives the buyer the seller-funded deletion refund and
   leaves sticky escrow shells; use the hardened package below for further development;
-- no marketplace frontend actions or V1 settlement exist.
+- no marketplace frontend actions exist; Token V1 acceptance is documented separately.
 
 ## Hardened V2 re-acceptance
 

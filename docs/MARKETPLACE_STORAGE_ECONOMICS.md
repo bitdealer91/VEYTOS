@@ -1,6 +1,6 @@
 # Marketplace storage economics
 
-Status: implemented for the hardened V2 package; testnet re-acceptance is required before V1.
+Status: implemented and accepted on testnet for both V2 and Token V1.
 
 Framework source: Aptos framework revision `831c39cff4c5a8ead98ddffe0edfc4ba51623e91`.
 
@@ -106,3 +106,24 @@ Move unit tests verify the reimbursement snapshot, authorization, cap, expected-
 atomic settlement, terminal status, and absence of an escrow object shell. They do not execute the
 validator storage-fee accounting and cannot prove `FeeStatement` amounts. LIST/CANCEL/RELIST/BUY
 must therefore be repeated on testnet after any change to state layout or storage policy.
+
+## Token V1 calibration
+
+Gate D-V1 measured the Token V1 lifecycle independently rather than copying the V2
+configuration. The representative NFT used direct linear `0x3::token::Token` custody and a
+nonzero `property_version`.
+
+The first Token V1 cancellation deleted the private escrow table item and shared active-asset
+table item, refunding `926,400` octas to the seller transaction sender. The adapter therefore uses
+the same initial `926,400` octa reimbursement as V2, but this is a measured result rather than an
+assumption. The value remains independently configurable through the V1 policy field.
+
+Token V1 LIST also removed the NFT's row from the seller's `TokenStore`. That deletion generated a
+`480,400` octa refund to the seller while the same transaction charged `1,448,800` octas for new
+marketplace state. This TokenStore refund belongs directly to the seller and does not enter the
+buyer reimbursement calculation. BUY charged `1,003,600` octas of storage while refunding the
+same `926,400` octas for terminal marketplace cleanup; the buyer-funded reimbursement exactly
+offset the seller-funded marketplace deletion refund received by the buyer.
+
+Evidence is recorded in
+[`docs/evidence/marketplace-v1-testnet.json`](evidence/marketplace-v1-testnet.json).
