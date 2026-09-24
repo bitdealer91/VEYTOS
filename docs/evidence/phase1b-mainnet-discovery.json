@@ -1,0 +1,39 @@
+{
+  "observedAt": "2026-09-24",
+  "network": "mainnet",
+  "source": "Aptos Labs Indexer API via @aptos-labs/ts-sdk 7.3.0",
+  "wallet": "0x0f3f84a5fbec5473ca5ee4b4b69a56d480951c89084a9127d1129059137238d1",
+  "pages": 7,
+  "currentPositiveBalanceRows": 638,
+  "rejectedRows": 0,
+  "standardsObserved": ["v1", "v2"],
+  "verifiedHistoricalCollection": {
+    "name": "Pontem Space Pirates",
+    "standard": "v1",
+    "creator": "0xc46dd298b89d38314b486b2182a6163c4c955dce3509bf30751c307f5ecc2f36",
+    "collectionId": "0xaece05d29c0b543be608d73c44d8bb46a09e18e06097f7fdec078689e52ed118",
+    "ownedSamples": [
+      {
+        "name": "Space Pirate #1",
+        "tokenDataId": "0x3c4c1869c8332992e6c4d28f6259bf2d6758c0f42f01ff155840446377621703",
+        "propertyVersion": "0",
+        "amount": "1",
+        "metadataUri": "ipfs://bafybeif5ivdrbtbrzhfcicrizmmew5v22kud2lvtajl43x5d2jji4nybje/1.json",
+        "lastTransactionVersion": "1075390781"
+      },
+      {
+        "name": "Space Pirate #847",
+        "tokenDataId": "0x784685286479f91e06743c982ab842180f7340330b2040121bdff95494fb9bd1",
+        "propertyVersion": "0",
+        "amount": "1",
+        "metadataUri": "ipfs://bafybeif5ivdrbtbrzhfcicrizmmew5v22kud2lvtajl43x5d2jji4nybje/847.json",
+        "lastTransactionVersion": "1791446138"
+      }
+    ]
+  },
+  "notes": [
+    "Read-only query; no private key or signing operation was used.",
+    "Counts are a point-in-time observation and may change with wallet activity.",
+    "Indexer classification is discovery evidence, not proof of future marketplace transferability."
+  ]
+}

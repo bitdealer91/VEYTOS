@@ -7,6 +7,7 @@
     "./domain": "./src/domain.ts",
     "./client": "./src/client.ts",
     "./types": "./src/types.ts",
-    "./recovery": "./src/recovery.ts"
+    "./recovery": "./src/recovery.ts",
+    "./discovery": "./src/discovery.ts"
   }
 }
