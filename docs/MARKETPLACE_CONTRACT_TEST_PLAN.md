@@ -1,15 +1,13 @@
 # Marketplace contract test plan
 
-Status: Phase 2A design gate. Planned scenarios: **94**. No marketplace Move
-implementation exists yet. Phase 2B starts by adding failing tests and minimal test
-fixtures, then implements only enough production code to satisfy this plan.
+Status: Phase 2A approved. Phase 2B implements this plan test-first. V2 settlement
+precedes V1 and must pass testnet Gate D before any V1 implementation begins.
 
 ## Test structure and fixtures
 
-Create a separate Move package for the marketplace. Phase 2B must select and record
-one explicit Aptos framework commit after confirming the APIs in this specification;
-it must not compile against a floating branch. If that commit differs from the
-research revision, rerun the relevant API review.
+The marketplace package pins Aptos framework commit
+`831c39cff4c5a8ead98ddffe0edfc4ba51623e91`; it must not compile against a floating
+branch. If the pin changes, rerun the relevant API review.
 Test-only helpers may create native V1 collections/tokens, V2 collections/tokens,
 royalties, restricted objects and funded APT accounts. Production modules must not
 contain fixture-only mint, signer or capability escape hatches.
@@ -331,13 +329,13 @@ separate deployment trust assumption, not an in-module admin feature.
 
 ## Phase 2B execution order
 
-1. Add fixtures and F01–F18 as failing tests; implement independent fee policy.
-2. Add G01–G22 against a test adapter; implement common lifecycle and events.
-3. Add V101–V120; implement and test V1 direct-Token escrow.
-4. Add V201–V220; implement isolated V2 escrow objects and reviewed-collection gate.
-5. Add A01–A14, invariant helpers and cross-adapter regression runs.
-6. Run the existing launchpad tests unchanged, then publish to testnet and execute a
-   separate marketplace Gate D acceptance with independent seller and buyer wallets.
+1. Add F01–F18 and implement the independent fee policy.
+2. Add G01–G22 and implement common lifecycle and events.
+3. Add V201–V220 plus early adversarial cases and implement isolated V2 escrow.
+4. Publish V2 to testnet and pass marketplace Gate D with independent roles.
+5. Only then add V101–V120 and implement V1 direct-Token escrow.
+6. Execute representative V1 acceptance, then complete A01–A14 and cross-adapter
+   regression runs.
 
 Do not weaken a scenario to fit an implementation. Any architectural change found
 while tests are red must update this specification and receive review before code is

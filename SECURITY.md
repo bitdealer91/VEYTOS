@@ -46,11 +46,12 @@ upgrade can change security behavior: operational admin restrictions do not cons
 the publisher's upgrade authority. Switch to a reviewed immutable package for mainnet
 and verify published metadata. Do not describe this development package as immutable.
 
-## Marketplace threat model (Phase 2A specification)
+## Marketplace threat model
 
-No marketplace contract is implemented. The approved design target is documented in
-`docs/MARKETPLACE_ARCHITECTURE.md`; these controls must be demonstrated by the Move
-tests before testnet custody is accepted.
+The V2 fee policy, shared lifecycle and isolated escrow implementation passed 73
+marketplace Move tests and live Aptos testnet Gate D. It remains unaudited,
+upgradeable and not mainnet-ready. V1 settlement is not implemented. See
+`docs/MARKETPLACE_ARCHITECTURE.md` and `docs/MARKETPLACE_TESTNET_ACCEPTANCE.md`.
 
 - **Fake listings and ownership claims:** entry functions derive identity and owner
   from native Move state. V1 listing must withdraw the exact `Token`; V2 listing must
@@ -103,7 +104,10 @@ tests before testnet custody is accepted.
 Residual risks requiring external review include package upgrades, V2 retained
 creator capabilities, unusual framework-compatible token configurations, royalty
 policy expectations, storage growth from terminal records/escrow shells, and gas
-bounds under adversarial state.
+bounds under adversarial state. Testnet also showed that purchase-time removal of
+the escrow table entry refunds storage to the buyer transaction sender even though
+the seller paid listing-time storage costs. Sale-price conservation is exact, but
+this network-cost allocation needs an explicit mainnet policy decision.
 
 ## Required review areas before launch
 

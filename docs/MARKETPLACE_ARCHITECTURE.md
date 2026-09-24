@@ -1,7 +1,7 @@
 # VEYTOS fixed-price marketplace specification
 
-Status: Phase 2A specification, 2026-09-24. No marketplace Move modules exist yet.
-This document is the review gate before test-first implementation.
+Status: Phase 2A approved. Phase 2B V2 core and live testnet Gate D are complete.
+The V1 adapter remains unimplemented pending review of the V2 acceptance evidence.
 
 ## Framework basis
 
@@ -16,8 +16,8 @@ The design was rechecked against current official Aptos documentation and aptos-
   [royalty source](https://github.com/aptos-labs/aptos-core/blob/831c39cff4c5a8ead98ddffe0edfc4ba51623e91/aptos-move/framework/aptos-token-objects/sources/royalty.move), and
   [Object source](https://github.com/aptos-labs/aptos-core/blob/831c39cff4c5a8ead98ddffe0edfc4ba51623e91/aptos-move/framework/aptos-framework/sources/object.move).
 
-Phase 2B must compile against a deliberately pinned framework revision and rerun
-this API review if the pin changes.
+Phase 2B is pinned to Aptos framework revision
+`831c39cff4c5a8ead98ddffe0edfc4ba51623e91`. Rerun this API review if the pin changes.
 
 ## Scope and invariants
 
