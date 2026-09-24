@@ -1,0 +1,61 @@
+{
+  "observedAt": "2026-09-24",
+  "network": "mainnet",
+  "operation": "read-only fullnode Token V1 Collections resource and TokenData table inspection",
+  "source": "https://api.mainnet.aptoslabs.com/v1",
+  "collections": [
+    {
+      "name": "Aptos Monkeys",
+      "creator": "0xf932dcb9835e681b21d2f411ef99f4f5e577e6ac299eebee2272a39fb348f702",
+      "tokenDataHandle": "0xdbf0eaecdbacc59c9aecc83cea1365faa9aa6fb1f8a85f3048ab291a6238378f",
+      "sample": "AptosMonkeys #1",
+      "maximum": "1",
+      "supply": "1",
+      "largestPropertyVersion": "0",
+      "royalty": { "numerator": "500", "denominator": "10000", "payee": "0x89e272841c2381ec63e7d8ccf6a70bd784b2a9dda6d6425aeb31657f4a5619c0" },
+      "mutability": { "maximum": true, "uri": true, "royalty": true, "description": true, "properties": true },
+      "defaultProperties": []
+    },
+    {
+      "name": "Aptomingos",
+      "creator": "0xc0e3fbf8ae61056d66ce624d71ccf1888f879355cc4e364ef117249b5e3160a8",
+      "tokenDataHandle": "0x6436e04f8c26e378ab6cd463fbeb3a040d0bf9b01e16387044f9c6fc29946b6",
+      "sample": "Aptomingo #1",
+      "maximum": "1",
+      "supply": "1",
+      "largestPropertyVersion": "0",
+      "royalty": { "numerator": "800", "denominator": "10000", "payee": "0x4230ae221d653cc39b40140f11783a45b557fe560b21461dacbd46094bf1b7b3" },
+      "mutability": { "maximum": true, "uri": true, "royalty": true, "description": true, "properties": true },
+      "defaultProperties": []
+    },
+    {
+      "name": "Bruh Bears",
+      "creator": "0x043ec2cb158e3569842d537740fd53403e992b9e7349cc5d3dfaa5aff8faaef2",
+      "tokenDataHandle": "0xba0ae903f5d5c58d5570157824f18b243d0529959e9a12669ab32a03524a1846",
+      "sample": "Bruh Bear #1",
+      "maximum": "1",
+      "supply": "1",
+      "largestPropertyVersion": "1",
+      "royalty": { "numerator": "550", "denominator": "10000", "payee": "0x5aa4efe9703ffba6082906721756da68b9f7e8d256ed719cf49c40cab3938650" },
+      "mutability": { "maximum": true, "uri": true, "royalty": true, "description": true, "properties": true },
+      "defaultProperties": []
+    },
+    {
+      "name": "Pontem Space Pirates",
+      "creator": "0xc46dd298b89d38314b486b2182a6163c4c955dce3509bf30751c307f5ecc2f36",
+      "tokenDataHandle": "0x53c9b18b912930a91df1d727e0333cac55b830405e2a4b305772c88fec2f3845",
+      "sample": "Space Pirate #1",
+      "maximum": "1",
+      "supply": "1",
+      "largestPropertyVersion": "0",
+      "royalty": { "numerator": "0", "denominator": "10000", "payee": "0xf9359556f1101567722a17cabe506670e0627d20b0b8048cfa9ab9a4f719f771" },
+      "mutability": { "maximum": true, "uri": true, "royalty": true, "description": true, "properties": true },
+      "defaultProperties": []
+    }
+  ],
+  "limitations": [
+    "Each row is one canonical sample, not a collection-wide guarantee.",
+    "No mainnet transaction or ownership mutation was performed.",
+    "Listing must repeat all checks against the exact TokenId in Move state."
+  ]
+}

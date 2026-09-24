@@ -35,6 +35,6 @@ Mainnet remains blocked. This checklist does not authorize deployment.
 - [ ] Final testnet evidence attached, deployment owner reviews release checklist.
 - [ ] Mainnet publication explicitly approved, executed and independently verified.
 
-Gate A does not include public IPFS availability, browser wallets, discovery or
-mainnet approval. Phase 1B / Gate B discovery is next; Phase 1C / Gate C UI follows.
-No Phase 2 implementation before Phase 1 acceptance and compatibility research.
+Gate A does not include public IPFS availability or mainnet approval. Browser mint
+and Phase 1B read-only discovery are verified. No marketplace implementation before
+the Phase 2A architecture and contract test plan are reviewed.

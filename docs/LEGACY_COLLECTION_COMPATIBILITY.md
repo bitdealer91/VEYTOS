@@ -20,8 +20,9 @@ Indexer contains unrelated collections with duplicate names.
   `current_token_datas` table now returns a deprecation error.
 - A two-signer `direct_transfer` is always possible. Single-signer transfer to an
   address requires that recipient to opt into direct transfer. The legacy
-  `token_transfers` offer/claim path leaves the NFT with the sender until claim.
-  These semantics are materially different from an object transfer.
+  `token_transfers` offer path withdraws the value into a sender-owned
+  `PendingClaims` table until claim or cancellation. These semantics are materially
+  different from an object transfer.
 - V1 has expiring, amount-bounded withdraw capabilities, but there is no uniform
   marketplace approval convention deployed across old collections. Listing
   compatibility must therefore be established by an actual custody transaction,

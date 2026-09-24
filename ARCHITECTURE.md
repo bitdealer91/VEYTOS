@@ -258,25 +258,22 @@ Do not create empty UI packages or generic abstractions before they are needed.
 
 ## 7. Milestones and acceptance gates
 
-1. Phase 1A / Gate A — launchpad core: complete. 82 Move tests, 13 TypeScript
-   tests, real testnet collection, independent buyer ownership, 5% settlement,
-   native royalties, counters and events verified. This is operator/SDK acceptance.
+1. Phase 1A / Gate A — launchpad core: complete. 82 Move tests, real testnet
+   collection, independent buyer ownership, 5% settlement, native royalties,
+   counters, events and browser-originated mint verified.
 2. Phase 1B / Gate B — existing Aptos NFT discovery and Token V1/V2 compatibility:
-   pending. Research real historical collections, document transfer/royalty
-   restrictions and build verified wallet ownership queries. No compatibility
-   matrix or legacy implementation is claimed by Gate A.
-3. Phase 1C / Gate C — minimal launchpad UI: wallet integration, homepage/explore,
-   creator wizard, persistent IPFS uploads, collection/mint flow, database/indexer,
-   dashboard and authenticated moderation. Verify desktop/mobile browser flows,
-   rejected signatures, network changes, pending recovery and production build.
-4. Phase 2 / Gate D — fixed-price secondary trading after preceding gates;
-   Token V1 and V2 settlement require their own verified compatibility decisions.
-   The planned 200 bps secondary fee remains separate from primary fees; no
-   marketplace contract is implemented.
+   complete. Mainnet discovery, historical collection identities, transfer/royalty
+   research and the read-only wallet profile support both standards.
+3. Frontend launchpad stabilization: homepage/explore/drop/collection/profile,
+   wallet mint, pending recovery, production build and current automated tests pass.
+   Creator Studio, persistent uploads, database worker and moderation remain open.
+4. Phase 2A — fixed-price marketplace specification and 94-scenario Move test plan:
+   complete pending review. The planned 200 bps secondary fee is independent from
+   primary fees; no marketplace contract is implemented.
 5. Phase 3 / Gate E — unified creator and collector product.
 6. Phase 4 — growth and advanced features only when explicitly scoped.
 
-Phase 2 is blocked until every Phase 1 definition-of-done item is verified.
+Marketplace settlement is blocked until the Phase 2A specification is reviewed.
 Mainnet additionally requires the independent review, multisig, immutable package
 and operational gates in [MAINNET_CHECKLIST.md](MAINNET_CHECKLIST.md).
 

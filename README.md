@@ -201,6 +201,7 @@ acceptance gates. No mainnet deployment has been performed or is implied.
 
 ## Next milestone
 
-Phase 1B: research actual Token V1/V2 collections and implement verified wallet NFT
-discovery. No outstanding Gate A blocker prevents that work; it was deliberately
-not started in this milestone. Frontend is Phase 1C and marketplace is Phase 2.
+Review the Phase 2A [fixed-price marketplace specification](docs/MARKETPLACE_ARCHITECTURE.md)
+and its [94-scenario Move test plan](docs/MARKETPLACE_CONTRACT_TEST_PLAN.md). After
+approval, Phase 2B begins test-first with the independent secondary fee policy and
+common listing lifecycle. No settlement contract exists yet.
