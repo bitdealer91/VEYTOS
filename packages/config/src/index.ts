@@ -13,7 +13,7 @@ export const feeDisplay = Object.freeze({
   primaryDefaultBps: 500,
   primaryMaximumBps: 1000,
   secondaryTargetBps: 200,
-  secondaryStatus: "planned" as const,
+  secondaryStatus: "testnet-verified" as const,
 });
 export const networkSchema = z.enum(["devnet", "testnet", "mainnet"]);
 export type AptosNetwork = z.infer<typeof networkSchema>;
@@ -29,6 +29,7 @@ const optionalAddress = z.preprocess(
 const publicSchema = z.object({
   NEXT_PUBLIC_APTOS_NETWORK: networkSchema.default("testnet"),
   NEXT_PUBLIC_LAUNCHPAD_ADDRESS: optionalAddress,
+  NEXT_PUBLIC_MARKETPLACE_ADDRESS: optionalAddress,
   NEXT_PUBLIC_APP_URL: z.url().default("http://localhost:3000"),
   NEXT_PUBLIC_IPFS_GATEWAY: z.url().default("https://ipfs.io/ipfs/"),
 });

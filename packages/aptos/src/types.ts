@@ -9,3 +9,48 @@ export type Activity = MintEvent & { hash: string; version: string };
 export type Asset = { identity: TokenIdentity; address: string; name: string; uri: string; owner: string; collection: string };
 export type TransactionPhase = 'ready' | 'review' | 'wallet' | 'submitted' | 'confirming' | 'success' | 'failure' | 'unknown';
 export type PendingMint = { hash: string; sender: string; drop: string; quantity: number; unitPrice: string; network: string; module: string };
+export type MarketplaceStandard = 'v1' | 'v2';
+export type MarketplaceListing = {
+  id: string;
+  seller: string;
+  standard: MarketplaceStandard;
+  identity: TokenIdentity;
+  collectionId: string;
+  price: string;
+  feeBps: string;
+  storageReimbursement: string;
+  royaltyPayee: string;
+  royaltyNumerator: string;
+  royaltyDenominator: string;
+  status: 'ACTIVE' | 'CANCELLED' | 'SOLD';
+};
+export type MarketplaceConfig = {
+  chainId: number;
+  feeBps: string;
+  recipient: string;
+  globalPaused: boolean;
+  v1Paused: boolean;
+  v2Paused: boolean;
+  admin: string;
+  v1StorageReimbursement: string;
+  v2StorageReimbursement: string;
+};
+export type MarketplaceEconomics = {
+  price: bigint;
+  fee: bigint;
+  royalty: bigint;
+  sellerProceeds: bigint;
+  storageReimbursement: bigint;
+  buyerTotalBeforeGas: bigint;
+};
+export type PendingMarketplaceTransaction = {
+  action: 'list' | 'cancel' | 'buy';
+  hash: string;
+  sender: string;
+  listingId?: string;
+  identity: TokenIdentity;
+  expectedPrice?: string;
+  expectedStorageReimbursement?: string;
+  network: string;
+  module: string;
+};

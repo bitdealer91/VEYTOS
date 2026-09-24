@@ -2,6 +2,7 @@ import { Aptos } from '@aptos-labs/ts-sdk';
 import { z } from 'zod';
 import { canonical } from './domain.ts';
 import type { TokenIdentity } from './types.ts';
+import { encodeNFTIdentity } from './marketplace.ts';
 
 const address = z.string().regex(/^0x[\da-f]{1,64}$/i).transform(canonical);
 const integer = z.union([z.string(), z.number().int().nonnegative(), z.bigint().nonnegative()])
@@ -22,6 +23,13 @@ const tokenSchema = z.object({
   token_standard: z.enum(['v1', 'v2']),
   token_uri: z.string(),
   current_collection: collectionSchema,
+  maximum: integer.optional().nullable(),
+  token_properties: z.unknown().optional().nullable(),
+  current_royalty_v1: z.object({
+    payee_address: address,
+    royalty_points_numerator: integer,
+    royalty_points_denominator: integer,
+  }).optional().nullable(),
 });
 const ownershipSchema = z.object({
   token_standard: z.enum(['v1', 'v2']),
@@ -31,6 +39,7 @@ const ownershipSchema = z.object({
   last_transaction_version: integer,
   amount: integer,
   current_token_data: tokenSchema,
+  is_soulbound_v2: z.boolean().optional().nullable(),
 });
 
 export type NormalizedNFT = {
@@ -48,6 +57,10 @@ export type NormalizedNFT = {
   collectionCreator: string;
   collectionMetadataUri: string;
   lastTransactionVersion: string;
+  maximum: string | null;
+  properties: unknown;
+  royalty: { payee: string; numerator: string; denominator: string } | null;
+  isSoulbound: boolean;
 };
 
 export type NFTDiscoveryResult = {
@@ -55,6 +68,8 @@ export type NFTDiscoveryResult = {
   rejectedRows: number;
   pages: number;
 };
+
+export type NFTDiscoveryPage = NFTDiscoveryResult & { offset: number; hasMore: boolean };
 
 export class NFTDiscoveryError extends Error {
   readonly code: 'indexer-unavailable' | 'pagination-limit';
@@ -98,6 +113,14 @@ function normalize(row: z.infer<typeof ownershipSchema>): NormalizedNFT {
     collectionCreator: collection.creator_address,
     collectionMetadataUri: collection.uri,
     lastTransactionVersion: row.last_transaction_version,
+    maximum: token.maximum ?? null,
+    properties: token.token_properties ?? null,
+    royalty: token.current_royalty_v1 ? {
+      payee: token.current_royalty_v1.payee_address,
+      numerator: token.current_royalty_v1.royalty_points_numerator,
+      denominator: token.current_royalty_v1.royalty_points_denominator,
+    } : null,
+    isSoulbound: row.is_soulbound_v2 ?? false,
   };
 }
 
@@ -116,7 +139,10 @@ export function normalizeOwnershipRows(rows: readonly unknown[], expectedOwner?:
     }
     const key = rowIdentity(parsed.data);
     const previous = latest.get(key);
-    if (!previous || BigInt(parsed.data.last_transaction_version) > BigInt(previous.last_transaction_version)) {
+    const newer = !previous || BigInt(parsed.data.last_transaction_version) > BigInt(previous.last_transaction_version);
+    const sameVersionHigherBalance = previous && parsed.data.last_transaction_version === previous.last_transaction_version &&
+      BigInt(parsed.data.amount) > BigInt(previous.amount);
+    if (newer || sameVersionHigherBalance) {
       latest.set(key, parsed.data);
     }
   }
@@ -175,4 +201,63 @@ export async function discoverOwnedNFTs(
     throw new NFTDiscoveryError('indexer-unavailable', 'Aptos NFT ownership is unavailable', { cause: error });
   }
   return { ...normalizeOwnershipRows(rows, accountAddress), pages };
+}
+
+export async function discoverOwnedNFTPage(
+  aptos: Aptos,
+  owner: string,
+  options: { offset?: number; pageSize?: number } = {},
+): Promise<NFTDiscoveryPage> {
+  const accountAddress = canonical(owner);
+  const offset = options.offset ?? 0;
+  const pageSize = options.pageSize ?? 24;
+  if (!Number.isSafeInteger(offset) || offset < 0) throw new RangeError('offset must be nonnegative');
+  if (!Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 100) throw new RangeError('pageSize must be 1..100');
+  try {
+    const rows = await aptos.getAccountOwnedTokens({
+      accountAddress,
+      options: {
+        offset,
+        limit: pageSize + 1,
+        orderBy: [{ last_transaction_version: 'desc' }, { token_data_id: 'asc' }, { property_version_v1: 'asc' }],
+      },
+    });
+    const hasMore = rows.length > pageSize;
+    const normalized = normalizeOwnershipRows(rows.slice(0, pageSize), accountAddress);
+    return { ...normalized, pages: 1, offset, hasMore };
+  } catch (error) {
+    throw new NFTDiscoveryError('indexer-unavailable', 'Aptos NFT ownership is unavailable', { cause: error });
+  }
+}
+
+const ownershipQuery = `query nft($where: current_token_ownerships_v2_bool_exp!) {
+  current_token_ownerships_v2(where:$where,order_by:[{last_transaction_version:desc}],limit:20) {
+    token_standard token_data_id property_version_v1 owner_address last_transaction_version amount
+    current_token_data { collection_id description token_data_id token_name token_standard token_uri maximum token_properties
+      current_royalty_v1 { payee_address royalty_points_numerator royalty_points_denominator }
+      current_collection { collection_id collection_name creator_address token_standard uri } }
+  }
+}`;
+
+export async function discoverNFTByIdentity(indexerUrl: string, identity: TokenIdentity): Promise<NormalizedNFT | null> {
+  const where = identity.standard === 'v2'
+    ? { token_standard: { _eq: 'v2' }, token_data_id: { _eq: canonical(identity.address) } }
+    : {
+        token_standard: { _eq: 'v1' }, property_version_v1: { _eq: identity.propertyVersion },
+        current_token_data: {
+          token_name: { _eq: identity.name },
+          current_collection: {
+            creator_address: { _eq: canonical(identity.creator) }, collection_name: { _eq: identity.collection },
+          },
+        },
+      };
+  const response = await fetch(indexerUrl, {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ query: ownershipQuery, variables: { where } }),
+  });
+  if (!response.ok) throw new NFTDiscoveryError('indexer-unavailable', `Indexer HTTP ${response.status}`);
+  const body = await response.json() as { data?: { current_token_ownerships_v2?: unknown[] }; errors?: unknown[] };
+  if (body.errors?.length || !body.data?.current_token_ownerships_v2) throw new NFTDiscoveryError('indexer-unavailable', 'Indexer GraphQL error');
+  const result = normalizeOwnershipRows(body.data.current_token_ownerships_v2);
+  return result.items.find((item) => encodeNFTIdentity(item.identity) === encodeNFTIdentity(identity)) ?? null;
 }

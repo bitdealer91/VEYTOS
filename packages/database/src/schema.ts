@@ -133,6 +133,61 @@ export const indexerCheckpoints = pgTable("indexer_checkpoints", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [primaryKey({ columns: [t.network, t.processor] }), u64Check("checkpoint_u64", t.nextVersion)]);
 
+export const marketplaceListings = pgTable("marketplace_listings", {
+  network: network().notNull(),
+  moduleAddress: text("module_address").notNull(),
+  listingId: u64("listing_id").notNull(),
+  standard: text().notNull(),
+  assetKey: text("asset_key").notNull(),
+  collectionKey: text("collection_key").notNull(),
+  sellerAddress: text("seller_address").notNull(),
+  buyerAddress: text("buyer_address"),
+  priceOctas: u64("price_octas").notNull(),
+  feeBps: integer("fee_bps").notNull(),
+  storageReimbursementOctas: u64("storage_reimbursement_octas").notNull(),
+  royaltyPayee: text("royalty_payee").notNull(),
+  royaltyNumerator: u64("royalty_numerator").notNull(),
+  royaltyDenominator: u64("royalty_denominator").notNull(),
+  status: text().notNull(),
+  listedVersion: u64("listed_version").notNull(),
+  terminalVersion: u64("terminal_version"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  primaryKey({ columns: [t.network, t.moduleAddress, t.listingId] }),
+  uniqueIndex("marketplace_active_asset").on(t.network, t.moduleAddress, t.assetKey).where(sql`${t.status} = 'ACTIVE'`),
+  index("marketplace_seller_idx").on(t.network, t.moduleAddress, t.sellerAddress, t.status),
+  index("marketplace_collection_idx").on(t.network, t.moduleAddress, t.collectionKey, t.status),
+  u64Check("marketplace_listing_id_u64", t.listingId),
+  u64Check("marketplace_price_u64", t.priceOctas),
+  check("marketplace_standard", sql`${t.standard} IN ('v1','v2')`),
+  check("marketplace_status", sql`${t.status} IN ('ACTIVE','CANCELLED','SOLD')`),
+  check("marketplace_fee_bounds", sql`${t.feeBps} BETWEEN 0 AND 500`),
+]);
+
+export const marketplaceEvents = pgTable("marketplace_events", {
+  network: network().notNull(),
+  moduleAddress: text("module_address").notNull(),
+  transactionVersion: u64("transaction_version").notNull(),
+  eventIndex: integer("event_index").notNull(),
+  transactionHash: text("transaction_hash").notNull(),
+  listingId: u64("listing_id").notNull(),
+  eventType: text("event_type").notNull(),
+  standard: text().notNull(),
+  assetKey: text("asset_key").notNull(),
+  collectionKey: text("collection_key").notNull(),
+  sellerAddress: text("seller_address").notNull(),
+  buyerAddress: text("buyer_address"),
+  grossPriceOctas: u64("gross_price_octas"),
+  payload: jsonb().notNull(),
+  chainTimestamp: timestamp("chain_timestamp", { withTimezone: true }).notNull(),
+}, (t) => [
+  primaryKey({ columns: [t.network, t.moduleAddress, t.transactionVersion, t.eventIndex] }),
+  index("marketplace_activity_listing_idx").on(t.network, t.moduleAddress, t.listingId),
+  index("marketplace_activity_collection_idx").on(t.network, t.moduleAddress, t.collectionKey, t.transactionVersion),
+  u64Check("marketplace_event_version_u64", t.transactionVersion),
+  check("marketplace_event_type", sql`${t.eventType} IN ('LISTED','CANCELLED','PURCHASED')`),
+]);
+
 export const authChallenges = pgTable("auth_challenges", {
   id: uuid().defaultRandom().primaryKey(), nonceHash: text("nonce_hash").notNull().unique(),
   domain: text().notNull(), uri: text().notNull(), network: network().notNull(),

@@ -24,6 +24,8 @@
     "testnet:acceptance": "npm run check && node --import tsx scripts/testnet-acceptance.ts",
     "testnet:marketplace-v2": "node --import tsx scripts/marketplace-v2-testnet.ts",
     "testnet:marketplace-v1": "node --import tsx scripts/marketplace-v1-testnet.ts",
+    "indexer:marketplace": "node --import tsx scripts/marketplace-indexer.ts",
+    "testnet:marketplace-frontend-setup": "node --import tsx scripts/marketplace-frontend-testnet-setup.ts",
     "mainnet:nft-smoke": "node --import tsx scripts/mainnet-nft-smoke.ts",
     "move:compile": "node scripts/move.mjs compile",
     "move:test": "node scripts/move.mjs test",

@@ -108,6 +108,13 @@ test('a newer zero balance suppresses a stale positive ownership row', () => {
   assert.deepEqual(result.items, []);
 });
 
+test('same-version transfer rows retain the positive current owner row regardless of response order', () => {
+  const sent = row('v2', { owner_address: a('1'), amount: '0', last_transaction_version: '20' });
+  const received = row('v2', { owner_address: a('2'), amount: '1', last_transaction_version: '20' });
+  assert.equal(normalizeOwnershipRows([sent, received]).items[0]?.owner, a('2'));
+  assert.equal(normalizeOwnershipRows([received, sent]).items[0]?.owner, a('2'));
+});
+
 test('rows for another owner are rejected instead of leaking into the wallet result', () => {
   const result = normalizeOwnershipRows([row('v2', { owner_address: a('9') })], owner);
   assert.deepEqual(result.items, []);
