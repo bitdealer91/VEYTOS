@@ -10,8 +10,9 @@ TanStack Query caches live eligibility; no additional global state library.
 
 packages/aptos contains serializable domain types, integer-safe eligibility,
 transaction validation and the SDK read/payload layer. Token identity is a tagged
-V1/V2 union; only real supported Digital Assets are populated today. No V1 data or
-marketplace settlement is invented. Existing domain money helpers remain canonical.
+V1/V2 union. Phase 1B adds official Indexer ownership discovery for both standards,
+while keeping the underlying identities distinct. No marketplace settlement is
+implemented or implied. Existing domain money helpers remain canonical.
 
 apps/web/src/lib owns validated public config and server-only discovery config.
 Discovery uses an explicit, bounded list of drop addresses from operator environment,
@@ -29,9 +30,10 @@ Metadata stays canonical ipfs://; bounded reads only through the configured publ
 HTTPS gateway, no server-side arbitrary URI proxy. Missing/unpinned metadata leaves
 a labelled fallback. Production has no test fixtures, local signer or private keys.
 
-Implemented routes: /, /explore, /drops and /collection/[id]. Activity, NFT detail,
-Studio and profile routes do not exist yet and are absent from primary navigation.
-Token links use Aptos Explorer. Historical holdings require Phase 1B. No buy/list actions.
+Implemented routes: /, /explore, /drops, /collection/[id] and the read-only
+/profile/[address]. Activity, NFT detail and Studio routes do not exist and are
+absent from primary navigation. Token links use Aptos Explorer. The profile reads
+current holdings from the configured network's Indexer; it has no buy/list actions.
 
 Validation: preserve Gate A, add domain/state/error tests, production build,
 responsive browser checks, native wallet selector and real testnet reads. Actual
@@ -47,7 +49,8 @@ No-hash interruptions are labelled unconfirmed, not submitted. Recovery accepts 
 wallet transaction hash for chain validation or an explicit user acknowledgement
 that the wallet request is closed and no transaction was signed/submitted. There is
 no automatic re-signing. Known hashes remain blocked until chain reconciliation.
-Browser wallet and mint acceptance are pending until recorded in stabilization evidence.
+Browser wallet and mint acceptance are recorded in
+`docs/evidence/frontend-browser-mint.json`.
 
 Local setup: copy apps/web/.env.example to apps/web/.env.local, npm ci, npm run dev.
 Network/package values are public build-time configuration; rebuild after changes.

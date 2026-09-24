@@ -6,8 +6,11 @@ Tagline: The NFT home of Aptos. Product copy comes from `packages/config`.
 
 Implemented: shared configuration/domain/storage interface, database schema,
 fee policy, native Digital Asset launchpad and operator acceptance tooling.
-The application, indexing, storage adapter and authentication sections below remain
-the intended design, not implemented services. See [TESTNET_ACCEPTANCE.md](TESTNET_ACCEPTANCE.md).
+The first frontend and read-only V1/V2 Indexer discovery are implemented. The
+database indexer, storage adapter and authentication sections below remain intended
+design, not implemented services. See [TESTNET_ACCEPTANCE.md](TESTNET_ACCEPTANCE.md),
+[historical compatibility](docs/LEGACY_COLLECTION_COMPATIBILITY.md), and
+[marketplace architecture research](docs/MARKETPLACE_ARCHITECTURE.md).
 
 ## 1. Application architecture
 

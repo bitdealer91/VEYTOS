@@ -1,4 +1,4 @@
-# Mintos
+# VEYTOS
 
 The NFT home of Aptos.
 
@@ -8,8 +8,9 @@ is Phase 2 and is deliberately outside the current implementation.
 
 ## Current status
 
-**Phase 1A / Gate A passed on Aptos testnet.** The contract core is implemented;
-the browser product and mainnet security gates remain incomplete.
+**Phase 1A / Gate A and the browser mint gate passed on Aptos testnet.** Phase 1B
+read-only historical NFT discovery is implemented; marketplace settlement and the
+mainnet security gates remain incomplete.
 
 Implemented:
 
@@ -22,13 +23,17 @@ Implemented:
   two-step admin rotation, pause state, events and checked arithmetic.
 - Native Digital Asset collection creation, staged metadata, immutable launch terms,
   lifetime supply/wallet limits, pause controls, royalties and atomic APT settlement.
-- 82 passing Move tests and 13 passing TypeScript tests; normal type checking
-  includes the testnet operator scripts.
+- 82 passing Move tests, 35 passing TypeScript/Node tests and 14 frontend tests;
+  normal type checking includes the testnet operator scripts.
 - Real testnet publication and two-NFT mint, verified owner/counters/events and
   exact 5% payment split. See [TESTNET_ACCEPTANCE.md](TESTNET_ACCEPTANCE.md).
+- Official Indexer discovery for Token V1 and V2, with strict normalization,
+  complete pagination, deduplication and a read-only wallet profile.
+- Browser wallet mint and committed-version ownership reconciliation. See
+  [frontend evidence](docs/evidence/frontend-browser-mint.json).
 
-Not implemented yet: browser wallet integration, frontend, storage uploads,
-authenticated routes, indexer, dashboard, admin UI or historical NFT discovery.
+Not implemented yet: storage uploads, authenticated routes, database event worker,
+creator dashboard, admin UI or marketplace settlement.
 Acceptance uses three disposable SDK-controlled testnet wallets. Database migrations
 have been generated, but not applied to a PostgreSQL instance here.
 
@@ -37,9 +42,8 @@ have been generated, but not applied to a PostgreSQL instance here.
 Read [ARCHITECTURE.md](ARCHITECTURE.md) for the full design, standards decisions,
 data model, repository layout, security boundaries and open validation gates.
 
-Target: Next.js/React/TypeScript, Tailwind, TanStack Query, Aptos Move, official
+Stack: Next.js/React/TypeScript, Tailwind, TanStack Query, Aptos Move, official
 Aptos SDK and Wallet Adapter, PostgreSQL/Drizzle, and replaceable IPFS storage.
-Next.js and wallet integration belong to Phase 1C after Phase 1B discovery research.
 Branding lives in `packages/config/src/index.ts`; UI code must import it rather
 than embedding the working name.
 
@@ -50,11 +54,12 @@ Use Node.js 22 or newer and npm. Node 24 was used for this milestone.
 ```sh
 npm ci
 cp .env.example .env
+npm run dev
 npm run check
 ```
 
-There is no web development server yet. `npm run dev` and `npm run build` will be
-added with the frontend milestone; no placeholder command pretends to build an app.
+Copy `apps/web/.env.example` to `apps/web/.env.local` for the browser application.
+`npm run dev` starts Next.js and `npm run build` performs the production webpack build.
 
 ### Move setup
 
@@ -150,6 +155,7 @@ npm run testnet:accounts
 # Fund the printed admin address with at least 5 TESTNET APT via the official faucet.
 npm run testnet:preflight
 npm run testnet:acceptance
+npm run mainnet:nft-smoke
 ```
 
 The tool enforces testnet chain ID 2 and the official fullnode. It validates
@@ -174,12 +180,12 @@ Set the real module address in the environment only after on-chain verification.
 Use testnet for persistent integration; devnet is disposable development state.
 
 Gate A verifies committed transactions and native state using the SDK. Its local,
-content-addressed metadata fixtures are not publicly pinned. Browser wallet and
-public storage acceptance remain Phase 1C work.
+content-addressed metadata fixtures are not publicly pinned. Browser wallet
+acceptance is recorded; public storage acceptance remains future work.
 
 ## Frontend and worker deployment plan
 
-After implementation, build `apps/web` on Vercel with public network/address/origin
+Build `apps/web` on Vercel with public network/address/origin
 and server-only database/storage configuration. Run migrations as an explicit release
 step. Deploy `apps/indexer` as a Node worker with a durable PostgreSQL checkpoint and
 the verified deployment version. Keep long-running indexing outside request handlers.
