@@ -25,6 +25,8 @@
     "mainnet:nft-smoke": "node --import tsx scripts/mainnet-nft-smoke.ts",
     "move:compile": "node scripts/move.mjs compile",
     "move:test": "node scripts/move.mjs test",
+    "move:marketplace:compile": "node scripts/move.mjs compile marketplace",
+    "move:marketplace:test": "node scripts/move.mjs test marketplace",
     "db:generate": "drizzle-kit generate --config packages/database/drizzle.config.ts",
     "db:migrate": "drizzle-kit migrate --config packages/database/drizzle.config.ts",
     "dev": "npm run dev --workspace @veytos/web",
