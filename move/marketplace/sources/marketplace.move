@@ -199,6 +199,23 @@ module marketplace::marketplace {
         assert!(asset.v2_token == token && asset.collection == collection, ESTANDARD_MISMATCH);
     }
 
+    public(package) fun assert_v1_identity(
+        asset: &AssetIdentity,
+        creator: address,
+        collection_name: String,
+        token_name: String,
+        property_version: u64,
+    ) {
+        assert!(asset.standard == STANDARD_V1, ESTANDARD_MISMATCH);
+        assert!(
+            asset.v1_creator == creator
+                && asset.v1_collection == collection_name
+                && asset.v1_token == token_name
+                && asset.v1_property_version == property_version,
+            ESTANDARD_MISMATCH,
+        );
+    }
+
     public(package) fun create_listing(
         seller: address,
         asset: AssetIdentity,
@@ -409,6 +426,11 @@ module marketplace::marketplace {
     public fun v2_identity_parts(asset: AssetIdentity): (address, address) {
         assert!(asset.standard == STANDARD_V2, ESTANDARD_MISMATCH);
         (asset.v2_token, asset.collection)
+    }
+
+    public fun v1_identity_parts(asset: AssetIdentity): (address, String, String, u64) {
+        assert!(asset.standard == STANDARD_V1, ESTANDARD_MISMATCH);
+        (asset.v1_creator, asset.v1_collection, asset.v1_token, asset.v1_property_version)
     }
 
     #[view]
