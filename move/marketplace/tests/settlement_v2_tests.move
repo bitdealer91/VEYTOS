@@ -1,13 +1,12 @@
 #[test_only]
 module marketplace::settlement_v2_tests {
     use std::option;
-    use std::signer;
     use std::string;
     use aptos_framework::account;
     use aptos_framework::aptos_account;
     use aptos_framework::aptos_coin::{Self, AptosCoin};
     use aptos_framework::coin;
-    use aptos_framework::object::{Self, Object, TransferRef};
+    use aptos_framework::object::{Self, TransferRef};
     use aptos_framework::timestamp;
     use aptos_token_objects::collection::{Self, Collection};
     use aptos_token_objects::royalty::{Self, MutatorRef};
@@ -56,7 +55,9 @@ module marketplace::settlement_v2_tests {
     }
 
     fun list(seller: &signer, token_address: address): u64 {
-        settlement_v2::list(seller, token_address, PRICE)
+        let id = marketplace::next_listing_id();
+        settlement_v2::list(seller, token_address, PRICE);
+        id
     }
 
     #[test]
@@ -342,7 +343,7 @@ module marketplace::settlement_v2_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = 4, location = marketplace::marketplace)]
+    #[expected_failure(abort_code = 7, location = marketplace::settlement_v2)]
     fun v224_cancel_then_buy_fails() {
         let (_, seller, buyer, _, collection_address) = setup();
         let token_address = mint(&seller, collection_address, b"one");
@@ -352,12 +353,80 @@ module marketplace::settlement_v2_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = 4, location = marketplace::marketplace)]
+    #[expected_failure(abort_code = 7, location = marketplace::settlement_v2)]
     fun v225_buy_then_cancel_fails() {
         let (_, seller, buyer, _, collection_address) = setup();
         let token_address = mint(&seller, collection_address, b"one");
         let id = list(&seller, token_address);
         settlement_v2::buy(&buyer, id, PRICE);
         settlement_v2::cancel(&seller, id);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 11, location = marketplace::marketplace_fee_policy)]
+    fun v226_v2_pause_blocks_listing() {
+        let (admin, seller, _, _, collection_address) = setup();
+        let token_address = mint(&seller, collection_address, b"one");
+        marketplace_fee_policy::set_v2_paused(&admin, true);
+        list(&seller, token_address);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 11, location = marketplace::marketplace_fee_policy)]
+    fun v227_global_pause_blocks_buy() {
+        let (admin, seller, buyer, _, collection_address) = setup();
+        let token_address = mint(&seller, collection_address, b"one");
+        let id = list(&seller, token_address);
+        marketplace_fee_policy::set_global_paused(&admin, true);
+        settlement_v2::buy(&buyer, id, PRICE);
+    }
+
+    #[test]
+    fun v228_revocation_does_not_trap_existing_escrow() {
+        let (admin, seller, _, _, collection_address) = setup();
+        let token_address = mint(&seller, collection_address, b"one");
+        let id = list(&seller, token_address);
+        marketplace::set_v2_collection_reviewed(&admin, collection_address, 1, false);
+        settlement_v2::cancel(&seller, id);
+        assert!(object::owner(object::address_to_object<Token>(token_address)) == @0xa, 100);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 2, location = marketplace::marketplace)]
+    fun v229_nonadmin_cannot_update_registry() {
+        let (_, _, _, attacker, collection_address) = setup();
+        marketplace::set_v2_collection_reviewed(&attacker, collection_address, 2, false);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 12, location = marketplace::marketplace)]
+    fun v230_noncollection_registry_entry_rejected() {
+        let (admin, _, _, _, _) = setup();
+        let plain = object::create_sticky_object(@0xa);
+        marketplace::set_v2_collection_reviewed(
+            &admin,
+            object::address_from_constructor_ref(&plain),
+            2,
+            true,
+        );
+    }
+
+    #[test]
+    #[expected_failure]
+    fun v231_insufficient_payment_aborts_purchase() {
+        let (_, seller, _, attacker, collection_address) = setup();
+        let token_address = mint(&seller, collection_address, b"one");
+        let id = list(&seller, token_address);
+        settlement_v2::buy(&attacker, id, PRICE);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 7, location = marketplace::settlement_v2)]
+    fun v232_double_buy_fails() {
+        let (_, seller, buyer, _, collection_address) = setup();
+        let token_address = mint(&seller, collection_address, b"one");
+        let id = list(&seller, token_address);
+        settlement_v2::buy(&buyer, id, PRICE);
+        settlement_v2::buy(&buyer, id, PRICE);
     }
 }

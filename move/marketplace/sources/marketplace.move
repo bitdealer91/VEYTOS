@@ -151,6 +151,13 @@ module marketplace::marketplace {
         }
     }
 
+    public(package) fun assert_v2_collection_reviewed(collection_address: address) acquires State {
+        require_state();
+        let policies = &borrow_global<State>(@marketplace).v2_collections;
+        assert!(table::contains(policies, collection_address), ECOLLECTION_NOT_REVIEWED);
+        assert!(table::borrow(policies, collection_address).reviewed, ECOLLECTION_NOT_REVIEWED);
+    }
+
     public(package) fun new_v1_identity(
         creator: address,
         collection_name: String,
@@ -178,6 +185,15 @@ module marketplace::marketplace {
             v2_token: token,
             collection,
         }
+    }
+
+    public(package) fun assert_v2_identity(
+        asset: &AssetIdentity,
+        token: address,
+        collection: address,
+    ) {
+        assert!(asset.standard == STANDARD_V2, ESTANDARD_MISMATCH);
+        assert!(asset.v2_token == token && asset.collection == collection, ESTANDARD_MISMATCH);
     }
 
     public(package) fun create_listing(
@@ -317,6 +333,7 @@ module marketplace::marketplace {
         assert!(signer::address_of(caller) == marketplace_fee_policy::admin(), EUNAUTHORIZED);
         assert!(provenance == PROVENANCE_VEYTOS || provenance == PROVENANCE_THIRD_PARTY, EINVALID_PROVENANCE);
         assert!(collection_address != @0x0, EINVALID_COLLECTION);
+        assert!(object::object_exists<Collection>(collection_address), EINVALID_COLLECTION);
         let collection_object = object::address_to_object<Collection>(collection_address);
         collection::name(collection_object);
         set_policy(collection_address, reviewed, provenance);
@@ -376,6 +393,11 @@ module marketplace::marketplace {
         table::borrow(&state.listings, id).asset
     }
 
+    public fun v2_identity_parts(asset: AssetIdentity): (address, address) {
+        assert!(asset.standard == STANDARD_V2, ESTANDARD_MISMATCH);
+        (asset.v2_token, asset.collection)
+    }
+
     #[view]
     public fun listing_status(id: u64): u8 acquires State {
         let (_, _, _, _, _, _, _, status) = listing_terms(id);
@@ -392,6 +414,12 @@ module marketplace::marketplace {
     public fun listing_fee_bps(id: u64): u64 acquires State {
         let (_, _, _, fee_bps, _, _, _, _) = listing_terms(id);
         fee_bps
+    }
+
+    #[view]
+    public fun next_listing_id(): u64 acquires State {
+        require_state();
+        borrow_global<State>(@marketplace).next_listing_id
     }
 
     public fun is_active_asset(asset: AssetIdentity): bool acquires State {
