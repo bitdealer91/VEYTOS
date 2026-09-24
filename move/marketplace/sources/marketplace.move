@@ -4,8 +4,6 @@ module marketplace::marketplace {
     use std::bcs;
     use std::signer;
     use std::string::{Self, String};
-    use std::vector;
-    use aptos_std::string_utils;
     use aptos_std::table::{Self, Table};
     use aptos_framework::aptos_account;
     use aptos_framework::event;
@@ -28,6 +26,8 @@ module marketplace::marketplace {
     const EINVALID_COLLECTION: u64 = 12;
     const EALREADY_INITIALIZED: u64 = 13;
     const ELISTING_ID_OVERFLOW: u64 = 14;
+    const ESTORAGE_REIMBURSEMENT_CHANGED: u64 = 15;
+    const ETOTAL_OVERFLOW: u64 = 16;
 
     const STANDARD_V1: u8 = 1;
     const STANDARD_V2: u8 = 2;
@@ -53,6 +53,7 @@ module marketplace::marketplace {
         asset: AssetIdentity,
         price: u64,
         fee_bps: u64,
+        storage_reimbursement: u64,
         royalty_payee: address,
         royalty_numerator: u64,
         royalty_denominator: u64,
@@ -79,6 +80,7 @@ module marketplace::marketplace {
         seller: address,
         gross_price: u64,
         fee_bps: u64,
+        storage_reimbursement: u64,
         royalty_payee: address,
         royalty_numerator: u64,
         royalty_denominator: u64,
@@ -105,6 +107,7 @@ module marketplace::marketplace {
         royalty_recipient: address,
         royalty: u64,
         seller_proceeds: u64,
+        storage_reimbursement: u64,
         timestamp: u64,
     }
 
@@ -211,6 +214,7 @@ module marketplace::marketplace {
         assert!(royalty_numerator <= royalty_denominator, EINVALID_ROYALTY);
         assert!(royalty_numerator == 0 || royalty_payee != @0x0, EINVALID_ROYALTY);
         let fee_bps = marketplace_fee_policy::fee_bps();
+        let storage_reimbursement = marketplace_fee_policy::storage_reimbursement(asset.standard);
         marketplace_fee_policy::quote_sale(price, fee_bps, royalty_numerator, royalty_denominator);
         let key = asset_key(&asset);
         let state = borrow_global_mut<State>(@marketplace);
@@ -226,6 +230,7 @@ module marketplace::marketplace {
             asset,
             price,
             fee_bps,
+            storage_reimbursement,
             royalty_payee,
             royalty_numerator,
             royalty_denominator,
@@ -238,6 +243,7 @@ module marketplace::marketplace {
             seller,
             gross_price: price,
             fee_bps,
+            storage_reimbursement,
             royalty_payee,
             royalty_numerator,
             royalty_denominator,
@@ -282,17 +288,20 @@ module marketplace::marketplace {
         buyer: &signer,
         id: u64,
         expected_price: u64,
+        expected_storage_reimbursement: u64,
         expected_standard: u8,
     ): AssetIdentity acquires State {
         assert_standard_open(expected_standard);
         let listing = active_listing_mut(id, expected_standard);
         assert!(listing.price == expected_price, EPRICE_CHANGED);
+        assert!(listing.storage_reimbursement == expected_storage_reimbursement, ESTORAGE_REIMBURSEMENT_CHANGED);
         let buyer_address = signer::address_of(buyer);
         assert!(buyer_address != listing.seller, ESELF_PURCHASE);
         let seller = listing.seller;
         let asset = listing.asset;
         let gross = listing.price;
         let royalty_payee = listing.royalty_payee;
+        let storage_reimbursement = listing.storage_reimbursement;
         let (fee, royalty, seller_proceeds) = marketplace_fee_policy::quote_sale(
             gross,
             listing.fee_bps,
@@ -302,7 +311,9 @@ module marketplace::marketplace {
         let fee_recipient = marketplace_fee_policy::recipient();
         if (fee > 0) aptos_account::transfer(buyer, fee_recipient, fee);
         if (royalty > 0) aptos_account::transfer(buyer, royalty_payee, royalty);
-        aptos_account::transfer(buyer, seller, seller_proceeds);
+        let seller_total = (seller_proceeds as u128) + (storage_reimbursement as u128);
+        assert!(seller_total <= 18446744073709551615, ETOTAL_OVERFLOW);
+        aptos_account::transfer(buyer, seller, seller_total as u64);
         listing.status = STATUS_SOLD;
         let key = asset_key(&asset);
         let removed_id = table::remove(&mut borrow_global_mut<State>(@marketplace).active_assets, key);
@@ -318,6 +329,7 @@ module marketplace::marketplace {
             royalty_recipient: royalty_payee,
             royalty,
             seller_proceeds,
+            storage_reimbursement,
             timestamp: timestamp::now_seconds(),
         });
         asset
@@ -368,7 +380,7 @@ module marketplace::marketplace {
     }
 
     #[view]
-    public fun listing_terms(id: u64): (address, u8, u64, u64, address, u64, u64, u8) acquires State {
+    public fun listing_terms(id: u64): (address, u8, u64, u64, u64, address, u64, u64, u8) acquires State {
         require_state();
         let state = borrow_global<State>(@marketplace);
         assert!(table::contains(&state.listings, id), ELISTING_NOT_FOUND);
@@ -378,6 +390,7 @@ module marketplace::marketplace {
             listing.asset.standard,
             listing.price,
             listing.fee_bps,
+            listing.storage_reimbursement,
             listing.royalty_payee,
             listing.royalty_numerator,
             listing.royalty_denominator,
@@ -400,20 +413,26 @@ module marketplace::marketplace {
 
     #[view]
     public fun listing_status(id: u64): u8 acquires State {
-        let (_, _, _, _, _, _, _, status) = listing_terms(id);
+        let (_, _, _, _, _, _, _, _, status) = listing_terms(id);
         status
     }
 
     #[view]
     public fun listing_price(id: u64): u64 acquires State {
-        let (_, _, price, _, _, _, _, _) = listing_terms(id);
+        let (_, _, price, _, _, _, _, _, _) = listing_terms(id);
         price
     }
 
     #[view]
     public fun listing_fee_bps(id: u64): u64 acquires State {
-        let (_, _, _, fee_bps, _, _, _, _) = listing_terms(id);
+        let (_, _, _, fee_bps, _, _, _, _, _) = listing_terms(id);
         fee_bps
+    }
+
+    #[view]
+    public fun listing_storage_reimbursement(id: u64): u64 acquires State {
+        let (_, _, _, _, reimbursement, _, _, _, _) = listing_terms(id);
+        reimbursement
     }
 
     #[view]
@@ -431,8 +450,8 @@ module marketplace::marketplace {
     public fun new_v1_identity_for_test(creator: address, seed: u64, property_version: u64): AssetIdentity {
         new_v1_identity(
             creator,
-            string_utils::to_string(&seed),
-            string_utils::to_string(&seed),
+            aptos_std::string_utils::to_string(&seed),
+            aptos_std::string_utils::to_string(&seed),
             property_version,
         )
     }
@@ -459,15 +478,15 @@ module marketplace::marketplace {
         seller_proceeds: u64,
     ) {
         let listed = event::emitted_events<NFTListed>();
-        assert!(vector::length(&listed) == 2, 100);
-        assert!(vector::borrow(&listed, 0).listing_id == cancelled_id, 101);
-        assert!(vector::borrow(&listed, 1).listing_id == sold_id, 102);
+        assert!(std::vector::length(&listed) == 2, 100);
+        assert!(std::vector::borrow(&listed, 0).listing_id == cancelled_id, 101);
+        assert!(std::vector::borrow(&listed, 1).listing_id == sold_id, 102);
         let cancelled = event::emitted_events<ListingCancelled>();
-        assert!(vector::length(&cancelled) == 1, 103);
-        assert!(vector::borrow(&cancelled, 0).seller == seller, 104);
+        assert!(std::vector::length(&cancelled) == 1, 103);
+        assert!(std::vector::borrow(&cancelled, 0).seller == seller, 104);
         let purchased = event::emitted_events<NFTPurchased>();
-        assert!(vector::length(&purchased) == 1, 105);
-        let sale = vector::borrow(&purchased, 0);
+        assert!(std::vector::length(&purchased) == 1, 105);
+        let sale = std::vector::borrow(&purchased, 0);
         assert!(sale.listing_id == sold_id && sale.seller == seller && sale.buyer == buyer, 106);
         assert!(sale.gross_price == price && sale.platform_fee == fee, 107);
         assert!(sale.royalty == royalty && sale.seller_proceeds == seller_proceeds, 108);

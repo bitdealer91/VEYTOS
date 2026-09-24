@@ -69,10 +69,8 @@ module marketplace::settlement_v2 {
         marketplace::assert_v2_collection_reviewed(collection_address);
         let (royalty_payee, royalty_numerator, royalty_denominator) = royalty_terms(token_object);
 
-        let constructor = object::create_sticky_object(@marketplace);
-        let escrow_address = object::address_from_constructor_ref(&constructor);
-        let authority = object::generate_extend_ref(&constructor);
-        object::set_untransferable(&constructor);
+        let authority = object::create_unique_onchain_signer();
+        let escrow_address = object::address_from_extend_ref(&authority);
         object::transfer(seller, token_object, escrow_address);
         assert!(object::owner(token_object) == escrow_address, EESCROW_MISMATCH);
 
@@ -117,10 +115,21 @@ module marketplace::settlement_v2 {
         assert!(object::owner(token_object) == signer::address_of(seller), EESCROW_MISMATCH);
     }
 
-    public entry fun buy(buyer: &signer, listing_id: u64, expected_price: u64) acquires Escrows {
+    public entry fun buy(
+        buyer: &signer,
+        listing_id: u64,
+        expected_price: u64,
+        expected_storage_reimbursement: u64,
+    ) acquires Escrows {
         require_state();
         assert!(has_escrow(listing_id), EESCROW_NOT_FOUND);
-        let asset = marketplace::buy_listing(buyer, listing_id, expected_price, STANDARD_V2);
+        let asset = marketplace::buy_listing(
+            buyer,
+            listing_id,
+            expected_price,
+            expected_storage_reimbursement,
+            STANDARD_V2,
+        );
         let Escrow { authority, escrow, token, collection } = take_escrow(listing_id);
         marketplace::assert_v2_identity(&asset, token, collection);
         let token_object = object::address_to_object<Token>(token);
@@ -171,8 +180,6 @@ module marketplace::settlement_v2 {
         let escrow = table::borrow(entries, listing_id);
         assert!(escrow.token == expected_token, 100);
         assert!(object::address_from_extend_ref(&escrow.authority) == escrow.escrow, 101);
-        assert!(object::is_untransferable(
-            object::address_to_object<object::ObjectCore>(escrow.escrow),
-        ), 102);
+        assert!(!object::object_exists<object::ObjectCore>(escrow.escrow), 102);
     }
 }

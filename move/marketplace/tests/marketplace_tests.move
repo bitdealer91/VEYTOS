@@ -39,11 +39,11 @@ module marketplace::marketplace_tests {
     fun g01_create_listing() {
         let (_, seller, _, _) = setup();
         let id = list(&seller, 1);
-        let (recorded_seller, standard, price, fee_bps, _, numerator, denominator, status) =
+        let (recorded_seller, standard, price, fee_bps, reimbursement, _, numerator, denominator, status) =
             marketplace::listing_terms(id);
         assert!(id == 1 && recorded_seller == @0xa && standard == 1, 100);
         assert!(price == PRICE && fee_bps == 200, 101);
-        assert!(numerator == 500 && denominator == 10000 && status == 1, 102);
+        assert!(reimbursement == 0 && numerator == 500 && denominator == 10000 && status == 1, 102);
     }
 
     #[test]
@@ -94,7 +94,7 @@ module marketplace::marketplace_tests {
     fun g07_buy_listing() {
         let (_, seller, buyer, _) = setup();
         let id = list(&seller, 1);
-        marketplace::buy_listing(&buyer, id, PRICE, 1);
+        marketplace::buy_listing(&buyer, id, PRICE, 0, 1);
         assert!(marketplace::listing_status(id) == 3, 100);
         assert!(coin::balance<AptosCoin>(@0xa) == 93000000, 101);
         assert!(coin::balance<AptosCoin>(@0xc) == 2000000, 102);
@@ -107,7 +107,7 @@ module marketplace::marketplace_tests {
         let (_, seller, _, _) = setup();
         aptos_account::deposit_fungible_assets(@0xa, aptos_coin::mint_apt_fa_for_test(PRICE));
         let id = list(&seller, 1);
-        marketplace::buy_listing(&seller, id, PRICE, 1);
+        marketplace::buy_listing(&seller, id, PRICE, 0, 1);
     }
 
     #[test]
@@ -131,8 +131,8 @@ module marketplace::marketplace_tests {
     fun g11_sold_replay() {
         let (_, seller, buyer, _) = setup();
         let id = list(&seller, 1);
-        marketplace::buy_listing(&buyer, id, PRICE, 1);
-        marketplace::buy_listing(&buyer, id, PRICE, 1);
+        marketplace::buy_listing(&buyer, id, PRICE, 0, 1);
+        marketplace::buy_listing(&buyer, id, PRICE, 0, 1);
     }
 
     #[test]
@@ -140,7 +140,7 @@ module marketplace::marketplace_tests {
     fun g12_wrong_expected_price() {
         let (_, seller, buyer, _) = setup();
         let id = list(&seller, 1);
-        marketplace::buy_listing(&buyer, id, PRICE - 1, 1);
+        marketplace::buy_listing(&buyer, id, PRICE - 1, 0, 1);
     }
 
     #[test]
@@ -162,7 +162,7 @@ module marketplace::marketplace_tests {
         let new = list(&seller, 2);
         assert!(marketplace::listing_fee_bps(old) == 200, 100);
         assert!(marketplace::listing_fee_bps(new) == 300, 101);
-        marketplace::buy_listing(&buyer, old, PRICE, 1);
+        marketplace::buy_listing(&buyer, old, PRICE, 0, 1);
         assert!(coin::balance<AptosCoin>(@0xc) == 2000000, 102);
     }
 
@@ -171,7 +171,7 @@ module marketplace::marketplace_tests {
         let (admin, seller, buyer, _) = setup();
         let id = list(&seller, 1);
         marketplace_fee_policy::set_recipient(&admin, @0xd);
-        marketplace::buy_listing(&buyer, id, PRICE, 1);
+        marketplace::buy_listing(&buyer, id, PRICE, 0, 1);
         assert!(coin::balance<AptosCoin>(@0xc) == 0, 100);
         assert!(coin::balance<AptosCoin>(@0xd) == 2000000, 101);
     }
@@ -180,9 +180,9 @@ module marketplace::marketplace_tests {
     fun g16_royalty_snapshot() {
         let (_, seller, buyer, _) = setup();
         let id = list(&seller, 1);
-        let (_, _, _, _, payee, numerator, denominator, _) = marketplace::listing_terms(id);
+        let (_, _, _, _, _, payee, numerator, denominator, _) = marketplace::listing_terms(id);
         assert!(payee == @0xf && numerator == 500 && denominator == 10000, 100);
-        marketplace::buy_listing(&buyer, id, PRICE, 1);
+        marketplace::buy_listing(&buyer, id, PRICE, 0, 1);
         assert!(coin::balance<AptosCoin>(@0xf) == 5000000, 101);
     }
 
@@ -192,7 +192,7 @@ module marketplace::marketplace_tests {
         let (admin, seller, buyer, _) = setup();
         let id = list(&seller, 1);
         marketplace_fee_policy::set_global_paused(&admin, true);
-        marketplace::buy_listing(&buyer, id, PRICE, 1);
+        marketplace::buy_listing(&buyer, id, PRICE, 0, 1);
     }
 
     #[test]
@@ -237,7 +237,32 @@ module marketplace::marketplace_tests {
         let cancelled = list(&seller, 1);
         marketplace::cancel_listing(@0xa, cancelled, 1);
         let sold = list(&seller, 2);
-        marketplace::buy_listing(&buyer, sold, PRICE, 1);
+        marketplace::buy_listing(&buyer, sold, PRICE, 0, 1);
         marketplace::assert_events_for_test(cancelled, sold, @0xa, @0xb, PRICE, 2000000, 5000000, 93000000);
+    }
+
+    #[test]
+    fun g23_storage_reimbursement_snapshot() {
+        let (admin, seller, buyer, _) = setup();
+        marketplace::set_v2_reviewed_for_test(@0xe, 1);
+        let id = marketplace::create_listing(
+            @0xa, marketplace::new_v2_identity_for_test(@0xe, @0xe), PRICE, @0xf, 500, 10000,
+        );
+        assert!(marketplace::listing_storage_reimbursement(id) == 926400, 100);
+        marketplace_fee_policy::set_v2_storage_reimbursement(&admin, 900000);
+        assert!(marketplace::listing_storage_reimbursement(id) == 926400, 101);
+        marketplace::buy_listing(&buyer, id, PRICE, 926400, 2);
+        assert!(coin::balance<AptosCoin>(signer::address_of(&seller)) == 93926400, 102);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 15, location = marketplace::marketplace)]
+    fun g24_wrong_expected_storage_reimbursement() {
+        let (_, _, buyer, _) = setup();
+        marketplace::set_v2_reviewed_for_test(@0xe, 1);
+        let id = marketplace::create_listing(
+            @0xa, marketplace::new_v2_identity_for_test(@0xe, @0xe), PRICE, @0xf, 500, 10000,
+        );
+        marketplace::buy_listing(&buyer, id, PRICE, 1, 2);
     }
 }

@@ -16,9 +16,13 @@ module marketplace::marketplace_fee_policy {
     const EZERO_PRICE: u64 = 9;
     const EINVALID_DEDUCTIONS: u64 = 10;
     const EPAUSED: u64 = 11;
+    const ESTORAGE_REIMBURSEMENT_TOO_HIGH: u64 = 12;
 
     const INITIAL_FEE_BPS: u64 = 200;
     const MAX_FEE_BPS: u64 = 500;
+    const INITIAL_V1_STORAGE_REIMBURSEMENT_OCTAS: u64 = 0;
+    const INITIAL_V2_STORAGE_REIMBURSEMENT_OCTAS: u64 = 926400;
+    const MAX_STORAGE_REIMBURSEMENT_OCTAS: u64 = 10000000;
     const BPS_DENOMINATOR: u128 = 10000;
 
     const PAUSE_GLOBAL: u8 = 0;
@@ -30,6 +34,8 @@ module marketplace::marketplace_fee_policy {
         pending_admin: Option<address>,
         fee_bps: u64,
         recipient: address,
+        v1_storage_reimbursement_octas: u64,
+        v2_storage_reimbursement_octas: u64,
         global_paused: bool,
         v1_paused: bool,
         v2_paused: bool,
@@ -52,6 +58,13 @@ module marketplace::marketplace_fee_policy {
     struct MarketplaceFeeRecipientUpdated has drop, store {
         old_recipient: address,
         new_recipient: address,
+    }
+
+    #[event]
+    struct MarketplaceStorageReimbursementUpdated has drop, store {
+        standard: u8,
+        old_octas: u64,
+        new_octas: u64,
     }
 
     #[event]
@@ -81,6 +94,8 @@ module marketplace::marketplace_fee_policy {
             pending_admin: option::none(),
             fee_bps: INITIAL_FEE_BPS,
             recipient,
+            v1_storage_reimbursement_octas: INITIAL_V1_STORAGE_REIMBURSEMENT_OCTAS,
+            v2_storage_reimbursement_octas: INITIAL_V2_STORAGE_REIMBURSEMENT_OCTAS,
             global_paused: false,
             v1_paused: false,
             v2_paused: false,
@@ -113,6 +128,32 @@ module marketplace::marketplace_fee_policy {
         let old_recipient = config.recipient;
         config.recipient = new_recipient;
         event::emit(MarketplaceFeeRecipientUpdated { old_recipient, new_recipient });
+    }
+
+    public entry fun set_v1_storage_reimbursement(caller: &signer, new_octas: u64) acquires Config {
+        assert_admin(caller);
+        assert!(new_octas <= MAX_STORAGE_REIMBURSEMENT_OCTAS, ESTORAGE_REIMBURSEMENT_TOO_HIGH);
+        let config = borrow_global_mut<Config>(@marketplace);
+        let old_octas = config.v1_storage_reimbursement_octas;
+        config.v1_storage_reimbursement_octas = new_octas;
+        event::emit(MarketplaceStorageReimbursementUpdated {
+            standard: 1,
+            old_octas,
+            new_octas,
+        });
+    }
+
+    public entry fun set_v2_storage_reimbursement(caller: &signer, new_octas: u64) acquires Config {
+        assert_admin(caller);
+        assert!(new_octas <= MAX_STORAGE_REIMBURSEMENT_OCTAS, ESTORAGE_REIMBURSEMENT_TOO_HIGH);
+        let config = borrow_global_mut<Config>(@marketplace);
+        let old_octas = config.v2_storage_reimbursement_octas;
+        config.v2_storage_reimbursement_octas = new_octas;
+        event::emit(MarketplaceStorageReimbursementUpdated {
+            standard: 2,
+            old_octas,
+            new_octas,
+        });
     }
 
     public entry fun set_global_paused(caller: &signer, paused: bool) acquires Config {
@@ -180,6 +221,18 @@ module marketplace::marketplace_fee_policy {
     public fun recipient(): address acquires Config {
         assert!(exists<Config>(@marketplace), ENOT_INITIALIZED);
         borrow_global<Config>(@marketplace).recipient
+    }
+
+    #[view]
+    public fun storage_reimbursement(standard: u8): u64 acquires Config {
+        assert!(exists<Config>(@marketplace), ENOT_INITIALIZED);
+        let config = borrow_global<Config>(@marketplace);
+        if (standard == 1) {
+            config.v1_storage_reimbursement_octas
+        } else {
+            assert!(standard == 2, EINVALID_DEDUCTIONS);
+            config.v2_storage_reimbursement_octas
+        }
     }
 
     #[view]

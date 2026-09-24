@@ -134,4 +134,29 @@ module marketplace::marketplace_fee_policy_tests {
     fun f18_zero_price_policy() {
         marketplace_fee_policy::quote_sale(0, 200, 0, 1);
     }
+
+    #[test(publisher = @marketplace)]
+    fun f19_storage_reimbursement_defaults_and_update(publisher: &signer) {
+        marketplace_fee_policy::initialize(publisher, @0xa);
+        assert!(marketplace_fee_policy::storage_reimbursement(1) == 0, 100);
+        assert!(marketplace_fee_policy::storage_reimbursement(2) == 926400, 101);
+        marketplace_fee_policy::set_v1_storage_reimbursement(publisher, 500000);
+        marketplace_fee_policy::set_v2_storage_reimbursement(publisher, 900000);
+        assert!(marketplace_fee_policy::storage_reimbursement(1) == 500000, 102);
+        assert!(marketplace_fee_policy::storage_reimbursement(2) == 900000, 103);
+    }
+
+    #[test(publisher = @marketplace, attacker = @0xb)]
+    #[expected_failure(abort_code = 1, location = marketplace::marketplace_fee_policy)]
+    fun f20_storage_reimbursement_authorization(publisher: &signer, attacker: &signer) {
+        marketplace_fee_policy::initialize(publisher, @0xa);
+        marketplace_fee_policy::set_v2_storage_reimbursement(attacker, 1);
+    }
+
+    #[test(publisher = @marketplace)]
+    #[expected_failure(abort_code = 12, location = marketplace::marketplace_fee_policy)]
+    fun f21_storage_reimbursement_cap(publisher: &signer) {
+        marketplace_fee_policy::initialize(publisher, @0xa);
+        marketplace_fee_policy::set_v2_storage_reimbursement(publisher, 10000001);
+    }
 }

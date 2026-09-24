@@ -68,7 +68,7 @@ module marketplace::settlement_v2_tests {
         let escrow = settlement_v2::escrow_address(id);
         assert!(id == 1, 100);
         assert!(object::owner(object::address_to_object<Token>(token_address)) == escrow, 101);
-        assert!(object::is_untransferable(object::address_to_object<object::ObjectCore>(escrow)), 102);
+        assert!(!object::object_exists<object::ObjectCore>(escrow), 102);
         assert!(marketplace::listing_status(id) == 1, 103);
     }
 
@@ -88,10 +88,10 @@ module marketplace::settlement_v2_tests {
         let (_, seller, buyer, _, collection_address) = setup();
         let token_address = mint(&seller, collection_address, b"one");
         let id = list(&seller, token_address);
-        settlement_v2::buy(&buyer, id, PRICE);
+        settlement_v2::buy(&buyer, id, PRICE, 926400);
         assert!(object::owner(object::address_to_object<Token>(token_address)) == @0xb, 100);
         assert!(marketplace::listing_status(id) == 3, 101);
-        assert!(coin::balance<AptosCoin>(@0xa) == 93000000, 102);
+        assert!(coin::balance<AptosCoin>(@0xa) == 93926400, 102);
         assert!(coin::balance<AptosCoin>(@0xc) == 2000000, 103);
         assert!(coin::balance<AptosCoin>(@0xf) == 5000000, 104);
     }
@@ -161,7 +161,7 @@ module marketplace::settlement_v2_tests {
             string::utf8(b"ipfs://token"),
         );
         let id = list(&seller, object::address_from_constructor_ref(&constructor));
-        settlement_v2::buy(&buyer, id, PRICE);
+        settlement_v2::buy(&buyer, id, PRICE, 926400);
         assert!(coin::balance<AptosCoin>(@0xd) == 10000000, 100);
         assert!(coin::balance<AptosCoin>(@0xf) == 0, 101);
     }
@@ -171,7 +171,7 @@ module marketplace::settlement_v2_tests {
         let (_, seller, buyer, _, collection_address) = setup();
         let token_address = mint(&seller, collection_address, b"one");
         let id = list(&seller, token_address);
-        settlement_v2::buy(&buyer, id, PRICE);
+        settlement_v2::buy(&buyer, id, PRICE, 926400);
         assert!(coin::balance<AptosCoin>(@0xf) == 5000000, 100);
     }
 
@@ -189,8 +189,8 @@ module marketplace::settlement_v2_tests {
         let collection_address = object::address_from_constructor_ref(&constructor);
         marketplace::set_v2_collection_reviewed(&admin, collection_address, 2, true);
         let token_address = mint(&seller, collection_address, b"one");
-        settlement_v2::buy(&buyer, list(&seller, token_address), PRICE);
-        assert!(coin::balance<AptosCoin>(@0xa) == 98000000, 100);
+        settlement_v2::buy(&buyer, list(&seller, token_address), PRICE, 926400);
+        assert!(coin::balance<AptosCoin>(@0xa) == 98926400, 100);
     }
 
     fun mint_mutable_royalty(
@@ -216,7 +216,7 @@ module marketplace::settlement_v2_tests {
         let (token_address, mutator) = mint_mutable_royalty(&seller, collection_address);
         let id = list(&seller, token_address);
         royalty::update(&mutator, royalty::create(1000, 10000, @0xd));
-        settlement_v2::buy(&buyer, id, PRICE);
+        settlement_v2::buy(&buyer, id, PRICE, 926400);
         assert!(coin::balance<AptosCoin>(@0xf) == 5000000, 100);
         assert!(coin::balance<AptosCoin>(@0xd) == 0, 101);
     }
@@ -313,7 +313,7 @@ module marketplace::settlement_v2_tests {
         let unrelated = mint(&seller, collection_address, b"two");
         let id = list(&seller, listed);
         assert!(object::owner(object::address_to_object<Token>(unrelated)) == @0xa, 100);
-        settlement_v2::buy(&buyer, id, PRICE);
+        settlement_v2::buy(&buyer, id, PRICE, 926400);
         assert!(object::owner(object::address_to_object<Token>(unrelated)) == @0xa, 101);
     }
 
@@ -339,7 +339,7 @@ module marketplace::settlement_v2_tests {
     fun v223_wrong_expected_price() {
         let (_, seller, buyer, _, collection_address) = setup();
         let token_address = mint(&seller, collection_address, b"one");
-        settlement_v2::buy(&buyer, list(&seller, token_address), PRICE - 1);
+        settlement_v2::buy(&buyer, list(&seller, token_address), PRICE - 1, 926400);
     }
 
     #[test]
@@ -349,7 +349,7 @@ module marketplace::settlement_v2_tests {
         let token_address = mint(&seller, collection_address, b"one");
         let id = list(&seller, token_address);
         settlement_v2::cancel(&seller, id);
-        settlement_v2::buy(&buyer, id, PRICE);
+        settlement_v2::buy(&buyer, id, PRICE, 926400);
     }
 
     #[test]
@@ -358,7 +358,7 @@ module marketplace::settlement_v2_tests {
         let (_, seller, buyer, _, collection_address) = setup();
         let token_address = mint(&seller, collection_address, b"one");
         let id = list(&seller, token_address);
-        settlement_v2::buy(&buyer, id, PRICE);
+        settlement_v2::buy(&buyer, id, PRICE, 926400);
         settlement_v2::cancel(&seller, id);
     }
 
@@ -378,7 +378,7 @@ module marketplace::settlement_v2_tests {
         let token_address = mint(&seller, collection_address, b"one");
         let id = list(&seller, token_address);
         marketplace_fee_policy::set_global_paused(&admin, true);
-        settlement_v2::buy(&buyer, id, PRICE);
+        settlement_v2::buy(&buyer, id, PRICE, 926400);
     }
 
     #[test]
@@ -417,7 +417,7 @@ module marketplace::settlement_v2_tests {
         let (_, seller, _, attacker, collection_address) = setup();
         let token_address = mint(&seller, collection_address, b"one");
         let id = list(&seller, token_address);
-        settlement_v2::buy(&attacker, id, PRICE);
+        settlement_v2::buy(&attacker, id, PRICE, 926400);
     }
 
     #[test]
@@ -426,7 +426,28 @@ module marketplace::settlement_v2_tests {
         let (_, seller, buyer, _, collection_address) = setup();
         let token_address = mint(&seller, collection_address, b"one");
         let id = list(&seller, token_address);
-        settlement_v2::buy(&buyer, id, PRICE);
-        settlement_v2::buy(&buyer, id, PRICE);
+        settlement_v2::buy(&buyer, id, PRICE, 926400);
+        settlement_v2::buy(&buyer, id, PRICE, 926400);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 15, location = marketplace::marketplace)]
+    fun v233_wrong_storage_reimbursement_leaves_purchase_unexecutable() {
+        let (_, seller, buyer, _, collection_address) = setup();
+        let token_address = mint(&seller, collection_address, b"one");
+        let id = list(&seller, token_address);
+        settlement_v2::buy(&buyer, id, PRICE, 1);
+    }
+
+    #[test]
+    fun v234_lightweight_escrow_has_no_terminal_shell() {
+        let (_, seller, _, _, collection_address) = setup();
+        let token_address = mint(&seller, collection_address, b"one");
+        let id = list(&seller, token_address);
+        let escrow = settlement_v2::escrow_address(id);
+        assert!(!object::object_exists<object::ObjectCore>(escrow), 100);
+        settlement_v2::cancel(&seller, id);
+        assert!(!object::object_exists<object::ObjectCore>(escrow), 101);
+        assert!(marketplace::listing_status(id) == 2, 102);
     }
 }
