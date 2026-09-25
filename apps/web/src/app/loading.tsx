@@ -1,0 +1,1 @@
+import{SkeletonCard}from'@/components/ui';export default function Loading(){return <div className="section" aria-busy="true"><div className="skeleton line"/><div className="skeleton hero"/><div className="card-grid"><SkeletonCard/><SkeletonCard/><SkeletonCard/></div></div>;}

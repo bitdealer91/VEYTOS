@@ -1,0 +1,77 @@
+{
+  "network": "testnet",
+  "marketplacePackage": "0x40fcdc2583e3e15c09f20a5d777b72f7bec8a9ac9292d57c03e9fb23c091eebb",
+  "asset": {
+    "standard": "v1",
+    "creator": "0x0e0f181950b98d0bb59bdfc324db7d113fc148bec665c5746c43a1113fefc225",
+    "collection": "VEYTOS V1 Browser 20260925",
+    "tokenName": "Legacy Browser NFT #1",
+    "propertyVersion": "0",
+    "maximum": "1",
+    "royaltyNumerator": "750",
+    "royaltyDenominator": "10000",
+    "collectionCreationTransaction": "0x98f3d2ff3e615f4e61b7786a350897e1c1c7cd80441a076a48d7b09c60bf749f",
+    "tokenCreationTransaction": "0x869e0214208953264a2478a45f20acbe6a1b321e7a7a93cbfeb66747db84fa0f"
+  },
+  "seller": "0x0e0f181950b98d0bb59bdfc324db7d113fc148bec665c5746c43a1113fefc225",
+  "buyer": "0xcb49d9cd635449fdbba2b56ff23757646bc454c4e6d858f002106386bf1dfb68",
+  "treasury": "0xed6fc41816b13e2151a8e4a66c72247b7b927c264c84976bda91d918d23049aa",
+  "list": {
+    "transactionHash": "0x713ade9248a933b6ebf02365e4be6e99d599c8a3a7d32bb7eb3ba1994b867303",
+    "transactionVersion": "11409969532",
+    "listingId": "8",
+    "browserResult": "VEYTOS reconciled to ACTIVE, showed Wallet A as seller, displayed VEYTOS Escrow custody, and exposed Cancel listing without a reload.",
+    "exactEscrowIdentityVerified": true,
+    "approximateUiReconciliation": "within a few seconds of commitment; not separately instrumented"
+  },
+  "cancel": {
+    "transactionHash": "0xb9ffca63d77f07b4264392eddbb24835dda5dc29526cfd214065a5ef5d0bdbb5",
+    "transactionVersion": "11409989555",
+    "listingId": "8",
+    "sellerExactTokenBalanceAfterCancel": "1",
+    "browserResult": "VEYTOS reconciled to UNLISTED, restored Wallet A ownership, and enabled relisting without a reload.",
+    "approximateUiReconciliation": "within a few seconds of commitment; not separately instrumented"
+  },
+  "relist": {
+    "transactionHash": "0x4141ba9a37389d254ce503ac1197006e79cce6dd8cfc7df346005a3a7d53eabd",
+    "transactionVersion": "11410004199",
+    "listingId": "9",
+    "browserResult": "VEYTOS reconciled the same exact Token V1 identity to a new ACTIVE listing without a reload.",
+    "approximateUiReconciliation": "within a few seconds of commitment; not separately instrumented"
+  },
+  "buy": {
+    "transactionHash": "0x2506d21c496d674861e43daf7bd6694834c119122014ca2aaacc328c5f94b58e",
+    "transactionVersion": "11410019006",
+    "listingId": "9",
+    "grossPriceOctas": "10000000",
+    "platformFeeOctas": "200000",
+    "royaltyOctas": "750000",
+    "sellerProceedsOctas": "9050000",
+    "storageReimbursementOctas": "926400",
+    "finalOwner": "0xcb49d9cd635449fdbba2b56ff23757646bc454c4e6d858f002106386bf1dfb68",
+    "finalOwnerExactTokenBalance": "1",
+    "propertyVersionPreserved": "0",
+    "browserResult": "VEYTOS reconciled to SOLD and displayed Wallet B as owner without a reload.",
+    "approximateUiReconciliation": "within a few seconds of commitment; not separately instrumented"
+  },
+  "economics": {
+    "conservation": "10000000 = 200000 + 750000 + 9050000",
+    "buyerTotalBeforeGasOctas": "10926400",
+    "royaltyRecipient": "0x0e0f181950b98d0bb59bdfc324db7d113fc148bec665c5746c43a1113fefc225",
+    "storagePolicy": "Buyer pays the snapshotted reimbursement to the seller and receives the protocol deletion refund separately."
+  },
+  "rpcAcceptance": {
+    "manualReloadRequiredForLifecycle": false,
+    "aptos429Observed": 0,
+    "duplicateRequestStormObserved": false,
+    "falseConnectionErrorObserved": false,
+    "notes": "No Aptos 429 or repeated idle polling was visible during page load, LIST, CANCEL, wallet switch, or BUY. Exact request timing/count instrumentation was not active for this run."
+  },
+  "integrationDefectFoundAndFixed": {
+    "description": "After BUY, confirmed V1 ownership was correct but listing eligibility reused stale Indexer owner and amount fields, producing a false unique-ownership warning.",
+    "chainOwnershipWasCorrect": true,
+    "v1LogicLeakedIntoV2": false,
+    "fix": "V1 listing eligibility now reads settlement_v1::token_balance for the connected wallet and exact creator/collection/name/property-version tuple. Token V2 continues to use ObjectCore ownership.",
+    "browserVerification": "After loading the fixed code, Wallet B remained the displayed owner and the false ownership warning disappeared."
+  }
+}

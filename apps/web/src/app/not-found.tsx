@@ -1,0 +1,1 @@
+import Link from'next/link';import{EmptyState}from'@/components/ui';export default function NotFound(){return <section className="section"><EmptyState title="This collection could not be found" description="Check the address and selected network."><Link href="/explore" className="button primary">Explore collections</Link></EmptyState></section>;}

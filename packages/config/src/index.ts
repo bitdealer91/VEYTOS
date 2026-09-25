@@ -1,10 +1,10 @@
 import { z } from "zod";
 
 export const brand = Object.freeze({
-  name: "Mintos",
-  tagline: "The NFT home of Aptos.",
+  name: "VEYTOS",
+  tagline: "The home of Aptos NFTs.",
   marketingLine: "Launch. Collect. Trade.",
-  metadata: Object.freeze({ title: "Mintos — The NFT home of Aptos.", description: "Discover Aptos NFTs, launch collections and collect native digital assets." }),
+  metadata: Object.freeze({ title: "VEYTOS — The home of Aptos NFTs.", description: "Discover Aptos NFTs, launch collections and collect native digital assets." }),
   // No invented social handles or support destinations.
   socialLinks: Object.freeze({ x: null, discord: null }),
   supportLinks: Object.freeze({ help: null, security: null }),
@@ -13,7 +13,7 @@ export const feeDisplay = Object.freeze({
   primaryDefaultBps: 500,
   primaryMaximumBps: 1000,
   secondaryTargetBps: 200,
-  secondaryStatus: "planned" as const,
+  secondaryStatus: "testnet-verified" as const,
 });
 export const networkSchema = z.enum(["devnet", "testnet", "mainnet"]);
 export type AptosNetwork = z.infer<typeof networkSchema>;
@@ -29,8 +29,10 @@ const optionalAddress = z.preprocess(
 const publicSchema = z.object({
   NEXT_PUBLIC_APTOS_NETWORK: networkSchema.default("testnet"),
   NEXT_PUBLIC_LAUNCHPAD_ADDRESS: optionalAddress,
+  NEXT_PUBLIC_MARKETPLACE_ADDRESS: optionalAddress,
   NEXT_PUBLIC_APP_URL: z.url().default("http://localhost:3000"),
   NEXT_PUBLIC_IPFS_GATEWAY: z.url().default("https://ipfs.io/ipfs/"),
+  NEXT_PUBLIC_APTOS_FULLNODE_URL: z.url().optional(),
 });
 
 export function readPublicConfig(env: Record<string, string | undefined>) {

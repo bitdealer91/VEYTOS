@@ -9,7 +9,13 @@
     "skipLibCheck": true,
     "noEmit": true,
     "esModuleInterop": true,
-    "types": ["node"]
+    "types": [
+      "node"
+    ],
+    "allowImportingTsExtensions": true
   },
-  "include": ["packages/**/*.ts", "scripts/**/*.ts"]
+  "include": [
+    "packages/**/*.ts",
+    "scripts/**/*.ts"
+  ]
 }

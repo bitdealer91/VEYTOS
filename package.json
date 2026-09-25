@@ -1,5 +1,5 @@
 {
-  "name": "mintos",
+  "name": "veytos",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -17,15 +17,26 @@
   },
   "scripts": {
     "test": "node --import tsx --test packages/*/test/*.test.ts scripts/test/*.test.ts",
-    "typecheck": "tsc --noEmit",
-    "check": "npm run typecheck && npm test",
+    "typecheck": "tsc --noEmit && npm run typecheck --workspace @veytos/web",
+    "check": "npm run typecheck && npm test && npm run test:frontend",
     "testnet:accounts": "node --import tsx scripts/testnet-accounts.ts",
     "testnet:preflight": "node --import tsx scripts/testnet-acceptance.ts --preflight",
     "testnet:acceptance": "npm run check && node --import tsx scripts/testnet-acceptance.ts",
+    "testnet:marketplace-v2": "node --import tsx scripts/marketplace-v2-testnet.ts",
+    "testnet:marketplace-v1": "node --import tsx scripts/marketplace-v1-testnet.ts",
+    "indexer:marketplace": "node --import tsx scripts/marketplace-indexer.ts",
+    "testnet:marketplace-frontend-setup": "node --import tsx scripts/marketplace-frontend-testnet-setup.ts",
+    "mainnet:nft-smoke": "node --import tsx scripts/mainnet-nft-smoke.ts",
     "move:compile": "node scripts/move.mjs compile",
     "move:test": "node scripts/move.mjs test",
+    "move:marketplace:compile": "node scripts/move.mjs compile marketplace",
+    "move:marketplace:test": "node scripts/move.mjs test marketplace",
     "db:generate": "drizzle-kit generate --config packages/database/drizzle.config.ts",
-    "db:migrate": "drizzle-kit migrate --config packages/database/drizzle.config.ts"
+    "db:migrate": "drizzle-kit migrate --config packages/database/drizzle.config.ts",
+    "dev": "npm run dev --workspace @veytos/web",
+    "build": "npm run build --workspace @veytos/web",
+    "start": "npm run start --workspace @veytos/web",
+    "test:frontend": "npm run test --workspace @veytos/web"
   },
   "dependencies": {
     "@aptos-labs/ts-sdk": "7.3.0",
@@ -36,10 +47,15 @@
     "zod": "4.6.5"
   },
   "devDependencies": {
+    "@testing-library/react": "16.3.3",
     "@types/node": "26.6.2",
     "@types/pg": "8.23.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
     "drizzle-kit": "0.31.11",
+    "jsdom": "29.1.1",
     "tsx": "4.23.15",
-    "typescript": "7.0.2"
+    "typescript": "7.0.2",
+    "vitest": "5.0.1"
   }
 }

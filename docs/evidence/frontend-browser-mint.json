@@ -1,0 +1,78 @@
+{
+  "checkedAt": "2026-09-23T18:17:46.156Z",
+  "originEvidence": "User supplied transaction hash in response to request to mint through VEYTOS browser wallet UI. UI success/wallet identity awaiting user confirmation.",
+  "pending": {
+    "hash": "0x6a8f195103fea94754561a847e2637938ef9a6f0e6f819d05ab9948536d74805",
+    "sender": "0xcb49d9cd635449fdbba2b56ff23757646bc454c4e6d858f002106386bf1dfb68",
+    "drop": "0xa9ff8a00fda26cbb50c1b32ac198fe8f1c8128587f7ec822a9202cd2c8600e3",
+    "quantity": 1,
+    "unitPrice": "10000000",
+    "network": "testnet",
+    "module": "0x5e802dc2d3105fbf967541d9cd64f5d34a18ebb473a4d40ddb26c8f727e9db28"
+  },
+  "status": "success",
+  "version": "11371916278",
+  "assets": [
+    {
+      "identity": {
+        "standard": "v2",
+        "address": "0x7606dd3ee48735ecefadf29ae642fbc4d3baf62e8cbdf2004bc04327a8c094ec"
+      },
+      "address": "0x7606dd3ee48735ecefadf29ae642fbc4d3baf62e8cbdf2004bc04327a8c094ec",
+      "name": "Gate A #3",
+      "uri": "ipfs://bafkreiesmalvzvjcroqrayllqpkrgfyrnwqcn2idw3nni2t6kfwqqg3sfq",
+      "owner": "0xcb49d9cd635449fdbba2b56ff23757646bc454c4e6d858f002106386bf1dfb68",
+      "collection": "0x287dea5ae1c96817a211877faf19b38d1884fb4a59305101db44fc32fb609e61"
+    }
+  ],
+  "currentAsset": {
+    "identity": {
+      "standard": "v2",
+      "address": "0x7606dd3ee48735ecefadf29ae642fbc4d3baf62e8cbdf2004bc04327a8c094ec"
+    },
+    "address": "0x7606dd3ee48735ecefadf29ae642fbc4d3baf62e8cbdf2004bc04327a8c094ec",
+    "name": "Gate A #3",
+    "uri": "ipfs://bafkreiesmalvzvjcroqrayllqpkrgfyrnwqcn2idw3nni2t6kfwqqg3sfq",
+    "owner": "0xcb49d9cd635449fdbba2b56ff23757646bc454c4e6d858f002106386bf1dfb68",
+    "collection": "0x287dea5ae1c96817a211877faf19b38d1884fb4a59305101db44fc32fb609e61"
+  },
+  "drop": {
+    "collection": "0x287dea5ae1c96817a211877faf19b38d1884fb4a59305101db44fc32fb609e61",
+    "finalized": true,
+    "creator_paused": false,
+    "admin_paused": false,
+    "uploaded": "100",
+    "minted": "3",
+    "terms": {
+      "creator": "0xdf06f553f91c6f861b1569da5b89d0c436fe3885310da962053386e678d972d9",
+      "name": "Gate A acceptance",
+      "description": "Disposable testnet collection",
+      "collection_uri": "ipfs://bafkreiblmldnffjlohwygjwcir4docspibogmkady7wqvy57kjqt7pxjxq",
+      "max_supply": "100",
+      "unit_price": "10000000",
+      "wallet_limit": "10",
+      "transaction_limit": "5",
+      "start_seconds": "1790180342",
+      "end_seconds": "0",
+      "royalty_bps": "750",
+      "fee_bps": "500"
+    },
+    "address": "0x0a9ff8a00fda26cbb50c1b32ac198fe8f1c8128587f7ec822a9202cd2c8600e3"
+  },
+  "walletMinted": "1",
+  "events": [
+    {
+      "buyer": "0xcb49d9cd635449fdbba2b56ff23757646bc454c4e6d858f002106386bf1dfb68",
+      "collection": "0x287dea5ae1c96817a211877faf19b38d1884fb4a59305101db44fc32fb609e61",
+      "creator": "0xdf06f553f91c6f861b1569da5b89d0c436fe3885310da962053386e678d972d9",
+      "creator_revenue": "9500000",
+      "drop": "0xa9ff8a00fda26cbb50c1b32ac198fe8f1c8128587f7ec822a9202cd2c8600e3",
+      "fee": "500000",
+      "serial": "3",
+      "timestamp": "1790187310",
+      "token": "0x7606dd3ee48735ecefadf29ae642fbc4d3baf62e8cbdf2004bc04327a8c094ec",
+      "treasury": "0x5e802dc2d3105fbf967541d9cd64f5d34a18ebb473a4d40ddb26c8f727e9db28",
+      "unit_price": "10000000"
+    }
+  ]
+}
