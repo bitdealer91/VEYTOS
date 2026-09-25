@@ -54,15 +54,61 @@ test('unsupported NFT fails closed with a readable reason', async () => {
 test('pause blocks a new listing but keeps seller cancellation available', async () => {
   const paused = { ...config, globalPaused: true }; mocks.config.mockResolvedValue(paused);
   const first = mount(nft, null, paused); expect(await screen.findByText(/temporarily paused/)).toBeTruthy(); expect(screen.getByRole('button', { name: 'Review listing' }).hasAttribute('disabled')).toBe(true);
-  first.unmount(); mount(nft, listing, paused); expect(screen.getByRole('button', { name: 'Cancel listing' }).hasAttribute('disabled')).toBe(false);
+  first.unmount(); mount(nft, listing, paused); await waitFor(() => expect(screen.getByRole('button', { name: 'Cancel listing' }).hasAttribute('disabled')).toBe(false));
 });
 
 test('wrong network prevents all trading review actions', async () => {
   mocks.wallet.network.chainId = 1; mount(); expect(await screen.findByRole('alert')).toHaveProperty('textContent', expect.stringContaining('Switch your wallet to Aptos testnet')); expect(screen.queryByRole('button', { name: 'Review listing' })).toBe(null);
 });
 
-test('buyer review exposes expected total before gas', () => {
-  mocks.wallet.account.address.toString = () => buyer; mount(nft, listing); fireEvent.click(screen.getByRole('button', { name: 'Buy now' })); const dialog = screen.getByRole('dialog'); expect(dialog.textContent).toContain('10.009264'); expect(dialog.textContent).toContain('Storage reimbursement');
+test('buyer review exposes expected total before gas', async () => {
+  mocks.wallet.account.address.toString = () => buyer; mount(nft, listing); await waitFor(() => expect(screen.getByRole('button', { name: 'Buy now' }).hasAttribute('disabled')).toBe(false)); fireEvent.click(screen.getByRole('button', { name: 'Buy now' })); const dialog = screen.getByRole('dialog'); expect(dialog.textContent).toContain('10.009264'); expect(dialog.textContent).toContain('Storage reimbursement');
+});
+
+test('inconsistent first BUY precheck fails without a hash, preserves diagnostics, and retries only after reconciliation', async () => {
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+  mocks.wallet.account.address.toString = () => buyer;
+  mount(nft, listing);
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Buy now' }).hasAttribute('disabled')).toBe(false));
+  mocks.assetState.mockReset().mockResolvedValueOnce({ listing: null, owner: seller, ledgerVersion: '10' });
+  fireEvent.click(screen.getByRole('button', { name: 'Buy now' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Confirm in wallet' }));
+  expect(await screen.findByText(/listing changed or is no longer available/i)).toBeTruthy();
+  expect(screen.queryByText(/Check your connection/i)).toBe(null);
+  expect(mocks.wallet.signAndSubmitTransaction).not.toHaveBeenCalled();
+  const diagnostic = JSON.parse(localStorage.getItem(`${key}:last-error`)!);
+  expect(diagnostic).toMatchObject({ stage: 'asset-state', message: 'ELISTING_STALE', hash: null });
+
+  mocks.assetState.mockResolvedValue({ listing, owner: listing.escrowAddress, ledgerVersion: '11' });
+  mocks.wallet.signAndSubmitTransaction.mockReturnValue(new Promise(() => {}));
+  fireEvent.click(screen.getByRole('button', { name: 'Buy now' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Confirm in wallet' }));
+  await screen.findByText(/Review this transaction/);
+  expect(mocks.wallet.signAndSubmitTransaction).toHaveBeenCalledTimes(1);
+  consoleError.mockRestore();
+});
+
+test('Buy stays disabled while the authoritative listing query is reconciling', async () => {
+  mocks.wallet.account.address.toString = () => buyer;
+  let release!: (value: { listing: MarketplaceListing; owner: string; ledgerVersion: string }) => void;
+  const delayed = new Promise<{ listing: MarketplaceListing; owner: string; ledgerVersion: string }>((resolve) => { release = resolve; });
+  const view = mount(nft, listing);
+  mocks.assetState.mockReset().mockReturnValue(delayed);
+  void view.client.invalidateQueries({ queryKey: ['market-asset'] });
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Buy now' }).hasAttribute('disabled')).toBe(true));
+  expect(await screen.findByText('Updating marketplace state…')).toBeTruthy();
+  release({ listing, owner: listing.escrowAddress!, ledgerVersion: '10' });
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Buy now' }).hasAttribute('disabled')).toBe(false));
+});
+
+test('buyer can relist a purchased V2 object despite stale Indexer owner and quantity', async () => {
+  mocks.wallet.account.address.toString = () => buyer;
+  const stale = { ...nft, amount: '0' };
+  mount(stale, null, config, { listing: null, owner: buyer, ledgerVersion: '50' });
+  fireEvent.change(await screen.findByLabelText('Price in APT'), { target: { value: '1' } });
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Review listing' }).hasAttribute('disabled')).toBe(false));
+  expect(screen.queryByText(/does not own exactly one NFT/i)).toBe(null);
+  expect(mocks.eligibility).toHaveBeenCalledWith(stale, buyer);
 });
 
 test('direct ACTIVE listing overrides stale seller discovery ownership', async () => {
@@ -136,6 +182,7 @@ test('CANCEL reconciliation immediately restores owner and removes the seller ac
     .mockResolvedValue({ listing: null, owner: seller, ledgerVersion: '20' });
   mocks.wallet.signAndSubmitTransaction.mockResolvedValue({ hash });
   mocks.reconcile.mockResolvedValue({ status: 'success', listing: { ...listing, status: 'CANCELLED' }, receipt: { version: '20' } });
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Cancel listing' }).hasAttribute('disabled')).toBe(false));
   fireEvent.click(screen.getByRole('button', { name: 'Cancel listing' }));
   fireEvent.click(screen.getByRole('button', { name: 'Confirm in wallet' }));
   expect(await screen.findByText(/Listing cancelled/)).toBeTruthy();
@@ -152,6 +199,7 @@ test('BUY reconciliation immediately shows buyer ownership and clears Buy now', 
     .mockResolvedValue({ listing: null, owner: buyer, ledgerVersion: '30' });
   mocks.wallet.signAndSubmitTransaction.mockResolvedValue({ hash });
   mocks.reconcile.mockResolvedValue({ status: 'success', listing: { ...listing, status: 'SOLD' }, receipt: { version: '30' } });
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Buy now' }).hasAttribute('disabled')).toBe(false));
   fireEvent.click(screen.getByRole('button', { name: 'Buy now' }));
   fireEvent.click(screen.getByRole('button', { name: 'Confirm in wallet' }));
   expect(await screen.findByText(/Purchase verified/)).toBeTruthy();

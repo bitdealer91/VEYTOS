@@ -63,6 +63,32 @@ export function marketplacePaused(config: MarketplaceConfig, standard: 'v1' | 'v
   return config.globalPaused || (standard === 'v1' ? config.v1Paused : config.v2Paused);
 }
 
+export type MarketplacePreparationStage = 'configuration' | 'asset-state' | 'eligibility' | 'payload' | 'wallet' | 'reconciliation';
+export function marketplaceErrorMessage(error: unknown, stage: MarketplacePreparationStage) {
+  const message = error instanceof Error ? error.message : String(error);
+  if (/reject|denied|4001|user cancel/i.test(message)) return 'Request cancelled in your wallet. No transaction was submitted.';
+  if (/INSUFFICIENT|insufficient.*balance|balance.*(gas|fee)/i.test(message)) return 'Your balance is too low for the price, storage reimbursement, and gas.';
+  if (/EPRICE_CHANGED|EMAX_TOTAL|price changed/i.test(message)) return 'The listing price changed. Review the new price before buying.';
+  if (/ELISTING_STALE|Listing unavailable|listing.*(changed|inactive|not active)/i.test(message)) return 'This listing changed or is no longer available. Refreshing…';
+  if (/EPAUSED/i.test(message)) return 'Marketplace purchases are temporarily paused.';
+  if (/wrong network|chain.*mismatch/i.test(message)) return 'Switch your wallet to Aptos Testnet.';
+  if (/older than the confirmed transaction|ESTATE_UPDATING/i.test(message)) return 'Marketplace state is still updating. Try again in a moment.';
+  if (/ECONN|ENOTFOUND|ETIMEDOUT|fetch failed|network request|429|502|503|504|RPC unavailable/i.test(message)) return 'We could not reach Aptos. No transaction was submitted.';
+  if (stage !== 'wallet' && stage !== 'reconciliation') return "We couldn't prepare this transaction. No funds were transferred.";
+  return 'The wallet did not return a transaction hash. Check wallet activity before trying again.';
+}
+
+export function marketplaceErrorDiagnostic(error: unknown, stage: MarketplacePreparationStage) {
+  const value = error as { name?: unknown; message?: unknown; code?: unknown; status?: unknown };
+  return {
+    stage,
+    name: typeof value?.name === 'string' ? value.name : 'UnknownError',
+    message: typeof value?.message === 'string' ? value.message : String(error),
+    code: typeof value?.code === 'string' || typeof value?.code === 'number' ? String(value.code) : null,
+    status: typeof value?.status === 'string' || typeof value?.status === 'number' ? String(value.status) : null,
+  };
+}
+
 export function marketplaceAssetKey(identity: TokenIdentity, collectionId?: string) {
   const serializer = new Serializer();
   serializer.serializeU8(identity.standard === 'v1' ? 1 : 2);
@@ -172,11 +198,17 @@ export function marketplace(aptos: Aptos, packageAddress: string) {
   }, expectedOwner: string) {
     const reasons: string[] = [];
     let royalty = nft.royalty;
-    if (canonical(nft.owner) !== canonical(expectedOwner) || BigInt(nft.amount) !== 1n) reasons.push('Connected wallet does not own exactly one NFT.');
     if (nft.identity.standard === 'v1') {
+      if (canonical(nft.owner) !== canonical(expectedOwner) || BigInt(nft.amount) !== 1n) reasons.push('Connected wallet does not own exactly one Token V1 asset.');
       if (nft.maximum !== '1') reasons.push('Token V1 editions and unlimited-supply token data are not supported.');
       if (!nft.royalty || BigInt(nft.royalty.denominator) <= 0n || BigInt(nft.royalty.numerator) > BigInt(nft.royalty.denominator)) reasons.push('Token V1 royalty data is unavailable or malformed.');
     } else {
+      try {
+        const core = await aptos.getAccountResource<{ owner: string }>({
+          accountAddress: canonical(nft.identity.address), resourceType: '0x1::object::ObjectCore',
+        });
+        if (canonical(core.owner) !== canonical(expectedOwner)) reasons.push('Connected wallet does not own this Digital Asset.');
+      } catch { reasons.push('Digital Asset ownership could not be verified.'); }
       if (nft.isSoulbound) reasons.push('This Digital Asset is transfer restricted.');
       const [policy] = await aptos.view<[boolean, number]>({
         payload: { function: marketFn('v2_collection_policy'), functionArguments: [canonical(nft.collectionId)] },

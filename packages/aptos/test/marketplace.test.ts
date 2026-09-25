@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import type { Aptos } from '@aptos-labs/ts-sdk';
-import { decodeNFTIdentity, encodeNFTIdentity, marketplace, marketplaceAssetKey, marketplacePaused, quoteMarketplaceSale } from '../src/marketplace.ts';
+import { decodeNFTIdentity, encodeNFTIdentity, marketplace, marketplaceAssetKey, marketplaceErrorMessage, marketplacePaused, quoteMarketplaceSale } from '../src/marketplace.ts';
 import { projectMarketplaceTransaction } from '../src/marketplace-events.ts';
 import { discoverOwnedNFTPage } from '../src/discovery.ts';
 
@@ -67,6 +67,31 @@ test('direct asset state uses active_assets and reports escrow ownership despite
 test('a fullnode behind a confirmed transaction cannot regress marketplace state', async () => {
   const aptos = { getLedgerInfo: async () => ({ ledger_version: '99' }) } as unknown as Aptos;
   await assert.rejects(() => marketplace(aptos, module).assetState(v2, creator, '100'), /older than the confirmed transaction/);
+});
+test('V2 eligibility uses exact ObjectCore ownership instead of stale indexed quantity', async () => {
+  const aptos = {
+    getAccountResource: async () => ({ owner: buyer }),
+    view: async ({ payload }: { payload: { function: string } }) => payload.function.endsWith('v2_collection_policy')
+      ? [true, 1] : [{ vec: [{ payee_address: creator, numerator: '750', denominator: '10000' }] }],
+  } as unknown as Aptos;
+  const result = await marketplace(aptos, module).eligibility({
+    identity: v2, owner: seller, amount: '0', collectionId: creator, maximum: '999', royalty: null, isSoulbound: false,
+  }, buyer);
+  assert.equal(result.eligible, true); assert.deepEqual(result.reasons, []);
+});
+test('V1 eligibility retains exact unique-token ownership checks', async () => {
+  const result = await marketplace({} as Aptos, module).eligibility({
+    identity: v1, owner: seller, amount: '0', collectionId: creator, maximum: '1',
+    royalty: { payee: creator, numerator: '750', denominator: '10000' }, isSoulbound: false,
+  }, seller);
+  assert.equal(result.eligible, false); assert.match(result.reasons[0]!, /Token V1/);
+});
+test('marketplace preparation errors distinguish stale state, price, balance and connectivity', () => {
+  assert.match(marketplaceErrorMessage(new Error('ELISTING_STALE'), 'asset-state'), /no longer available/);
+  assert.match(marketplaceErrorMessage(new Error('EPRICE_CHANGED'), 'asset-state'), /price changed/);
+  assert.match(marketplaceErrorMessage(new Error('INSUFFICIENT_BALANCE'), 'wallet'), /balance is too low/);
+  assert.match(marketplaceErrorMessage(new Error('Fullnode state is older than the confirmed transaction'), 'asset-state'), /still updating/);
+  assert.match(marketplaceErrorMessage(new Error('unexpected encoding'), 'payload'), /No funds were transferred/);
 });
 test('buy payload includes immutable expected price and reimbursement', () => {
   const listing = { id:'9',seller,standard:'v2' as const,identity:v2,collectionId:creator,price:'100',feeBps:'200',storageReimbursement:'926400',royaltyPayee:creator,royaltyNumerator:'750',royaltyDenominator:'10000',status:'ACTIVE' as const,escrowAddress:seller };

@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { ArrowUpRight, Check, X } from 'lucide-react';
 import type { NormalizedNFT } from '@veytos/aptos/discovery';
-import { quoteMarketplaceSale, marketplacePaused } from '@veytos/aptos/marketplace';
+import { encodeNFTIdentity, marketplaceErrorDiagnostic, marketplaceErrorMessage, quoteMarketplaceSale, marketplacePaused, type MarketplacePreparationStage } from '@veytos/aptos/marketplace';
 import type { MarketplaceConfig, MarketplaceEconomics, MarketplaceListing, PendingMarketplaceTransaction, TransactionPhase } from '@veytos/aptos/types';
 import { definitiveRejection, transactionTransition } from '@veytos/aptos/recovery';
 import { isUnresolved, networkMatches, readableError } from '@veytos/aptos/domain';
@@ -39,13 +39,16 @@ export function MarketplacePanel({ nft, initialListing, initialConfig }: {
   const confirmedVersionRef = useRef<string | undefined>(undefined);
   const [syncing, setSyncing] = useState(false);
   const walletScope = useRef<string | null>(null);
+  const currentWalletScope = `${account || 'disconnected'}:${wallet.network?.chainId ?? 'unknown'}`;
+  const walletScopeChanging = walletScope.current !== null && walletScope.current !== currentWalletScope;
   const assetRoute = `${nft.tokenId}:${nft.identity.standard === 'v1' ? nft.identity.propertyVersion : ''}`;
   const confirmedKey = `veytos:confirmed:${network}:${marketplaceAddress}:${assetRoute}`;
   const assetQuery = useQuery({
     queryKey: ['market-asset', network, marketplaceAddress, assetRoute],
     queryFn: () => marketChain().assetState(nft.identity, nft.collectionId, confirmedVersionRef.current),
     initialData: { listing: initialListing, owner: nft.standard === 'v2' ? initialListing?.escrowAddress || nft.owner : null, ledgerVersion: nft.lastTransactionVersion },
-    refetchInterval: 5000, refetchOnWindowFocus: true, refetchOnReconnect: true,
+    initialDataUpdatedAt: 0,
+    staleTime: 8000, refetchInterval: 5000, refetchOnWindowFocus: 'always', refetchOnReconnect: 'always',
   });
   const listing = assetQuery.data.listing;
   const snapshotIsNewer = !!confirmedVersion && BigInt(confirmedVersion) > BigInt(assetQuery.data.ledgerVersion);
@@ -57,12 +60,13 @@ export function MarketplacePanel({ nft, initialListing, initialConfig }: {
   const key = `veytos:market:${network}:${marketplaceAddress}:${assetRoute}`;
   const legacyKey = `veytos:market:${network}:${marketplaceAddress}:asset:${assetRoute}`;
   const configQuery = useQuery({ queryKey: ['market-config', network, marketplaceAddress], queryFn: () => marketChain().config(), initialData: initialConfig, refetchInterval: 15000 });
+  const stateUpdating = syncing || walletScopeChanging || assetQuery.isFetching || assetQuery.isStale || assetQuery.isError;
   const eligibility = useQuery({
     queryKey: ['market-eligibility', network, nft.tokenId, account],
-    queryFn: () => marketChain().eligibility(nft, account!), enabled: !!account && owner && !active,
+    queryFn: () => marketChain().eligibility(nft, account!), enabled: !!account && owner && !active && !stateUpdating,
   });
   const config = configQuery.data;
-  const locked = isUnresolved(phase) || syncing;
+  const locked = isUnresolved(phase) || stateUpdating;
   const rightNetwork = networkMatches(config.chainId, wallet.network?.chainId);
   const paused = marketplacePaused(config, nft.standard);
   const royalty = listing ? { numerator: listing.royaltyNumerator, denominator: listing.royaltyDenominator }
@@ -94,14 +98,14 @@ export function MarketplacePanel({ nft, initialListing, initialConfig }: {
   }, [confirmedKey, nft.lastTransactionVersion]);
 
   useEffect(() => {
-    const next = `${account || 'disconnected'}:${wallet.network?.chainId ?? 'unknown'}`;
+    const next = currentWalletScope;
     if (walletScope.current === null) { walletScope.current = next; return; }
     if (walletScope.current === next) return;
     walletScope.current = next;
     if (!isUnresolved(phase)) { setMessage('Refreshing marketplace permissions for the selected wallet…'); setPhase('ready'); }
     setSyncing(true);
     void invalidateAffected().then(() => queryClient.refetchQueries({ queryKey: ['market-asset', network, marketplaceAddress, assetRoute], type: 'active' })).finally(() => { setSyncing(false); router.refresh(); });
-  }, [account, wallet.network?.chainId, assetRoute, marketplaceAddress, phase, queryClient, router]);
+  }, [account, wallet.network?.chainId, assetRoute, currentWalletScope, marketplaceAddress, phase, queryClient, router]);
 
   useEffect(() => {
     try {
@@ -158,20 +162,28 @@ export function MarketplacePanel({ nft, initialListing, initialConfig }: {
     dialog.current?.close();
     let value: PendingMarketplaceTransaction | null = null;
     let requested = false;
+    let stage: MarketplacePreparationStage = 'configuration';
     try {
       const freshConfig = await marketChain().config();
       if (!networkMatches(freshConfig.chainId, wallet.network?.chainId)) throw new Error('Wrong network');
       if (action !== 'cancel' && marketplacePaused(freshConfig, nft.standard)) throw new Error('EPAUSED');
-      const freshAsset = await marketChain().assetState(nft.identity, nft.collectionId);
+      stage = 'asset-state';
+      const floor = [confirmedVersionRef.current, assetQuery.data.ledgerVersion].filter((version): version is string => !!version)
+        .reduce((latest, version) => BigInt(version) > BigInt(latest) ? version : latest, '0');
+      const freshAsset = await marketChain().assetState(nft.identity, nft.collectionId, floor);
       if (action === 'list') {
         if (freshAsset.listing) throw new Error('This NFT already has an active listing.');
+        stage = 'eligibility';
         const check = await marketChain().eligibility(nft, account);
         if (!check.eligible) throw new Error(check.reasons[0]);
         if (!economics) throw new Error('Invalid price');
       }
       const reviewedListing = action === 'list' ? null : freshAsset.listing;
-      if ((action === 'buy' || action === 'cancel') && !reviewedListing) throw new Error('Listing unavailable');
-      if (reviewedListing && listing && (reviewedListing.id !== listing.id || reviewedListing.price !== listing.price)) throw new Error('EPRICE_CHANGED');
+      if ((action === 'buy' || action === 'cancel') && !reviewedListing) throw new Error('ELISTING_STALE');
+      if (reviewedListing && (!listing || reviewedListing.id !== listing.id || reviewedListing.seller !== listing.seller ||
+          encodeNFTIdentity(reviewedListing.identity) !== encodeNFTIdentity(listing.identity) || reviewedListing.storageReimbursement !== listing.storageReimbursement)) throw new Error('ELISTING_STALE');
+      if (reviewedListing && reviewedListing.price !== listing?.price) throw new Error('EPRICE_CHANGED');
+      if (reviewedListing?.standard === 'v2' && (!reviewedListing.escrowAddress || freshAsset.owner !== reviewedListing.escrowAddress)) throw new Error('ESTATE_UPDATING');
       if (action === 'cancel' && reviewedListing?.seller.toLowerCase() !== account.toLowerCase()) throw new Error('Only the seller can cancel this listing.');
       if (action === 'buy' && reviewedListing?.seller.toLowerCase() === account.toLowerCase()) throw new Error('The seller cannot buy their own listing.');
       value = {
@@ -180,17 +192,21 @@ export function MarketplacePanel({ nft, initialListing, initialConfig }: {
         expectedStorageReimbursement: reviewedListing?.storageReimbursement,
         network, module: marketplaceAddress,
       };
-      save(value); requested = true; setPhase('wallet'); setMessage('Review this transaction in your Aptos wallet.');
+      stage = 'payload';
       const data = action === 'list' ? marketChain().listPayload(nft.identity, economics!.price.toString())
         : action === 'cancel' ? marketChain().cancelPayload(nft.standard, reviewedListing!.id) : marketChain().buyPayload(reviewedListing!);
+      save(value); requested = true; stage = 'wallet'; setPhase('wallet'); setMessage('Review this transaction in your Aptos wallet.');
       const response = await wallet.signAndSubmitTransaction({ data });
       if (!/^0x[0-9a-f]{64}$/i.test(response.hash)) throw new Error('Unknown submission');
       value = { ...value, hash: response.hash }; save(value); setPhase('submitted');
       await reconcile(value);
     } catch (error) {
+      const diagnostic = marketplaceErrorDiagnostic(error, stage);
+      console.error('[VEYTOS marketplace transaction]', diagnostic);
+      try { localStorage.setItem(`${key}:last-error`, JSON.stringify({ ...diagnostic, action, at: new Date().toISOString(), hash: value?.hash || null })); } catch {}
       const rejected = definitiveRejection(error);
       if (value?.hash || (requested && !rejected)) { setPhase('unknown'); setMessage(value?.hash ? 'The transaction hash is retained for reconciliation.' : 'No hash was returned. Submission is not confirmed; check wallet activity before another action.'); }
-      else { setPhase('failure'); setMessage(readableError(error)); if (requested) clear(); }
+      else { setPhase('failure'); setMessage(marketplaceErrorMessage(error, stage)); if (requested) clear(); }
     } finally { signing.current = false; }
   }
   function review(next: Action) {
@@ -210,7 +226,7 @@ export function MarketplacePanel({ nft, initialListing, initialConfig }: {
       </> : <div><dt>Owner</dt><dd>{currentOwner ? <WalletAddress address={currentOwner} /> : 'Updating…'}</dd></div>}
     </dl>
     {paused && <p className="notice warning">Marketplace trading is temporarily paused. Sellers can still cancel and recover listed NFTs.</p>}
-    {syncing && <p className="notice" aria-live="polite">Updating on-chain state…</p>}
+    {stateUpdating && <p className="notice" aria-live="polite">Updating marketplace state…</p>}
     {!active && owner && <label className="price-input">Price in APT<input value={priceInput} inputMode="decimal" placeholder="1.00" onChange={(event) => setPriceInput(event.target.value)} /></label>}
     {active && <dl><div><dt>Storage reimbursement</dt><dd><PriceDisplay octas={listing.storageReimbursement} /></dd></div></dl>}
     {!wallet.connected ? <WalletButton label="Connect wallet" />
