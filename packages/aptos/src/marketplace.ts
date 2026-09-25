@@ -1,9 +1,10 @@
-import { Aptos, type UserTransactionResponse } from '@aptos-labs/ts-sdk';
+import { AccountAddress, Aptos, Hex, Serializer, type UserTransactionResponse } from '@aptos-labs/ts-sdk';
 import { z } from 'zod';
 import { canonical } from './domain.ts';
 import type {
   MarketplaceConfig,
   MarketplaceEconomics,
+  MarketplaceAssetState,
   MarketplaceListing,
   PendingMarketplaceTransaction,
   TokenIdentity,
@@ -62,6 +63,18 @@ export function marketplacePaused(config: MarketplaceConfig, standard: 'v1' | 'v
   return config.globalPaused || (standard === 'v1' ? config.v1Paused : config.v2Paused);
 }
 
+export function marketplaceAssetKey(identity: TokenIdentity, collectionId?: string) {
+  const serializer = new Serializer();
+  serializer.serializeU8(identity.standard === 'v1' ? 1 : 2);
+  AccountAddress.fromString(identity.standard === 'v1' ? canonical(identity.creator) : canonical('0x0')).serialize(serializer);
+  serializer.serializeStr(identity.standard === 'v1' ? identity.collection : '');
+  serializer.serializeStr(identity.standard === 'v1' ? identity.name : '');
+  serializer.serializeU64(identity.standard === 'v1' ? BigInt(identity.propertyVersion) : 0n);
+  AccountAddress.fromString(identity.standard === 'v2' ? canonical(identity.address) : canonical('0x0')).serialize(serializer);
+  AccountAddress.fromString(identity.standard === 'v1' ? canonical(identity.creator) : canonical(collectionId || '')).serialize(serializer);
+  return Hex.fromHexInput(serializer.toUint8Array()).toString();
+}
+
 export function marketplace(aptos: Aptos, packageAddress: string) {
   const module = canonical(packageAddress);
   const marketFn = (name: string) => `${module}::marketplace::${name}` as const;
@@ -105,12 +118,51 @@ export function marketplace(aptos: Aptos, packageAddress: string) {
       identity = { standard: 'v2', address: canonical(parsedAsset.v2_token) };
       collectionId = canonical(parsedAsset.collection);
     }
+    const listingStatus = status[Number(terms[8]) - 1]!;
+    let escrowAddress: string | null = null;
+    if (listingStatus === 'ACTIVE' && standard === 'v2') {
+      const [address] = await aptos.view<[string]>({ payload: { function: `${module}::settlement_v2::escrow_address`, functionArguments: [listingId] } });
+      escrowAddress = canonical(address);
+    }
     return {
       id: listingId, seller: canonical(terms[0]), standard, identity, collectionId,
       price: u64.parse(terms[2]), feeBps: u64.parse(terms[3]), storageReimbursement: u64.parse(terms[4]),
       royaltyPayee: canonical(terms[5]), royaltyNumerator: u64.parse(terms[6]), royaltyDenominator: u64.parse(terms[7]),
-      status: status[Number(terms[8]) - 1]!,
+      status: listingStatus, escrowAddress,
     };
+  }
+
+  async function activeListing(identity: TokenIdentity, collectionId?: string): Promise<MarketplaceListing | null> {
+    const state = await aptos.getAccountResource<{ active_assets: { handle: string } }>({
+      accountAddress: module, resourceType: `${module}::marketplace::State`,
+    });
+    try {
+      const id = await aptos.getTableItem<string>({
+        handle: state.active_assets.handle,
+        data: { key_type: 'vector<u8>', value_type: 'u64', key: marketplaceAssetKey(identity, collectionId) },
+      });
+      const result = await listing(id);
+      if (result.status !== 'ACTIVE' || encodeNFTIdentity(result.identity) !== encodeNFTIdentity(identity)) throw new Error('Active listing identity mismatch');
+      return result;
+    } catch (error) {
+      if ((error as { status?: number }).status === 404) return null;
+      throw error;
+    }
+  }
+
+  async function assetState(identity: TokenIdentity, collectionId?: string, minimumLedgerVersion?: string): Promise<MarketplaceAssetState> {
+    const ledger = await aptos.getLedgerInfo();
+    const ledgerVersion = u64.parse(ledger.ledger_version);
+    if (minimumLedgerVersion && BigInt(ledgerVersion) < BigInt(u64.parse(minimumLedgerVersion))) {
+      throw new Error('Fullnode state is older than the confirmed transaction');
+    }
+    const [active, owner] = await Promise.all([
+      activeListing(identity, collectionId),
+      identity.standard === 'v2' ? aptos.getAccountResource<{ owner: string }>({
+        accountAddress: canonical(identity.address), resourceType: '0x1::object::ObjectCore',
+      }).then((core) => canonical(core.owner)) : Promise.resolve(null),
+    ]);
+    return { listing: active, owner, ledgerVersion };
   }
 
   async function eligibility(nft: {
@@ -173,7 +225,17 @@ export function marketplace(aptos: Aptos, packageAddress: string) {
       const event = tx.events.find((candidate) => candidate.type === `${module}::marketplace::NFTListed`);
       if (!event || canonical(String(event.data.seller)) !== canonical(pending.sender)) throw new Error('Listing event mismatch');
       const current = await listing(String(event.data.listing_id));
-      if (current.status !== 'ACTIVE' || encodeNFTIdentity(current.identity) !== encodeNFTIdentity(pending.identity)) throw new Error('Active listing mismatch');
+      if (current.status !== 'ACTIVE' || encodeNFTIdentity(current.identity) !== encodeNFTIdentity(pending.identity) ||
+          current.seller !== canonical(pending.sender) || current.price !== pending.expectedPrice) throw new Error('Active listing mismatch');
+      if (pending.identity.standard === 'v2') {
+        const [token] = await aptos.view<[string]>({ payload: { function: `${module}::settlement_v2::escrow_token`, functionArguments: [current.id] }, options: { ledgerVersion: BigInt(tx.version) } });
+        if (canonical(token) !== canonical(pending.identity.address) || !current.escrowAddress) throw new Error('V2 escrow mismatch');
+        await assertOwner(pending.identity, current.escrowAddress, BigInt(tx.version));
+      } else {
+        const [hasEscrow] = await aptos.view<[boolean]>({ payload: { function: `${module}::settlement_v1::has_escrow`, functionArguments: [current.id] }, options: { ledgerVersion: BigInt(tx.version) } });
+        const escrowIdentity = await aptos.view<[string, string, string, string]>({ payload: { function: `${module}::settlement_v1::escrow_token_id`, functionArguments: [current.id] }, options: { ledgerVersion: BigInt(tx.version) } });
+        if (!hasEscrow || canonical(escrowIdentity[0]) !== canonical(pending.identity.creator) || escrowIdentity[1] !== pending.identity.collection || escrowIdentity[2] !== pending.identity.name || escrowIdentity[3] !== pending.identity.propertyVersion) throw new Error('V1 escrow mismatch');
+      }
       return { status: 'success' as const, listing: current, receipt: tx };
     }
     const id = u64.parse(pending.listingId);
@@ -210,5 +272,5 @@ export function marketplace(aptos: Aptos, packageAddress: string) {
     if (balance !== '1') throw new Error('NFT ownership mismatch');
   }
 
-  return { config, listing, eligibility, listPayload, cancelPayload, buyPayload, reconcile, module };
+  return { config, listing, activeListing, assetState, eligibility, listPayload, cancelPayload, buyPayload, reconcile, module };
 }

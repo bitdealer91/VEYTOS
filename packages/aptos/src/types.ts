@@ -23,6 +23,12 @@ export type MarketplaceListing = {
   royaltyNumerator: string;
   royaltyDenominator: string;
   status: 'ACTIVE' | 'CANCELLED' | 'SOLD';
+  escrowAddress: string | null;
+};
+export type MarketplaceAssetState = {
+  listing: MarketplaceListing | null;
+  owner: string | null;
+  ledgerVersion: string;
 };
 export type MarketplaceConfig = {
   chainId: number;

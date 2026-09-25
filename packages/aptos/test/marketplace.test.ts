@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import type { Aptos } from '@aptos-labs/ts-sdk';
-import { decodeNFTIdentity, encodeNFTIdentity, marketplace, marketplacePaused, quoteMarketplaceSale } from '../src/marketplace.ts';
+import { decodeNFTIdentity, encodeNFTIdentity, marketplace, marketplaceAssetKey, marketplacePaused, quoteMarketplaceSale } from '../src/marketplace.ts';
 import { projectMarketplaceTransaction } from '../src/marketplace-events.ts';
 import { discoverOwnedNFTPage } from '../src/discovery.ts';
 
@@ -38,8 +38,38 @@ test('V2 listing payload uses exact object identity', () => {
   assert.equal(payload.function, `${module}::settlement_v2::list`);
   assert.equal(payload.functionArguments[0], v2.address);
 });
+test('canonical marketplace asset keys distinguish V1 property versions and V2 objects', () => {
+  const v1Next = { ...v1, propertyVersion: '8' };
+  assert.match(marketplaceAssetKey(v2, creator), /^0x[0-9a-f]+$/);
+  assert.notEqual(marketplaceAssetKey(v1), marketplaceAssetKey(v1Next));
+  assert.notEqual(marketplaceAssetKey(v1), marketplaceAssetKey(v2, creator));
+});
+test('direct asset state uses active_assets and reports escrow ownership despite stale discovery', async () => {
+  let tableRequest: unknown;
+  const escrow = '0x0000000000000000000000000000000000000000000000000000000000000012';
+  const aptos = {
+    getLedgerInfo: async () => ({ ledger_version: '100' }),
+    getAccountResource: async ({ accountAddress, resourceType }: { accountAddress: string; resourceType: string }) =>
+      resourceType.endsWith('::marketplace::State') ? { active_assets: { handle: '0x123' } }
+        : accountAddress === v2.address ? { owner: escrow } : Promise.reject(new Error('unexpected resource')),
+    getTableItem: async (request: unknown) => { tableRequest = request; return '9'; },
+    view: async ({ payload }: { payload: { function: string } }) => {
+      if (payload.function.endsWith('listing_terms')) return [seller, 2, '100', '200', '926400', creator, '750', '10000', 1];
+      if (payload.function.endsWith('listing_asset')) return [{ standard: 2, v1_creator: '0x0', v1_collection: '', v1_token: '', v1_property_version: '0', v2_token: v2.address, collection: creator }];
+      if (payload.function.endsWith('escrow_address')) return [escrow];
+      throw new Error('unexpected view');
+    },
+  } as unknown as Aptos;
+  const state = await marketplace(aptos, module).assetState(v2, creator);
+  assert.equal(state.listing?.status, 'ACTIVE'); assert.equal(state.owner, escrow); assert.equal(state.ledgerVersion, '100');
+  assert.deepEqual(tableRequest, { handle: '0x123', data: { key_type: 'vector<u8>', value_type: 'u64', key: marketplaceAssetKey(v2, creator) } });
+});
+test('a fullnode behind a confirmed transaction cannot regress marketplace state', async () => {
+  const aptos = { getLedgerInfo: async () => ({ ledger_version: '99' }) } as unknown as Aptos;
+  await assert.rejects(() => marketplace(aptos, module).assetState(v2, creator, '100'), /older than the confirmed transaction/);
+});
 test('buy payload includes immutable expected price and reimbursement', () => {
-  const listing = { id:'9',seller,standard:'v2' as const,identity:v2,collectionId:creator,price:'100',feeBps:'200',storageReimbursement:'926400',royaltyPayee:creator,royaltyNumerator:'750',royaltyDenominator:'10000',status:'ACTIVE' as const };
+  const listing = { id:'9',seller,standard:'v2' as const,identity:v2,collectionId:creator,price:'100',feeBps:'200',storageReimbursement:'926400',royaltyPayee:creator,royaltyNumerator:'750',royaltyDenominator:'10000',status:'ACTIVE' as const,escrowAddress:seller };
   assert.deepEqual(marketplace({} as Aptos, module).buyPayload(listing).functionArguments, ['9','100','926400']);
 });
 test('cancel payload remains constructible independently of pause state', () => {

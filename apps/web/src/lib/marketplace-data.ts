@@ -1,36 +1,15 @@
 import 'server-only';
 import { cache } from 'react';
 import pg from 'pg';
-import { encodeNFTIdentity } from '@veytos/aptos/marketplace';
 import { projectMarketplaceTransaction } from '@veytos/aptos/marketplace-events';
-import type { MarketplaceListing, TokenIdentity } from '@veytos/aptos/types';
+import type { TokenIdentity } from '@veytos/aptos/types';
 import { aptos, marketChain } from './chain';
 import { marketplaceAddress, network } from './config';
 
-function configuredListingIds() {
-  return [...new Set((process.env.VEYTOS_MARKETPLACE_LISTINGS || '').split(',').map((value) => value.trim()).filter((value) => /^\d+$/.test(value)))].slice(0, 100);
-}
-
-async function databaseListing(identity: TokenIdentity): Promise<MarketplaceListing | null> {
-  if (!process.env.DATABASE_URL || !marketplaceAddress) return null;
-  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 1 });
-  try {
-    const result = await pool.query<{ listing_id: string }>(
-      `SELECT listing_id FROM marketplace_listings
-       WHERE network=$1 AND module_address=$2 AND asset_key=$3 AND status='ACTIVE' LIMIT 1`,
-      [network, marketplaceAddress, encodeNFTIdentity(identity)],
-    );
-    return result.rows[0] ? marketChain().listing(result.rows[0].listing_id) : null;
-  } finally { await pool.end(); }
-}
-
-export const activeListingFor = cache(async (identity: TokenIdentity) => {
-  const indexed = await databaseListing(identity);
-  if (indexed) return indexed;
-  const target = encodeNFTIdentity(identity);
-  const reads = await Promise.allSettled(configuredListingIds().map((id) => marketChain().listing(id)));
-  return reads.flatMap((result) => result.status === 'fulfilled' ? [result.value] : [])
-    .find((listing) => listing.status === 'ACTIVE' && encodeNFTIdentity(listing.identity) === target) ?? null;
+export const activeListingFor = cache(async (identity: TokenIdentity, collectionId?: string) => {
+  // Trading pages use the fullnode's canonical active_assets table. The database
+  // and Indexer are projections for discovery and must never override this read.
+  return marketChain().activeListing(identity, collectionId);
 });
 
 export const marketplaceActivity = cache(async () => {
