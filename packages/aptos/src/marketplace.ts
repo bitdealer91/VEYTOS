@@ -235,9 +235,15 @@ export function marketplace(aptos: Aptos, packageAddress: string) {
     const reasons: string[] = [];
     let royalty = nft.royalty;
     if (nft.identity.standard === 'v1') {
-      if (canonical(nft.owner) !== canonical(expectedOwner) || BigInt(nft.amount) !== 1n) reasons.push('Connected wallet does not own exactly one Token V1 asset.');
-      if (nft.maximum !== '1') reasons.push('Token V1 editions and unlimited-supply token data are not supported.');
-      if (!nft.royalty || BigInt(nft.royalty.denominator) <= 0n || BigInt(nft.royalty.numerator) > BigInt(nft.royalty.denominator)) reasons.push('Token V1 royalty data is unavailable or malformed.');
+      const [balance] = await aptos.view<[string]>({
+        payload: {
+          function: `${module}::settlement_v1::token_balance`,
+          functionArguments: [canonical(expectedOwner), canonical(nft.identity.creator), nft.identity.collection, nft.identity.name, u64.parse(nft.identity.propertyVersion)],
+        },
+      });
+      if (balance !== '1') reasons.push('This legacy NFT cannot be listed because its ownership state is not uniquely identifiable.');
+      if (nft.maximum !== '1') reasons.push('This legacy NFT uses an edition configuration that VEYTOS does not currently support.');
+      if (!nft.royalty || BigInt(nft.royalty.denominator) <= 0n || BigInt(nft.royalty.numerator) > BigInt(nft.royalty.denominator)) reasons.push('This legacy NFT cannot be listed because its royalty configuration could not be verified.');
     } else {
       try {
         const actualOwner = knownOwner || (await aptos.getAccountResource<{ owner: string }>({

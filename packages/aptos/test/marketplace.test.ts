@@ -17,6 +17,11 @@ test('listing review economics conserve price and expose storage reimbursement',
   assert.deepEqual(quote, { price: 1_000_000_000n, fee: 20_000_000n, royalty: 75_000_000n, sellerProceeds: 905_000_000n, storageReimbursement: 926_400n, buyerTotalBeforeGas: 1_000_926_400n });
 });
 test('V1 route identity round trips unicode and property version', () => assert.deepEqual(decodeNFTIdentity(encodeNFTIdentity(v1)), v1));
+test('V1 route identity preserves property version zero and distinguishes later versions', () => {
+  const zero = { ...v1, propertyVersion: '0' };
+  assert.deepEqual(decodeNFTIdentity(encodeNFTIdentity(zero)), zero);
+  assert.notEqual(encodeNFTIdentity(zero), encodeNFTIdentity(v1));
+});
 test('V2 route identity round trips canonical object address', () => assert.deepEqual(decodeNFTIdentity(encodeNFTIdentity(v2)), v2));
 test('malformed route identity fails closed', () => assert.throws(() => decodeNFTIdentity('veytos-nft-zz')));
 test('global and standard pauses are independent', () => {
@@ -107,11 +112,25 @@ test('V2 eligibility uses exact ObjectCore ownership instead of stale indexed qu
   assert.equal(result.eligible, true); assert.deepEqual(result.reasons, []);
 });
 test('V1 eligibility retains exact unique-token ownership checks', async () => {
-  const result = await marketplace({} as Aptos, module).eligibility({
+  const aptos = { view: async () => ['0'] } as unknown as Aptos;
+  const result = await marketplace(aptos, module).eligibility({
     identity: v1, owner: seller, amount: '0', collectionId: creator, maximum: '1',
     royalty: { payee: creator, numerator: '750', denominator: '10000' }, isSoulbound: false,
   }, seller);
-  assert.equal(result.eligible, false); assert.match(result.reasons[0]!, /Token V1/);
+  assert.equal(result.eligible, false); assert.match(result.reasons[0]!, /ownership state is not uniquely identifiable/);
+});
+test('V1 eligibility accepts authoritative exact balance despite stale indexed seller and never reads V2 ObjectCore', async () => {
+  let objectReads = 0;
+  let balanceOwner = '';
+  const aptos = {
+    view: async ({ payload }: { payload: { functionArguments: unknown[] } }) => { balanceOwner = String(payload.functionArguments[0]); return ['1']; },
+    getAccountResource: async () => { objectReads += 1; throw new Error('V2 ownership must not be used'); },
+  } as unknown as Aptos;
+  const result = await marketplace(aptos, module).eligibility({
+    identity: { ...v1, propertyVersion: '0' }, owner: seller, amount: '0', collectionId: creator, maximum: '1',
+    royalty: { payee: creator, numerator: '750', denominator: '10000' }, isSoulbound: false,
+  }, buyer);
+  assert.equal(result.eligible, true); assert.deepEqual(result.reasons, []); assert.equal(balanceOwner, buyer); assert.equal(objectReads, 0);
 });
 test('marketplace preparation errors distinguish stale state, price, balance and connectivity', () => {
   assert.match(marketplaceErrorMessage(new Error('ELISTING_STALE'), 'asset-state'), /no longer available/);

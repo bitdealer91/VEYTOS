@@ -45,9 +45,9 @@ export default async function NFTPage({ params }: { params: Promise<{ token: str
         <section className="blockchain-details"><h2>Properties</h2>{properties.length ? <dl>{properties.map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{String(value)}</dd></div>)}</dl> : <p className="muted">No readable properties are available for this NFT.</p>}</section>
         <section className="blockchain-details"><h2>Blockchain details</h2><dl>
           <div><dt>Network</dt><dd>Aptos {network}</dd></div>
-          <div><dt>Token standard</dt><dd>{nft.standard === 'v1' ? 'Token V1' : 'Digital Asset V2'}</dd></div>
+          <div><dt>Token standard</dt><dd>{nft.standard === 'v1' ? 'Token V1 / Legacy Aptos NFT' : 'Digital Asset V2'}</dd></div>
           <div><dt>Collection</dt><dd>{nft.collectionName}</dd></div>
-          {identity.standard === 'v1' ? <><div><dt>Creator</dt><dd><WalletAddress address={identity.creator} /></dd></div><div><dt>Property version</dt><dd>{identity.propertyVersion}</dd></div></> : <div><dt>Object</dt><dd><WalletAddress address={identity.address} /></dd></div>}
+          {identity.standard === 'v1' ? <><div><dt>Creator</dt><dd><WalletAddress address={identity.creator} /></dd></div><div><dt>Token name</dt><dd>{identity.name}</dd></div><div><dt>Property version</dt><dd>{identity.propertyVersion}</dd></div></> : <div><dt>Object</dt><dd><WalletAddress address={identity.address} /></dd></div>}
           <div><dt>Metadata URI</dt><dd className="identity-line" title={nft.metadataUri}>{nft.metadataUri || 'Unavailable'}</dd></div>
         </dl></section>
       </div>

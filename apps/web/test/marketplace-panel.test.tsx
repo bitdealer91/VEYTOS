@@ -22,6 +22,8 @@ import { MarketplacePanel } from '../src/features/marketplace-panel';
 const config: MarketplaceConfig = { chainId: 2, feeBps: '200', recipient: `0x${'e'.repeat(64)}`, globalPaused: false, v1Paused: false, v2Paused: false, admin: `0x${'f'.repeat(64)}`, v1StorageReimbursement: '800000', v2StorageReimbursement: '926400' };
 const nft: NormalizedNFT = { standard: 'v2', identity: { standard: 'v2', address: token }, tokenId: token, collectionId: collection, owner: seller, amount: '1', name: 'Verified NFT', description: '', metadataUri: '', image: null, collectionName: 'Verified collection', collectionCreator: seller, collectionMetadataUri: '', lastTransactionVersion: '1', maximum: null, properties: null, royalty: null, isSoulbound: false };
 const listing: MarketplaceListing = { id: '9', seller, standard: 'v2', identity: nft.identity, collectionId: collection, price: '1000000000', feeBps: '200', storageReimbursement: '926400', royaltyPayee: seller, royaltyNumerator: '750', royaltyDenominator: '10000', status: 'ACTIVE', escrowAddress: `0x${'9'.repeat(64)}` };
+const v1Nft: NormalizedNFT = { ...nft, standard: 'v1', identity: { standard: 'v1', creator: seller, collection: 'Legacy Collection', name: 'Legacy NFT #1', propertyVersion: '1' }, tokenId: `0x${'1'.repeat(64)}`, collectionId: `0x${'2'.repeat(64)}`, name: 'Legacy NFT #1', collectionName: 'Legacy Collection', maximum: '1', royalty: { payee: seller, numerator: '750', denominator: '10000' } };
+const v1Listing: MarketplaceListing = { ...listing, id: '10', standard: 'v1', identity: v1Nft.identity, collectionId: v1Nft.collectionId, storageReimbursement: '800000', escrowAddress: undefined };
 const key = `${'veytos:market:testnet'}:${moduleAddress}:${token}:`;
 
 function mount(asset = nft, active: MarketplaceListing | null = null, initialConfig = config, chainState?: { listing: MarketplaceListing | null; owner: string | null; ledgerVersion: string }) {
@@ -173,6 +175,80 @@ test('buyer can relist a purchased V2 object despite stale Indexer owner and qua
   await waitFor(() => expect(screen.getByRole('button', { name: 'Review listing' }).hasAttribute('disabled')).toBe(false));
   expect(screen.queryByText(/does not own exactly one NFT/i)).toBe(null);
   expect(mocks.eligibility).toHaveBeenCalledWith(stale, buyer, buyer, { retries: 0 });
+});
+
+test('V1 listing review preserves property version and exact economics', async () => {
+  mount(v1Nft);
+  fireEvent.change(screen.getByLabelText('Price in APT'), { target: { value: '10' } });
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Review listing' }).hasAttribute('disabled')).toBe(false));
+  fireEvent.click(screen.getByRole('button', { name: 'Review listing' }));
+  const dialog = screen.getByRole('dialog');
+  expect(dialog.textContent).toContain('Token V1 · property version 1');
+  expect(dialog.textContent).toContain('0.2'); expect(dialog.textContent).toContain('0.75');
+  expect(dialog.textContent).toContain('9.05'); expect(dialog.textContent).toContain('0.008');
+});
+
+test('active V1 seller sees escrow custody and Cancel without an ownership diagnostic', () => {
+  mocks.eligibility.mockResolvedValue({ eligible: false, reasons: ['This legacy NFT cannot be listed because its ownership state is not uniquely identifiable.'], royalty: null });
+  mount(v1Nft, v1Listing, config, { listing: v1Listing, owner: null, ledgerVersion: '10' });
+  expect(screen.getByText('ACTIVE')).toBeTruthy(); expect(screen.getByText(/You ·/)).toBeTruthy();
+  expect(screen.getByText('VEYTOS Escrow')).toBeTruthy(); expect(screen.getByRole('button', { name: 'Cancel listing' })).toBeTruthy();
+  expect(screen.queryByText(/ownership state is not uniquely identifiable/)).toBe(null);
+});
+
+test('V1 wallet switch replaces Cancel with Buy without V2 ownership logic', async () => {
+  const view = mount(v1Nft, v1Listing, config, { listing: v1Listing, owner: null, ledgerVersion: '10' });
+  expect(screen.getByRole('button', { name: 'Cancel listing' })).toBeTruthy();
+  mocks.wallet.account.address.toString = () => buyer; view.rerenderPanel();
+  expect(await screen.findByRole('button', { name: 'Buy now' })).toBeTruthy();
+  expect(screen.queryByText(/Digital Asset/)).toBe(null);
+});
+
+test('a V1 background 429 preserves the last ACTIVE listing and buyer action', async () => {
+  mocks.wallet.account.address.toString = () => buyer;
+  const view = mount(v1Nft, v1Listing, config, { listing: v1Listing, owner: null, ledgerVersion: '10' });
+  mocks.assetState.mockReset().mockRejectedValue(new Error('429 Too Many Requests'));
+  await view.client.invalidateQueries({ queryKey: ['market-asset'] });
+  await waitFor(() => expect(mocks.assetState).toHaveBeenCalled());
+  expect(screen.getByText('ACTIVE')).toBeTruthy(); expect(screen.getByRole('button', { name: 'Buy now' })).toBeTruthy();
+  expect(screen.queryByText(/connection/i)).toBe(null);
+});
+
+test('V1 CANCEL restores the exact seller state and permits relisting', async () => {
+  const hash = `0x${'6'.repeat(64)}`;
+  mount(v1Nft, v1Listing, config, { listing: v1Listing, owner: null, ledgerVersion: '10' });
+  mocks.assetState.mockReset().mockResolvedValueOnce({ listing: v1Listing, owner: null, ledgerVersion: '10' })
+    .mockResolvedValue({ listing: null, owner: null, ledgerVersion: '20' });
+  mocks.wallet.signAndSubmitTransaction.mockResolvedValue({ hash });
+  mocks.reconcile.mockResolvedValue({ status: 'success', listing: { ...v1Listing, status: 'CANCELLED' }, receipt: { version: '20' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Cancel listing' })); fireEvent.click(screen.getByRole('button', { name: 'Confirm in wallet' }));
+  expect(await screen.findByText(/Listing cancelled/)).toBeTruthy(); expect(screen.getByText('UNLISTED')).toBeTruthy();
+  expect(screen.getByLabelText('Price in APT')).toBeTruthy();
+});
+
+test('V1 BUY shows SOLD and the exact buyer after balance reconciliation', async () => {
+  const hash = `0x${'7'.repeat(64)}`;
+  mocks.wallet.account.address.toString = () => buyer;
+  mount(v1Nft, v1Listing, config, { listing: v1Listing, owner: null, ledgerVersion: '10' });
+  mocks.assetState.mockReset().mockResolvedValueOnce({ listing: v1Listing, owner: null, ledgerVersion: '10' })
+    .mockResolvedValue({ listing: null, owner: null, ledgerVersion: '30' });
+  mocks.wallet.signAndSubmitTransaction.mockResolvedValue({ hash });
+  mocks.reconcile.mockResolvedValue({ status: 'success', listing: { ...v1Listing, status: 'SOLD' }, receipt: { version: '30' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Buy now' })); fireEvent.click(screen.getByRole('button', { name: 'Confirm in wallet' }));
+  expect(await screen.findByText(/Purchase verified/)).toBeTruthy(); expect(screen.getByText('SOLD')).toBeTruthy();
+  expect(screen.getByText(`${buyer.slice(0, 6)}…${buyer.slice(-4)}`)).toBeTruthy();
+  expect(screen.queryByRole('button', { name: 'Buy now' })).toBe(null);
+});
+
+test('purchased V1 token can be relisted when exact balance overrides stale discovery ownership', async () => {
+  mocks.wallet.account.address.toString = () => buyer;
+  const stale = { ...v1Nft, owner: seller, amount: '0' };
+  localStorage.setItem(`veytos:confirmed:testnet:${moduleAddress}:${v1Nft.tokenId}:1`, JSON.stringify({ version: '31', owner: buyer, action: 'buy', listingStatus: 'SOLD' }));
+  mount(stale, null, config, { listing: null, owner: null, ledgerVersion: '30' });
+  fireEvent.change(await screen.findByLabelText('Price in APT'), { target: { value: '0.1' } });
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Review listing' }).hasAttribute('disabled')).toBe(false));
+  expect(mocks.eligibility).toHaveBeenCalledWith(stale, buyer, buyer, { retries: 0 });
+  expect(screen.queryByText(/ownership state is not uniquely identifiable/)).toBe(null);
 });
 
 test('direct ACTIVE listing overrides stale seller discovery ownership', async () => {
