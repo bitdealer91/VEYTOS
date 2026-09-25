@@ -11,7 +11,7 @@ const collection = `0x${'d'.repeat(64)}`;
 const moduleAddress = '0x40fcdc2583e3e15c09f20a5d777b72f7bec8a9ac9292d57c03e9fb23c091eebb';
 const mocks = vi.hoisted(() => ({
   wallet: { connected: true, account: { address: { toString: () => seller } }, network: { chainId: 2 }, signAndSubmitTransaction: vi.fn() },
-  config: vi.fn(), assetState: vi.fn(), eligibility: vi.fn(), reconcile: vi.fn(), listPayload: vi.fn(), cancelPayload: vi.fn(), buyPayload: vi.fn(),
+  config: vi.fn(), pauseState: vi.fn(), assetState: vi.fn(), eligibility: vi.fn(), reconcile: vi.fn(), listPayload: vi.fn(), cancelPayload: vi.fn(), buyPayload: vi.fn(),
 }));
 vi.mock('@aptos-labs/wallet-adapter-react', () => ({ useWallet: () => mocks.wallet }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
@@ -27,14 +27,16 @@ const key = `${'veytos:market:testnet'}:${moduleAddress}:${token}:`;
 function mount(asset = nft, active: MarketplaceListing | null = null, initialConfig = config, chainState?: { listing: MarketplaceListing | null; owner: string | null; ledgerVersion: string }) {
   mocks.assetState.mockResolvedValue(chainState || { listing: active, owner: active?.escrowAddress || asset.owner, ledgerVersion: '2' });
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
-  const view = render(<QueryClientProvider client={client}><MarketplacePanel nft={asset} initialListing={active} initialConfig={initialConfig} /></QueryClientProvider>);
-  return { ...view, client, rerenderPanel: () => view.rerender(<QueryClientProvider client={client}><MarketplacePanel nft={asset} initialListing={active} initialConfig={initialConfig} /></QueryClientProvider>) };
+  const initialAssetState = chainState || { listing: active, owner: active?.escrowAddress || asset.owner, ledgerVersion: '2' };
+  const view = render(<QueryClientProvider client={client}><MarketplacePanel nft={asset} initialListing={active} initialConfig={initialConfig} initialAssetState={initialAssetState} /></QueryClientProvider>);
+  return { ...view, client, rerenderPanel: () => view.rerender(<QueryClientProvider client={client}><MarketplacePanel nft={asset} initialListing={active} initialConfig={initialConfig} initialAssetState={initialAssetState} /></QueryClientProvider>) };
 }
 
 beforeEach(() => {
   onlineManager.setOnline(true);
   vi.clearAllMocks(); localStorage.clear(); mocks.wallet.connected = true; mocks.wallet.account.address.toString = () => seller; mocks.wallet.network.chainId = 2;
   mocks.config.mockResolvedValue(config); mocks.eligibility.mockResolvedValue({ eligible: true, reasons: [], royalty: { payee: seller, numerator: '750', denominator: '10000' } });
+  mocks.pauseState.mockResolvedValue({ globalPaused: false, v1Paused: false, v2Paused: false });
   mocks.assetState.mockResolvedValue({ listing: null, owner: seller, ledgerVersion: '2' });
   mocks.listPayload.mockReturnValue({ function: `${moduleAddress}::settlement_v2::list`, functionArguments: [] });
 });
@@ -115,16 +117,38 @@ test('a failed background RPC refresh cannot replace or lock a valid ACTIVE snap
   expect(screen.queryByText(/Updating marketplace state/)).toBe(null);
 });
 
-test('idle UNLISTED state stays visible while its initial authoritative refresh runs silently', async () => {
-  let release!: (value: { listing: null; owner: string; ledgerVersion: string }) => void;
-  mocks.assetState.mockReset().mockReturnValue(new Promise((resolve) => { release = resolve; }));
+test('idle UNLISTED state keeps the server snapshot without an immediate client RPC refresh', async () => {
   mount();
   expect(screen.getByText('UNLISTED')).toBeTruthy();
   expect(screen.getByText('List this NFT')).toBeTruthy();
   expect(screen.queryByText(/Updating marketplace state/)).toBe(null);
-  release({ listing: null, owner: seller, ledgerVersion: '2' });
-  await waitFor(() => expect(mocks.assetState).toHaveBeenCalled());
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  expect(mocks.assetState).not.toHaveBeenCalled();
   expect(screen.queryByText(/Updating marketplace state/)).toBe(null);
+});
+
+test('an idle active NFT page performs no timed marketplace or module refresh for two minutes', async () => {
+  vi.useFakeTimers();
+  try {
+    mount(nft, listing);
+    await vi.advanceTimersByTimeAsync(120_000);
+    expect(mocks.assetState).not.toHaveBeenCalled();
+    expect(mocks.config).not.toHaveBeenCalled();
+  } finally { vi.useRealTimers(); }
+});
+
+test('a hidden tab suppresses stale asset refresh and visibility performs one deduplicated read', async () => {
+  const view = mount(nft, listing);
+  view.client.setQueryData(['market-asset', 'testnet', moduleAddress, `${nft.tokenId}:`], {
+    listing, owner: listing.escrowAddress, ledgerVersion: '2',
+  }, { updatedAt: 1 });
+  Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' });
+  document.dispatchEvent(new Event('visibilitychange'));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  expect(mocks.assetState).not.toHaveBeenCalled();
+  Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
+  document.dispatchEvent(new Event('visibilitychange'));
+  await waitFor(() => expect(mocks.assetState).toHaveBeenCalledTimes(1));
 });
 
 test('a committed LIST shows an action-specific transition while authoritative reconciliation is pending', async () => {
@@ -148,7 +172,7 @@ test('buyer can relist a purchased V2 object despite stale Indexer owner and qua
   fireEvent.change(await screen.findByLabelText('Price in APT'), { target: { value: '1' } });
   await waitFor(() => expect(screen.getByRole('button', { name: 'Review listing' }).hasAttribute('disabled')).toBe(false));
   expect(screen.queryByText(/does not own exactly one NFT/i)).toBe(null);
-  expect(mocks.eligibility).toHaveBeenCalledWith(stale, buyer);
+  expect(mocks.eligibility).toHaveBeenCalledWith(stale, buyer, buyer, { retries: 0 });
 });
 
 test('direct ACTIVE listing overrides stale seller discovery ownership', async () => {
@@ -207,21 +231,21 @@ test('a non-seller wallet never receives the cancel action', () => {
   expect(screen.queryByRole('button', { name: 'Cancel listing' })).toBe(null);
 });
 
-test('network switch clears trading permissions and refetches authoritative asset state', async () => {
+test('wallet network switch clears permissions without refetching account-independent chain state', async () => {
   const view = mount(nft, listing);
-  await waitFor(() => expect(mocks.assetState).toHaveBeenCalled());
   const before = mocks.assetState.mock.calls.length;
   mocks.wallet.network.chainId = 1;
   view.rerenderPanel();
   expect(await screen.findByRole('alert')).toHaveProperty('textContent', expect.stringContaining('Switch your wallet'));
-  await waitFor(() => expect(mocks.assetState.mock.calls.length).toBeGreaterThan(before));
+  expect(mocks.assetState.mock.calls.length).toBe(before);
 });
 
 test('browser reconnect refetches authoritative marketplace state', async () => {
   mount(nft, listing);
-  await waitFor(() => expect(mocks.assetState).toHaveBeenCalled());
   const before = mocks.assetState.mock.calls.length;
-  onlineManager.setOnline(false); onlineManager.setOnline(true);
+  onlineManager.setOnline(false);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  onlineManager.setOnline(true);
   await waitFor(() => expect(mocks.assetState.mock.calls.length).toBeGreaterThan(before));
 });
 
@@ -249,7 +273,6 @@ test('duplicate LIST remains disabled while wallet submission is unresolved', as
 test('CANCEL reconciliation immediately restores owner and removes the seller action', async () => {
   const hash = `0x${'3'.repeat(64)}`;
   mount(nft, listing);
-  await waitFor(() => expect(mocks.assetState).toHaveBeenCalled());
   mocks.assetState.mockReset().mockResolvedValueOnce({ listing, owner: listing.escrowAddress, ledgerVersion: '10' })
     .mockResolvedValue({ listing: null, owner: seller, ledgerVersion: '20' });
   mocks.wallet.signAndSubmitTransaction.mockResolvedValue({ hash });
@@ -266,7 +289,6 @@ test('BUY reconciliation immediately shows SOLD and buyer ownership and clears B
   const hash = `0x${'4'.repeat(64)}`;
   mocks.wallet.account.address.toString = () => buyer;
   mount(nft, listing);
-  await waitFor(() => expect(mocks.assetState).toHaveBeenCalled());
   mocks.assetState.mockReset().mockResolvedValueOnce({ listing, owner: listing.escrowAddress, ledgerVersion: '10' })
     .mockResolvedValue({ listing: null, owner: buyer, ledgerVersion: '30' });
   mocks.wallet.signAndSubmitTransaction.mockResolvedValue({ hash });

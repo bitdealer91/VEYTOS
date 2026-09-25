@@ -12,6 +12,10 @@ export const activeListingFor = cache(async (identity: TokenIdentity, collection
   return marketChain().activeListing(identity, collectionId);
 });
 
+export const marketplaceAssetStateFor = cache(async (identity: TokenIdentity, collectionId?: string) => {
+  return marketChain().assetState(identity, collectionId, undefined, { retries: 0 });
+});
+
 export const marketplaceActivity = cache(async () => {
   if (!marketplaceAddress) return [];
   const moduleAddress = marketplaceAddress;

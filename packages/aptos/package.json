@@ -10,6 +10,7 @@
     "./recovery": "./src/recovery.ts",
     "./discovery": "./src/discovery.ts"
     ,"./marketplace": "./src/marketplace.ts",
-    "./marketplace-events": "./src/marketplace-events.ts"
+    "./marketplace-events": "./src/marketplace-events.ts",
+    "./rpc-read": "./src/rpc-read.ts"
   }
 }

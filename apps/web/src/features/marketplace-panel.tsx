@@ -2,11 +2,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
 import { ArrowUpRight, Check, X } from 'lucide-react';
 import type { NormalizedNFT } from '@veytos/aptos/discovery';
 import { encodeNFTIdentity, marketplaceErrorDiagnostic, marketplaceErrorMessage, quoteMarketplaceSale, marketplacePaused, type MarketplacePreparationStage } from '@veytos/aptos/marketplace';
-import type { MarketplaceConfig, MarketplaceEconomics, MarketplaceListing, PendingMarketplaceTransaction, TransactionPhase } from '@veytos/aptos/types';
+import type { MarketplaceAssetState, MarketplaceConfig, MarketplaceEconomics, MarketplaceListing, PendingMarketplaceTransaction, TransactionPhase } from '@veytos/aptos/types';
 import { definitiveRejection, transactionTransition } from '@veytos/aptos/recovery';
 import { isUnresolved, networkMatches, readableError } from '@veytos/aptos/domain';
 import { parseApt } from '../../../../packages/domain/src/money';
@@ -19,12 +18,11 @@ import { WalletAddress } from '@/components/chain-ui';
 
 type Action = 'list' | 'cancel' | 'buy';
 type ExplicitTransition = Action | 'wallet' | null;
-export function MarketplacePanel({ nft, initialListing, initialConfig }: {
-  nft: NormalizedNFT; initialListing: MarketplaceListing | null; initialConfig: MarketplaceConfig;
+export function MarketplacePanel({ nft, initialListing, initialConfig, initialAssetState }: {
+  nft: NormalizedNFT; initialListing: MarketplaceListing | null; initialConfig: MarketplaceConfig; initialAssetState?: MarketplaceAssetState;
 }) {
   const wallet = useWallet();
   const queryClient = useQueryClient();
-  const router = useRouter();
   const account = wallet.account?.address.toString();
   const dialog = useRef<HTMLDialogElement>(null);
   const signing = useRef(false);
@@ -47,10 +45,10 @@ export function MarketplacePanel({ nft, initialListing, initialConfig }: {
   const confirmedKey = `veytos:confirmed:${network}:${marketplaceAddress}:${assetRoute}`;
   const assetQuery = useQuery({
     queryKey: ['market-asset', network, marketplaceAddress, assetRoute],
-    queryFn: () => marketChain().assetState(nft.identity, nft.collectionId, confirmedVersionRef.current),
-    initialData: { listing: initialListing, owner: nft.standard === 'v2' ? initialListing?.escrowAddress || nft.owner : null, ledgerVersion: nft.lastTransactionVersion },
-    initialDataUpdatedAt: 0,
-    staleTime: 15000, refetchInterval: 30000, refetchOnWindowFocus: 'always', refetchOnReconnect: 'always',
+    queryFn: () => marketChain().assetState(nft.identity, nft.collectionId, confirmedVersionRef.current, { retries: 0 }),
+    initialData: initialAssetState || { listing: initialListing, owner: nft.standard === 'v2' ? initialListing?.escrowAddress || nft.owner : null, ledgerVersion: nft.lastTransactionVersion },
+    initialDataUpdatedAt: Date.now(),
+    staleTime: 30000, refetchOnWindowFocus: false, refetchOnReconnect: 'always',
   });
   const listing = assetQuery.data.listing;
   const snapshotIsNewer = !!confirmedVersion && BigInt(confirmedVersion) > BigInt(assetQuery.data.ledgerVersion);
@@ -61,7 +59,11 @@ export function MarketplacePanel({ nft, initialListing, initialConfig }: {
   const selected: Action = active ? seller ? 'cancel' : 'buy' : 'list';
   const key = `veytos:market:${network}:${marketplaceAddress}:${assetRoute}`;
   const legacyKey = `veytos:market:${network}:${marketplaceAddress}:asset:${assetRoute}`;
-  const configQuery = useQuery({ queryKey: ['market-config', network, marketplaceAddress], queryFn: () => marketChain().config(), initialData: initialConfig, refetchInterval: 60000 });
+  const configQuery = useQuery({
+    queryKey: ['market-config', network, marketplaceAddress], queryFn: () => marketChain().config({ retries: 0 }),
+    initialData: initialConfig, initialDataUpdatedAt: Date.now(), staleTime: 5 * 60_000,
+    refetchOnWindowFocus: false, refetchOnReconnect: false,
+  });
   const explicitTransition = transition !== null || walletScopeChanging;
   // TanStack staleness and background RPC failures do not invalidate the last
   // authoritative snapshot. submit() always performs a fresh chain precheck
@@ -69,7 +71,7 @@ export function MarketplacePanel({ nft, initialListing, initialConfig }: {
   const authoritativeStateUnavailable = !assetQuery.data?.ledgerVersion;
   const eligibility = useQuery({
     queryKey: ['market-eligibility', network, nft.tokenId, account],
-    queryFn: () => marketChain().eligibility(nft, account!), enabled: !!account && owner && !active && !explicitTransition && !authoritativeStateUnavailable,
+    queryFn: () => marketChain().eligibility(nft, account!, currentOwner, { retries: 0 }), enabled: !!account && owner && !active && !explicitTransition && !authoritativeStateUnavailable,
   });
   const config = configQuery.data;
   const locked = isUnresolved(phase) || explicitTransition || authoritativeStateUnavailable;
@@ -86,9 +88,9 @@ export function MarketplacePanel({ nft, initialListing, initialConfig }: {
     );
   } catch { economics = null; }
 
-  async function invalidateAffected() {
-    const roots = ['market-asset', 'market-config', 'market-eligibility', 'wallet-nfts', 'nft-detail', 'collection-market', 'market-activity'];
-    await Promise.all(roots.map((root) => queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] === root })));
+  function invalidateProjections() {
+    const roots = ['market-eligibility', 'wallet-nfts', 'nft-detail', 'collection-market', 'market-activity'];
+    for (const root of roots) void queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] === root, refetchType: 'none' });
   }
 
   useEffect(() => {
@@ -111,8 +113,20 @@ export function MarketplacePanel({ nft, initialListing, initialConfig }: {
     walletScope.current = next;
     if (!isUnresolved(phase)) { setMessage(''); setPhase('ready'); }
     setTransition('wallet');
-    void invalidateAffected().then(() => queryClient.refetchQueries({ queryKey: ['market-asset', network, marketplaceAddress, assetRoute], type: 'active' })).finally(() => { setTransition(null); router.refresh(); });
-  }, [account, wallet.network?.chainId, assetRoute, currentWalletScope, marketplaceAddress, phase, queryClient, router]);
+    void queryClient.invalidateQueries({ predicate: (query) => ['market-eligibility', 'wallet-nfts'].includes(String(query.queryKey[0])), refetchType: 'none' })
+      .finally(() => setTransition(null));
+  }, [account, wallet.network?.chainId, currentWalletScope, phase, queryClient]);
+
+  useEffect(() => {
+    const refreshWhenVisible = () => {
+      if (document.visibilityState !== 'visible' || transition !== null) return;
+      const state = queryClient.getQueryState(['market-asset', network, marketplaceAddress, assetRoute]);
+      if (!state || Date.now() - state.dataUpdatedAt < 30_000) return;
+      void queryClient.refetchQueries({ queryKey: ['market-asset', network, marketplaceAddress, assetRoute], type: 'active' });
+    };
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    return () => document.removeEventListener('visibilitychange', refreshWhenVisible);
+  }, [assetRoute, marketplaceAddress, queryClient, transition]);
 
   useEffect(() => {
     try {
@@ -154,11 +168,8 @@ export function MarketplacePanel({ nft, initialListing, initialConfig }: {
           }
           setPhase('success'); clear();
           setMessage(value.action === 'list' ? 'Listing is active on Aptos.' : value.action === 'cancel' ? 'Listing cancelled. Your NFT has been returned.' : 'Purchase verified. The NFT is now owned by the buyer.');
-          try {
-            await invalidateAffected();
-            await queryClient.refetchQueries({ queryKey: ['market-asset', network, marketplaceAddress, assetRoute], type: 'active' });
-            router.refresh();
-          } finally { setTransition(null); }
+          invalidateProjections();
+          setTransition(null);
           return;
         }
         await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -175,17 +186,18 @@ export function MarketplacePanel({ nft, initialListing, initialConfig }: {
     let requested = false;
     let stage: MarketplacePreparationStage = 'configuration';
     try {
-      const freshConfig = await marketChain().config();
-      if (!networkMatches(freshConfig.chainId, wallet.network?.chainId)) throw new Error('Wrong network');
-      if (action !== 'cancel' && marketplacePaused(freshConfig, nft.standard)) throw new Error('EPAUSED');
+      const retrying = () => setMessage('Marketplace data is temporarily unavailable. Retrying…');
+      const freshPause = await marketChain().pauseState({ onRateLimit: retrying });
+      if (!networkMatches(config.chainId, wallet.network?.chainId)) throw new Error('Wrong network');
+      if (action !== 'cancel' && (freshPause.globalPaused || (nft.standard === 'v1' ? freshPause.v1Paused : freshPause.v2Paused))) throw new Error('EPAUSED');
       stage = 'asset-state';
       const floor = [confirmedVersionRef.current, assetQuery.data.ledgerVersion].filter((version): version is string => !!version)
         .reduce((latest, version) => BigInt(version) > BigInt(latest) ? version : latest, '0');
-      const freshAsset = await marketChain().assetState(nft.identity, nft.collectionId, floor);
+      const freshAsset = await marketChain().assetState(nft.identity, nft.collectionId, floor, { onRateLimit: retrying });
       if (action === 'list') {
         if (freshAsset.listing) throw new Error('This NFT already has an active listing.');
         stage = 'eligibility';
-        const check = await marketChain().eligibility(nft, account);
+        const check = await marketChain().eligibility(nft, account, freshAsset.owner, { onRateLimit: retrying });
         if (!check.eligible) throw new Error(check.reasons[0]);
         if (!economics) throw new Error('Invalid price');
       }

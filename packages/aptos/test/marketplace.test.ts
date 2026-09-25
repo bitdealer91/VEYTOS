@@ -64,6 +64,23 @@ test('direct asset state uses active_assets and reports escrow ownership despite
   assert.equal(state.listing?.status, 'ACTIVE'); assert.equal(state.owner, escrow); assert.equal(state.ledgerVersion, '100');
   assert.deepEqual(tableRequest, { handle: '0x123', data: { key_type: 'vector<u8>', value_type: 'u64', key: marketplaceAssetKey(v2, creator) } });
 });
+test('concurrent V2 asset consumers coalesce State and ObjectCore and reuse the State handle', async () => {
+  let stateReads = 0; let ownerReads = 0; let ledgerReads = 0;
+  const missing = Object.assign(new Error('not found'), { status: 404 });
+  const aptos = {
+    getLedgerInfo: async () => { ledgerReads += 1; return { ledger_version: '100' }; },
+    getAccountResource: async ({ resourceType }: { resourceType: string }) => {
+      if (resourceType.endsWith('::marketplace::State')) { stateReads += 1; return { active_assets: { handle: '0x123' } }; }
+      ownerReads += 1; return { owner: seller };
+    },
+    getTableItem: async () => { throw missing; },
+  } as unknown as Aptos;
+  const client = marketplace(aptos, module);
+  await Promise.all([client.assetState(v2, creator), client.assetState(v2, creator)]);
+  assert.deepEqual({ stateReads, ownerReads, ledgerReads }, { stateReads: 1, ownerReads: 1, ledgerReads: 1 });
+  await client.assetState(v2, creator, '99');
+  assert.deepEqual({ stateReads, ownerReads, ledgerReads }, { stateReads: 1, ownerReads: 2, ledgerReads: 2 });
+});
 test('a fullnode behind a confirmed transaction cannot regress marketplace state', async () => {
   const aptos = { getLedgerInfo: async () => ({ ledger_version: '99' }) } as unknown as Aptos;
   await assert.rejects(() => marketplace(aptos, module).assetState(v2, creator, '100'), /older than the confirmed transaction/);

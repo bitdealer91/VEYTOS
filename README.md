@@ -109,6 +109,9 @@ Browser, indexer, storage and authentication variables are reserved for later ph
 - `LAUNCHPAD_DEPLOYMENT_VERSION`: first version for complete indexer backfill.
 - `APTOS_FULLNODE_URL`, `APTOS_INDEXER_URL`: optional server endpoint overrides.
 - `APTOS_API_KEY`: optional server-only RPC credential.
+- `NEXT_PUBLIC_APTOS_FULLNODE_URL`: optional browser-safe RPC endpoint override.
+  It must not contain a secret credential; private managed-provider keys stay in
+  `APTOS_API_KEY` and are used only by server-side Aptos reads.
 - `NEXT_PUBLIC_APP_URL`: public origin for auth and sharing. Mainnet requires HTTPS.
 - `DATABASE_URL`: server-only PostgreSQL DSN for migrations and product storage.
 - `IPFS_API_URL`, `IPFS_API_TOKEN`: server-only upload endpoint and credential.

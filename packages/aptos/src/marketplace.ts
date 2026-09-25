@@ -1,6 +1,7 @@
 import { AccountAddress, Aptos, Hex, Serializer, type UserTransactionResponse } from '@aptos-labs/ts-sdk';
 import { z } from 'zod';
 import { canonical } from './domain.ts';
+import { rpcReadCoordinator, type RpcReadOptions } from './rpc-read.ts';
 import type {
   MarketplaceConfig,
   MarketplaceEconomics,
@@ -73,7 +74,8 @@ export function marketplaceErrorMessage(error: unknown, stage: MarketplacePrepar
   if (/EPAUSED/i.test(message)) return 'Marketplace purchases are temporarily paused.';
   if (/wrong network|chain.*mismatch/i.test(message)) return 'Switch your wallet to Aptos Testnet.';
   if (/older than the confirmed transaction|ESTATE_UPDATING/i.test(message)) return 'Marketplace state is still updating. Try again in a moment.';
-  if (/ECONN|ENOTFOUND|ETIMEDOUT|fetch failed|network request|429|502|503|504|RPC unavailable/i.test(message)) return 'We could not reach Aptos. No transaction was submitted.';
+  if (/\b429\b|too many requests/i.test(message)) return 'Marketplace data is temporarily unavailable. No transaction was submitted.';
+  if (/ECONN|ENOTFOUND|ETIMEDOUT|fetch failed|network request|502|503|504|RPC unavailable/i.test(message)) return 'We could not reach Aptos. No transaction was submitted.';
   if (stage !== 'wallet' && stage !== 'reconciliation') return "We couldn't prepare this transaction. No funds were transferred.";
   return 'The wallet did not return a transaction hash. Check wallet activity before trying again.';
 }
@@ -103,10 +105,25 @@ export function marketplaceAssetKey(identity: TokenIdentity, collectionId?: stri
 
 export function marketplace(aptos: Aptos, packageAddress: string) {
   const module = canonical(packageAddress);
+  const reads = rpcReadCoordinator(aptos);
   const marketFn = (name: string) => `${module}::marketplace::${name}` as const;
   const feeFn = (name: string) => `${module}::marketplace_fee_policy::${name}` as const;
+  let activeAssetsHandle: Promise<string> | null = null;
+  let cachedConfig: { value: MarketplaceConfig; expiresAt: number } | null = null;
 
-  async function config(): Promise<MarketplaceConfig> {
+  function stateHandle(options: RpcReadOptions = {}) {
+    activeAssetsHandle ??= reads.run(`${module}:state-handle`, async () => {
+      const state = await aptos.getAccountResource<{ active_assets: { handle: string } }>({
+        accountAddress: module, resourceType: `${module}::marketplace::State`,
+      });
+      return state.active_assets.handle;
+    }, options).catch((error) => { activeAssetsHandle = null; throw error; });
+    return activeAssetsHandle;
+  }
+
+  async function config(options: RpcReadOptions & { fresh?: boolean } = {}): Promise<MarketplaceConfig> {
+    if (!options.fresh && cachedConfig && cachedConfig.expiresAt > Date.now()) return cachedConfig.value;
+    return reads.run(`${module}:configuration`, async () => {
     const [configuration, v1Storage, v2Storage, ledger] = await Promise.all([
       aptos.view<[string, string, boolean, boolean, boolean, string]>({
         payload: { function: feeFn('configuration'), functionArguments: [] },
@@ -115,17 +132,30 @@ export function marketplace(aptos: Aptos, packageAddress: string) {
       aptos.view<[string]>({ payload: { function: feeFn('storage_reimbursement'), functionArguments: [2] } }),
       aptos.getLedgerInfo(),
     ]);
-    return {
+    const value = {
       chainId: ledger.chain_id,
       feeBps: u64.parse(configuration[0]), recipient: canonical(configuration[1]),
       globalPaused: configuration[2], v1Paused: configuration[3], v2Paused: configuration[4],
       admin: canonical(configuration[5]), v1StorageReimbursement: u64.parse(v1Storage[0]),
       v2StorageReimbursement: u64.parse(v2Storage[0]),
     };
+    cachedConfig = { value, expiresAt: Date.now() + 5 * 60_000 };
+    return value;
+    }, options);
   }
 
-  async function listing(id: string): Promise<MarketplaceListing> {
+  async function pauseState(options: RpcReadOptions = {}) {
+    return reads.run(`${module}:pause-state`, async () => {
+      const [configuration] = await aptos.view<[string, string, boolean, boolean, boolean, string]>({
+        payload: { function: feeFn('configuration'), functionArguments: [] },
+      });
+      return { globalPaused: configuration[2], v1Paused: configuration[3], v2Paused: configuration[4] };
+    }, options);
+  }
+
+  async function listing(id: string, options: RpcReadOptions = {}): Promise<MarketplaceListing> {
     const listingId = u64.parse(id);
+    return reads.run(`${module}:listing:${listingId}:r${options.retries ?? 2}`, async () => {
     const [terms, asset] = await Promise.all([
       aptos.view<[string, number, string, string, string, string, string, string, number]>({
         payload: { function: marketFn('listing_terms'), functionArguments: [listingId] },
@@ -156,46 +186,52 @@ export function marketplace(aptos: Aptos, packageAddress: string) {
       royaltyPayee: canonical(terms[5]), royaltyNumerator: u64.parse(terms[6]), royaltyDenominator: u64.parse(terms[7]),
       status: listingStatus, escrowAddress,
     };
+    }, options);
   }
 
-  async function activeListing(identity: TokenIdentity, collectionId?: string): Promise<MarketplaceListing | null> {
-    const state = await aptos.getAccountResource<{ active_assets: { handle: string } }>({
-      accountAddress: module, resourceType: `${module}::marketplace::State`,
-    });
+  async function activeListing(identity: TokenIdentity, collectionId?: string, options: RpcReadOptions = {}): Promise<MarketplaceListing | null> {
+    const assetKey = marketplaceAssetKey(identity, collectionId);
+    return reads.run(`${module}:active:${assetKey}:r${options.retries ?? 2}`, async () => {
+    const handle = await stateHandle(options);
     try {
       const id = await aptos.getTableItem<string>({
-        handle: state.active_assets.handle,
-        data: { key_type: 'vector<u8>', value_type: 'u64', key: marketplaceAssetKey(identity, collectionId) },
+        handle,
+        data: { key_type: 'vector<u8>', value_type: 'u64', key: assetKey },
       });
-      const result = await listing(id);
+      const result = await listing(id, options);
       if (result.status !== 'ACTIVE' || encodeNFTIdentity(result.identity) !== encodeNFTIdentity(identity)) throw new Error('Active listing identity mismatch');
       return result;
     } catch (error) {
       if ((error as { status?: number }).status === 404) return null;
       throw error;
     }
+    }, options);
   }
 
-  async function assetState(identity: TokenIdentity, collectionId?: string, minimumLedgerVersion?: string): Promise<MarketplaceAssetState> {
+  async function assetState(identity: TokenIdentity, collectionId?: string, minimumLedgerVersion?: string, options: RpcReadOptions = {}): Promise<MarketplaceAssetState> {
+    const assetKey = marketplaceAssetKey(identity, collectionId);
+    return reads.run(`${module}:asset:${assetKey}:${minimumLedgerVersion || 'latest'}:r${options.retries ?? 2}`, async () => {
     const ledger = await aptos.getLedgerInfo();
     const ledgerVersion = u64.parse(ledger.ledger_version);
     if (minimumLedgerVersion && BigInt(ledgerVersion) < BigInt(u64.parse(minimumLedgerVersion))) {
       throw new Error('Fullnode state is older than the confirmed transaction');
     }
     const [active, owner] = await Promise.all([
-      activeListing(identity, collectionId),
+      activeListing(identity, collectionId, options),
       identity.standard === 'v2' ? aptos.getAccountResource<{ owner: string }>({
         accountAddress: canonical(identity.address), resourceType: '0x1::object::ObjectCore',
       }).then((core) => canonical(core.owner)) : Promise.resolve(null),
     ]);
     return { listing: active, owner, ledgerVersion };
+    }, options);
   }
 
   async function eligibility(nft: {
     identity: TokenIdentity; owner: string; amount: string; collectionId: string;
     maximum: string | null; royalty: { payee: string; numerator: string; denominator: string } | null;
     isSoulbound: boolean;
-  }, expectedOwner: string) {
+  }, expectedOwner: string, knownOwner?: string | null, options: RpcReadOptions = {}) {
+    return reads.run(`${module}:eligibility:${encodeNFTIdentity(nft.identity)}:${canonical(expectedOwner)}:${knownOwner || 'read'}`, async () => {
     const reasons: string[] = [];
     let royalty = nft.royalty;
     if (nft.identity.standard === 'v1') {
@@ -204,10 +240,10 @@ export function marketplace(aptos: Aptos, packageAddress: string) {
       if (!nft.royalty || BigInt(nft.royalty.denominator) <= 0n || BigInt(nft.royalty.numerator) > BigInt(nft.royalty.denominator)) reasons.push('Token V1 royalty data is unavailable or malformed.');
     } else {
       try {
-        const core = await aptos.getAccountResource<{ owner: string }>({
+        const actualOwner = knownOwner || (await aptos.getAccountResource<{ owner: string }>({
           accountAddress: canonical(nft.identity.address), resourceType: '0x1::object::ObjectCore',
-        });
-        if (canonical(core.owner) !== canonical(expectedOwner)) reasons.push('Connected wallet does not own this Digital Asset.');
+        })).owner;
+        if (canonical(actualOwner) !== canonical(expectedOwner)) reasons.push('Connected wallet does not own this Digital Asset.');
       } catch { reasons.push('Digital Asset ownership could not be verified.'); }
       if (nft.isSoulbound) reasons.push('This Digital Asset is transfer restricted.');
       const [policy] = await aptos.view<[boolean, number]>({
@@ -224,6 +260,7 @@ export function marketplace(aptos: Aptos, packageAddress: string) {
       } catch { reasons.push('Digital Asset royalty data could not be verified.'); }
     }
     return { eligible: reasons.length === 0, reasons, royalty };
+    }, options);
   }
 
   function listPayload(identity: TokenIdentity, price: string) {
@@ -304,5 +341,5 @@ export function marketplace(aptos: Aptos, packageAddress: string) {
     if (balance !== '1') throw new Error('NFT ownership mismatch');
   }
 
-  return { config, listing, activeListing, assetState, eligibility, listPayload, cancelPayload, buyPayload, reconcile, module };
+  return { config, pauseState, listing, activeListing, assetState, eligibility, listPayload, cancelPayload, buyPayload, reconcile, module };
 }

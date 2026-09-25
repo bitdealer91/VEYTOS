@@ -6,7 +6,14 @@ const u64 = z.string().regex(/^\d+$/).refine(v => BigInt(v) <= (1n << 64n) - 1n)
 const addr = z.string().transform(canonical);
 const dropSchema = z.object({ collection: addr, finalized: z.boolean(), creator_paused: z.boolean(), admin_paused: z.boolean(), uploaded: u64, minted: u64,
   terms: z.object({ creator: addr, name: z.string(), description: z.string(), collection_uri: z.string(), max_supply: u64, unit_price: u64, wallet_limit: u64, transaction_limit: u64, start_seconds: u64, end_seconds: u64, royalty_bps: u64, fee_bps: u64 }) });
-export function makeAptos(network: 'testnet'|'mainnet'|'devnet') { return new Aptos(new AptosConfig({ network: { testnet: Network.TESTNET, mainnet: Network.MAINNET, devnet: Network.DEVNET }[network] })); }
+export type AptosEndpointOptions = { fullnode?: string; apiKey?: string };
+export function makeAptos(network: 'testnet'|'mainnet'|'devnet', endpoint: AptosEndpointOptions = {}) {
+  return new Aptos(new AptosConfig({
+    network: { testnet: Network.TESTNET, mainnet: Network.MAINNET, devnet: Network.DEVNET }[network],
+    ...(endpoint.fullnode ? { fullnode: endpoint.fullnode } : {}),
+    ...(endpoint.apiKey ? { fullnodeConfig: { HEADERS: { Authorization: `Bearer ${endpoint.apiKey}` } } } : {}),
+  }));
+}
 export function launchpad(aptos: Aptos, packageAddress: string) {
   const module = canonical(packageAddress);
   const fn = (name: string) => `${module}::launchpad::${name}` as const;
