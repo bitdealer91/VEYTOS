@@ -24,6 +24,16 @@ test('global and standard pauses are independent', () => {
   assert.equal(marketplacePaused(base, 'v1'), false); assert.equal(marketplacePaused(base, 'v2'), true);
   assert.equal(marketplacePaused({ ...base, globalPaused: true }, 'v1'), true);
 });
+test('fresh pause precheck decodes the complete configuration view tuple', async () => {
+  const aptos = {
+    view: async () => ['200', seller, false, false, false, module],
+  } as unknown as Aptos;
+  assert.deepEqual(await marketplace(aptos, module).pauseState(), {
+    globalPaused: false,
+    v1Paused: false,
+    v2Paused: false,
+  });
+});
 test('invalid royalty and zero price fail before wallet submission', () => {
   assert.throws(() => quoteMarketplaceSale(0n, 200n, 0n, 1n, 0n));
   assert.throws(() => quoteMarketplaceSale(1n, 200n, 2n, 1n, 0n));

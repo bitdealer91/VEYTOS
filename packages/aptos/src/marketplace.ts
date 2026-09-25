@@ -146,7 +146,7 @@ export function marketplace(aptos: Aptos, packageAddress: string) {
 
   async function pauseState(options: RpcReadOptions = {}) {
     return reads.run(`${module}:pause-state`, async () => {
-      const [configuration] = await aptos.view<[string, string, boolean, boolean, boolean, string]>({
+      const configuration = await aptos.view<[string, string, boolean, boolean, boolean, string]>({
         payload: { function: feeFn('configuration'), functionArguments: [] },
       });
       return { globalPaused: configuration[2], v1Paused: configuration[3], v2Paused: configuration[4] };
