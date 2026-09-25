@@ -1,0 +1,58 @@
+{
+  "network": "testnet",
+  "marketplacePackage": "0x40fcdc2583e3e15c09f20a5d777b72f7bec8a9ac9292d57c03e9fb23c091eebb",
+  "asset": {
+    "standard": "v2",
+    "objectAddress": "0x295a1e09bf27b62a9bd5e96c96c2bef4d42293898e2fc244bcb014e4146b1900",
+    "collectionAddress": "0x287dea5ae1c96817a211877faf19b38d1884fb4a59305101db44fc32fb609e61"
+  },
+  "seller": "0xcb49d9cd635449fdbba2b56ff23757646bc454c4e6d858f002106386bf1dfb68",
+  "buyer": "0x0e0f181950b98d0bb59bdfc324db7d113fc148bec665c5746c43a1113fefc225",
+  "list": {
+    "transactionHash": "0x22f426972cec43fd9c4487e0f7c2d85ecf8b973f1795edd63dc1dcc5e55fedb2",
+    "browserResult": "The UI reconciled to ACTIVE, showed the seller separately from VEYTOS escrow custody, and exposed Cancel listing without a reload.",
+    "approximateUiReconciliation": "within a few seconds of commitment"
+  },
+  "buy": {
+    "transactionHash": "0x72ba16ab2e0ab56367cfd454f451f0085eec0f209d4e58bc35fa9e91d1b69480",
+    "transactionVersion": "11409361542",
+    "listingId": "7",
+    "grossPriceOctas": "10000000",
+    "platformFeeOctas": "200000",
+    "royaltyOctas": "750000",
+    "sellerProceedsOctas": "9050000",
+    "storageReimbursementOctas": "926400",
+    "finalObjectOwner": "0x0e0f181950b98d0bb59bdfc324db7d113fc148bec665c5746c43a1113fefc225",
+    "browserResult": "The UI reconciled to SOLD, displayed the buyer as owner, and showed verified purchase success without a reload.",
+    "approximateUiReconciliation": "within a few seconds of commitment"
+  },
+  "rpcAcceptance": {
+    "beforeFixCodeAudit": {
+      "initialActiveV2MarketplaceReads": 20,
+      "scheduledMarketplaceReadsPerTwoIdleMinutes": 36
+    },
+    "afterFix": {
+      "initialActiveV2MarketplaceReads": 11,
+      "scheduledMarketplaceReadsPerTwoIdleMinutes": 0,
+      "observedColdBuyerPageThroughCommittedBuyRestRequests": 27,
+      "idleObservationMinutes": 2,
+      "aptos429DuringIdle": 0,
+      "aptos429DuringSuccessfulListAndBuy": 0
+    },
+    "notes": [
+      "The 27 browser resource entries include initial page reads, wallet SDK ABI discovery, submission, receipt lookup, and targeted reconciliation.",
+      "A separate Sentry endpoint returned 429 in the extension-heavy browser; no Aptos endpoint returned 429 during the successful acceptance flow."
+    ]
+  },
+  "integrationDefectFoundAndFixed": {
+    "description": "The fresh pause precheck destructured the configuration view twice and treated a character from fee bps as a truthy pause flag.",
+    "failedAttemptHadTransactionHash": false,
+    "rawError": "EPAUSED",
+    "onChainPauseFlagsAtInvestigation": {
+      "global": false,
+      "v1": false,
+      "v2": false
+    },
+    "fixCommit": "bc148a0"
+  }
+}
