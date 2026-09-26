@@ -7,10 +7,12 @@ VEYTOS beta is an **Aptos Testnet** service. Test assets and test APT have no re
 - Deploy `apps/web` as a Node-compatible Next.js service behind HTTPS.
 - Run `npm run indexer:marketplace` as one continuously supervised Node worker.
 - Use managed PostgreSQL with backups and TLS. Apply `npm run db:migrate` once per release before starting the worker.
-- Use a managed Aptos fullnode for server and worker reads. Keep `APTOS_API_KEY` server-side. A browser-safe endpoint may be set separately only when its credential is explicitly public.
+- Use managed Aptos fullnode and Indexer endpoints for server/worker reads. Keep `APTOS_API_KEY` and `APTOS_INDEXER_API_KEY` server-side. Browser-safe endpoints may be set separately only when their credentials are explicitly public.
 - Aptos Indexer remains the ownership source for wallet discovery. The VEYTOS projection powers browsing and never authorizes List, Cancel, or Buy.
 
 Required production variables are documented in `apps/web/.env.example`. `APTOS_NETWORK` and `NEXT_PUBLIC_APTOS_NETWORK` must both be `testnet`. Set the HTTPS deployment origin in `NEXT_PUBLIC_APP_URL`. `BETA_INDEXER_START_VERSION` is needed only when the durable checkpoint does not exist; it must cover both deployed packages.
+
+`vercel.json` supplies the monorepo web build/output settings. `Dockerfile.indexer` is the portable worker image; deploy it to infrastructure with outbound HTTPS and PostgreSQL connectivity. The worker holds a PostgreSQL advisory lock keyed by network/module, so a second replica exits instead of racing the checkpoint.
 
 ## Worker recovery
 

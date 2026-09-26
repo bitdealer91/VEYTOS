@@ -2,15 +2,15 @@
 
 The NFT home of Aptos.
 
-A creator-first NFT launchpad: configure a collection, publish immutable assets,
-launch on Aptos, and let collectors mint through their wallets. Secondary trading
-is Phase 2 and is deliberately outside the current implementation.
+An Aptos-native NFT launchpad and fixed-price marketplace for current Digital Assets
+and historical Token V1 collections.
 
 ## Current status
 
-**Phase 1A / Gate A and the browser mint gate passed on Aptos testnet.** Phase 1B
-read-only historical NFT discovery is implemented; marketplace settlement and the
-mainnet security gates remain incomplete.
+**Phase 1A, Phase 1B, and Phase 2C passed their Aptos testnet gates.** The launchpad,
+Token V1/V2 discovery, fixed-price marketplace contracts, and browser List/Cancel/Buy
+flows are verified on testnet. Phase 3A prepares the public testnet beta; mainnet
+security gates and an external audit remain incomplete.
 
 Implemented:
 
@@ -23,8 +23,8 @@ Implemented:
   two-step admin rotation, pause state, events and checked arithmetic.
 - Native Digital Asset collection creation, staged metadata, immutable launch terms,
   lifetime supply/wallet limits, pause controls, royalties and atomic APT settlement.
-- 82 passing Move tests, 35 passing TypeScript/Node tests and 14 frontend tests;
-  normal type checking includes the testnet operator scripts.
+- 182 passing Move tests plus current TypeScript/Node and frontend regression suites;
+  normal type checking includes the testnet operator and indexer scripts.
 - Real testnet publication and two-NFT mint, verified owner/counters/events and
   exact 5% payment split. See [TESTNET_ACCEPTANCE.md](TESTNET_ACCEPTANCE.md).
 - Official Indexer discovery for Token V1 and V2, with strict normalization,
@@ -32,8 +32,9 @@ Implemented:
 - Browser wallet mint and committed-version ownership reconciliation. See
   [frontend evidence](docs/evidence/frontend-browser-mint.json).
 
-Not implemented yet: storage uploads, authenticated routes, database event worker,
-creator dashboard, admin UI or marketplace settlement.
+Not implemented yet: creator storage uploads, creator dashboard, admin UI, offers,
+auctions, or mainnet deployment. Marketplace browsing requires the durable PostgreSQL
+projection worker documented in [public beta operations](docs/PUBLIC_BETA_OPERATIONS.md).
 Acceptance uses three disposable SDK-controlled testnet wallets. Database migrations
 have been generated, but not applied to a PostgreSQL instance here.
 
@@ -99,16 +100,17 @@ network relationships and event uniqueness have database constraints.
 
 ## Environment variables
 
-`.env.example` documents current operator inputs and reserved application inputs.
-Browser, indexer, storage and authentication variables are reserved for later phases.
+`.env.example` documents current operator inputs and application inputs. Public beta
+browser, indexer, storage, and worker variables are also listed in
+`apps/web/.env.example`; private provider credentials remain server-only.
 
 - `APTOS_NETWORK`: server network, one of testnet/devnet/mainnet. Must match browser.
 - `NEXT_PUBLIC_APTOS_NETWORK`: public network; defaults to testnet.
 - `NEXT_PUBLIC_LAUNCHPAD_ADDRESS`: real published module address; no development
   fallback. Mainnet configuration fails without a nonzero address.
-- `LAUNCHPAD_DEPLOYMENT_VERSION`: first version for complete indexer backfill.
+- `BETA_INDEXER_START_VERSION`: first version for complete launchpad and marketplace backfill.
 - `APTOS_FULLNODE_URL`, `APTOS_INDEXER_URL`: optional server endpoint overrides.
-- `APTOS_API_KEY`: optional server-only RPC credential.
+- `APTOS_API_KEY`, `APTOS_INDEXER_API_KEY`: optional server-only provider credentials.
 - `NEXT_PUBLIC_APTOS_FULLNODE_URL`: optional browser-safe RPC endpoint override.
   It must not contain a secret credential; private managed-provider keys stay in
   `APTOS_API_KEY` and are used only by server-side Aptos reads.
@@ -186,14 +188,15 @@ Gate A verifies committed transactions and native state using the SDK. Its local
 content-addressed metadata fixtures are not publicly pinned. Browser wallet
 acceptance is recorded; public storage acceptance remains future work.
 
-## Frontend and worker deployment plan
+## Frontend and worker deployment
 
-Build `apps/web` on Vercel with public network/address/origin
-and server-only database/storage configuration. Run migrations as an explicit release
-step. Deploy `apps/indexer` as a Node worker with a durable PostgreSQL checkpoint and
-the verified deployment version. Keep long-running indexing outside request handlers.
-Scheduled jobs must never infer success from a browser-submitted hash without chain
-verification. Provider-specific deployment recipes follow the tested integration.
+Build `apps/web` on Vercel or another Node-compatible HTTPS host with the public
+network/address/origin and server-only database configuration. Run migrations as an
+explicit release step. Deploy `Dockerfile.indexer` as a continuously supervised worker.
+It resumes from a durable PostgreSQL checkpoint, verifies successful transactions,
+and writes duplicate-safe marketplace and launchpad projections. Long-running indexing
+stays outside request handlers and never authorizes a trade. See
+[PUBLIC_BETA_OPERATIONS.md](docs/PUBLIC_BETA_OPERATIONS.md).
 
 ## Security and mainnet
 
@@ -204,7 +207,6 @@ acceptance gates. No mainnet deployment has been performed or is implied.
 
 ## Next milestone
 
-Review the Phase 2A [fixed-price marketplace specification](docs/MARKETPLACE_ARCHITECTURE.md)
-and its [94-scenario Move test plan](docs/MARKETPLACE_CONTRACT_TEST_PLAN.md). After
-approval, Phase 2B begins test-first with the independent secondary fee policy and
-common listing lifecycle. No settlement contract exists yet.
+Deploy the Phase 3A web service, durable worker, and PostgreSQL projection to a public
+HTTPS testnet environment. Run the clean-browser public beta smoke gate before inviting
+external testers. Mainnet remains blocked on an external contract security review.

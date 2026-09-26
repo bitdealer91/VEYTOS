@@ -35,7 +35,7 @@ const publicSchema = z.object({
   NEXT_PUBLIC_ARWEAVE_GATEWAY: z.url().default("https://arweave.net/"),
   NEXT_PUBLIC_APTOS_FULLNODE_URL: z.url().optional(),
   NEXT_PUBLIC_APTOS_INDEXER_URL: z.url().optional(),
-  NEXT_PUBLIC_FEEDBACK_URL: z.url().optional(),
+  NEXT_PUBLIC_FEEDBACK_URL: z.url().default("https://github.com/bitdealer91/VEYTOS/issues/new/choose"),
 });
 
 export function readPublicConfig(env: Record<string, string | undefined>) {
