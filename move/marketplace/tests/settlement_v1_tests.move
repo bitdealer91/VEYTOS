@@ -294,4 +294,89 @@ module marketplace::settlement_v1_tests {
         token::deposit_token(&buyer, withdrawn);
         assert!(token::balance_of(@0xb, token_id) == 1, 101);
     }
+
+    #[test]
+    fun audit_v1_cancel_paused_preserves_other_escrow_and_balances() {
+        let (admin, seller, _, _) = setup();
+        let first = mint(&seller, b"one");
+        let second = mint(&seller, b"two");
+        let a = list(&seller, b"one", 0);
+        let b = list(&seller, b"two", 0);
+        marketplace_fee_policy::set_global_paused(&admin, true);
+        marketplace_fee_policy::set_v1_paused(&admin, true);
+        let buyer_before = coin::balance<AptosCoin>(@0xb);
+        settlement_v1::cancel(&seller, a);
+        assert!(token::balance_of(@0xa, first) == 1, 100);
+        assert!(token::balance_of(@0xa, second) == 0, 101);
+        assert!(settlement_v1::has_escrow(b), 102);
+        assert!(marketplace::listing_status(b) == 1, 103);
+        assert!(coin::balance<AptosCoin>(@0xb) == buyer_before, 104);
+        assert!(coin::balance<AptosCoin>(@0xa) == 0, 105);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 7, location = marketplace::settlement_v1)]
+    fun audit_v1_cancel_then_buy_rejected() {
+        let (_, seller, buyer, _) = setup();
+        mint(&seller, b"one");
+        let id = list(&seller, b"one", 0);
+        settlement_v1::cancel(&seller, id);
+        settlement_v1::buy(&buyer, id, PRICE, 0);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 7, location = marketplace::settlement_v1)]
+    fun audit_v1_double_buy_rejected() {
+        let (_, seller, buyer, _) = setup();
+        mint(&seller, b"one");
+        let id = list(&seller, b"one", 0);
+        settlement_v1::buy(&buyer, id, PRICE, 0);
+        settlement_v1::buy(&buyer, id, PRICE, 0);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 7, location = marketplace::settlement_v1)]
+    fun audit_v1_buy_then_cancel_rejected() {
+        let (_, seller, buyer, _) = setup();
+        mint(&seller, b"one");
+        let id = list(&seller, b"one", 0);
+        settlement_v1::buy(&buyer, id, PRICE, 0);
+        settlement_v1::cancel(&seller, id);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 2, location = marketplace::marketplace)]
+    fun audit_v1_admin_cannot_cancel() {
+        let (admin, seller, _, _) = setup();
+        mint(&seller, b"one");
+        settlement_v1::cancel(&admin, list(&seller, b"one", 0));
+    }
+
+    #[test]
+    fun audit_v1_seller_capability_revives_after_cancel() {
+        let (_, seller, _, _) = setup();
+        let token_id = mint(&seller, b"one");
+        let cap = token::create_withdraw_capability(&seller, token_id, 1, 1000);
+        let id = list(&seller, b"one", 0);
+        settlement_v1::cancel(&seller, id);
+        let value = token::withdraw_with_capability(cap);
+        assert!(token::get_token_amount(&value) == 1, 100);
+        assert!(token::balance_of(@0xa, token_id) == 0, 101);
+        token::deposit_token(&seller, value);
+    }
+
+    #[test]
+    fun audit_v1_preexisting_buyer_capability_after_purchase() {
+        let (_, seller, buyer, _) = setup();
+        let token_id = mint(&seller, b"one");
+        token::deposit_token(&buyer, token::withdraw_token(&seller, token_id, 1));
+        let cap = token::create_withdraw_capability(&buyer, token_id, 1, 1000);
+        token::deposit_token(&seller, token::withdraw_token(&buyer, token_id, 1));
+        let id = list(&seller, b"one", 0);
+        settlement_v1::buy(&buyer, id, PRICE, 0);
+        let value = token::withdraw_with_capability(cap);
+        assert!(token::get_token_amount(&value) == 1, 100);
+        assert!(marketplace::listing_status(id) == 3, 101);
+        token::deposit_token(&buyer, value);
+    }
 }
