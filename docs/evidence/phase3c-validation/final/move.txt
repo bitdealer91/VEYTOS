@@ -1,0 +1,221 @@
+
+> veytos@0.0.1 move:test
+> node scripts/move.mjs test
+
+INCLUDING DEPENDENCY AptosFramework
+INCLUDING DEPENDENCY AptosStdlib
+INCLUDING DEPENDENCY AptosTokenObjects
+INCLUDING DEPENDENCY MoveStdlib
+BUILDING MintosLaunchpad
+Running Move unit tests
+[ PASS    ] 0xcafe::fee_policy_tests::acceptance_without_nomination_rejected
+[ PASS    ] 0xcafe::fee_policy_tests::admin_can_update_fee_recipient_and_pause
+[ PASS    ] 0xcafe::fee_policy::configuration_events
+[ PASS    ] 0xcafe::fee_policy_tests::admin_cannot_exceed_fee_cap
+[ PASS    ] 0xcafe::fee_policy_tests::admin_transfer_requires_acceptance
+[ PASS    ] 0xcafe::fee_policy_tests::cannot_reinitialize
+[ PASS    ] 0xcafe::fee_policy_tests::fee_rounding_is_batch_invariant
+[ PASS    ] 0xcafe::fee_policy_tests::fee_split_conserves_revenue
+[ PASS    ] 0xcafe::fee_policy_tests::full_u64_range_uses_wide_intermediate
+[ PASS    ] 0xcafe::fee_policy_tests::initializes_fee_and_recipient
+[ PASS    ] 0xcafe::fee_policy_tests::old_admin_loses_authority
+[ PASS    ] 0xcafe::fee_policy_tests::quote_fee_cap
+[ PASS    ] 0xcafe::fee_policy_tests::total_overflow_rejected
+[ PASS    ] 0xcafe::fee_policy_tests::unauthorized_admin_proposal
+[ PASS    ] 0xcafe::fee_policy_tests::unauthorized_fee_update
+[ PASS    ] 0xcafe::fee_policy_tests::unauthorized_initialization
+[ PASS    ] 0xcafe::fee_policy_tests::unauthorized_pause
+[ PASS    ] 0xcafe::fee_policy_tests::unauthorized_recipient_update
+[ PASS    ] 0xcafe::fee_policy_tests::wrong_account_cannot_accept
+[ PASS    ] 0xcafe::fee_policy_tests::zero_nominee_rejected
+[ PASS    ] 0xcafe::fee_policy_tests::zero_price_and_zero_fee
+[ PASS    ] 0xcafe::fee_policy_tests::zero_quantity_rejected
+[ PASS    ] 0xcafe::fee_policy_tests::zero_recipient_rejected
+[ PASS    ] 0xcafe::fee_policy_tests::zero_recipient_update_rejected
+[ PASS    ] 0xcafe::launchpad_tests::admin_cannot_clear_creator_pause
+[ PASS    ] 0xcafe::launchpad_tests::admin_cannot_seize_holder_nft
+[ PASS    ] 0xcafe::launchpad_tests::changed_fee_before_preparation_requires_review
+[ PASS    ] 0xcafe::launchpad_tests::creator_cannot_mint_as_native_collection_owner
+[ PASS    ] 0xcafe::launchpad_tests::creator_cannot_mint_as_native_creator
+[ PASS    ] 0xcafe::launchpad_tests::creator_cannot_transfer_authority
+[ PASS    ] 0xcafe::launchpad_tests::creator_cannot_transfer_native_collection
+[ PASS    ] 0xcafe::launchpad_tests::double_finalize
+[ PASS    ] 0xcafe::launchpad_tests::duplicate_metadata_name
+[ PASS    ] 0xcafe::launchpad_tests::duplicate_metadata_uri
+[ PASS    ] 0xcafe::launchpad_tests::duplicate_uri_across_chunks
+[ PASS    ] 0xcafe::launchpad_tests::exact_maximum_supply_and_open_ended_schedule
+[ PASS    ] 0xcafe::launchpad_tests::excessive_supply
+[ PASS    ] 0xcafe::launchpad_tests::expired_finalize
+[ PASS    ] 0xcafe::launchpad_tests::fee_review_mismatch
+[ PASS    ] 0xcafe::launchpad_tests::fee_snapshot_rounding_and_treasury_rotation
+[ PASS    ] 0xcafe::launchpad_tests::finalize_platform_paused
+[ PASS    ] 0xcafe::launchpad_tests::holder_transfers_while_platform_paused
+[ PASS    ] 0xcafe::launchpad_tests::incomplete_finalize
+[ PASS    ] 0xcafe::launchpad_tests::insufficient_apt
+[ PASS    ] 0xcafe::launchpad_tests::invalid_metadata_uri
+[ PASS    ] 0xcafe::launchpad_tests::invalid_royalty
+[ PASS    ] 0xcafe::launchpad_tests::invalid_schedule
+[ PASS    ] 0xcafe::launchpad_tests::invalid_transaction_limit
+[ PASS    ] 0xcafe::launchpad_tests::invalid_wallet_limit
+[ PASS    ] 0xcafe::launchpad_tests::max_price_uses_u128_and_pays_native_apt
+[ PASS    ] 0xcafe::launchpad_tests::max_total_protection
+[ PASS    ] 0xcafe::launchpad_tests::metadata_array_length_mismatch
+[ PASS    ] 0xcafe::launchpad_tests::metadata_chunk_bound
+[ PASS    ] 0xcafe::launchpad_tests::metadata_gap
+[ PASS    ] 0xcafe::launchpad_tests::metadata_overwrite
+[ PASS    ] 0xcafe::launchpad_tests::metadata_supply_mismatch
+[ PASS    ] 0xcafe::launchpad_tests::mint_admin_paused
+[ PASS    ] 0xcafe::launchpad_tests::mint_after_end
+[ PASS    ] 0xcafe::launchpad_tests::mint_at_end
+[ PASS    ] 0xcafe::launchpad_tests::mint_before_start
+[ PASS    ] 0xcafe::launchpad_tests::mint_creator_paused
+[ PASS    ] 0xcafe::launchpad_tests::mint_not_finalized
+[ PASS    ] 0xcafe::launchpad_tests::mint_platform_paused
+[ PASS    ] 0xcafe::launchpad_tests::mint_total_overflow
+[ PASS    ] 0xcafe::launchpad_tests::multi_mint_transfers_native_tokens_and_exact_payments
+[ PASS    ] 0xcafe::launchpad_tests::past_schedule
+[ PASS    ] 0xcafe::launchpad_tests::pause_unpause_restores_minting
+[ PASS    ] 0xcafe::launchpad_tests::post_finalize_append
+[ PASS    ] 0xcafe::launchpad_tests::prepare_append_finalize_native_collection
+[ PASS    ] 0xcafe::launchpad_tests::prepare_paused
+[ PASS    ] 0xcafe::launchpad_tests::quantity_over_limit
+[ PASS    ] 0xcafe::launchpad_tests::quantity_zero
+[ PASS    ] 0xcafe::launchpad_tests::remaining_supply_limit
+[ PASS    ] 0xcafe::launchpad_tests::single_mint_and_free_mint
+[ PASS    ] 0xcafe::launchpad_tests::sold_out
+[ PASS    ] 0xcafe::launchpad_tests::unauthorized_admin_pause
+[ PASS    ] 0xcafe::launchpad_tests::unauthorized_append
+[ PASS    ] 0xcafe::launchpad_tests::unauthorized_creator_pause
+[ PASS    ] 0xcafe::launchpad_tests::unauthorized_finalize
+[ PASS    ] 0xcafe::launchpad_tests::wallet_lifetime_limit
+[ PASS    ] 0xcafe::launchpad_tests::wrong_expected_price
+[ PASS    ] 0xcafe::launchpad_tests::zero_supply
+Test result: OK. Total tests: 82; passed: 82; failed: 0
+{
+  "Result": "Success"
+}
+INCLUDING DEPENDENCY AptosFramework
+INCLUDING DEPENDENCY AptosStdlib
+INCLUDING DEPENDENCY AptosToken
+INCLUDING DEPENDENCY AptosTokenObjects
+INCLUDING DEPENDENCY MoveStdlib
+BUILDING VeytosMarketplace
+Running Move unit tests
+[ PASS    ] 0xbeef::marketplace_fee_policy_tests::audit_old_admin_cannot_pause
+[ PASS    ] 0xbeef::marketplace_fee_policy_tests::audit_royalty_numerator_over_denominator
+[ PASS    ] 0xbeef::marketplace_fee_policy_tests::audit_u128_product_boundary
+[ PASS    ] 0xbeef::marketplace_fee_policy_tests::audit_zero_recipient_update
+[ PASS    ] 0xbeef::marketplace_fee_policy_tests::f01_initialize_defaults
+[ PASS    ] 0xbeef::marketplace_fee_policy_tests::f02_initialization_authorization
+[ PASS    ] 0xbeef::marketplace_fee_policy_tests::f03_reinitialization
+[ PASS    ] 0xbeef::marketplace_fee_policy_tests::f04_fee_update
+[ PASS    ] 0xbeef::marketplace_fee_policy_tests::f05_fee_cap
+[ PASS    ] 0xbeef::marketplace_fee_policy::configuration_events
+[ PASS    ] 0xbeef::marketplace_fee_policy_tests::f06_fee_authorization
+[ PASS    ] 0xbeef::marketplace_fee_policy_tests::f07_recipient_update
+[ PASS    ] 0xbeef::marketplace_fee_policy_tests::f08_invalid_recipient
+[ PASS    ] 0xbeef::marketplace_fee_policy_tests::f09_recipient_authorization
+[ PASS    ] 0xbeef::marketplace_fee_policy_tests::f10_two_step_admin_transfer
+[ PASS    ] 0xbeef::marketplace_fee_policy_tests::f11_wrong_admin_acceptance
+[ PASS    ] 0xbeef::marketplace_fee_policy_tests::f12_two_percent_exact_quote
+[ PASS    ] 0xbeef::marketplace_fee_policy_tests::f13_fee_rounding
+[ PASS    ] 0xbeef::marketplace_fee_policy_tests::f14_royalty_rounding
+[ PASS    ] 0xbeef::marketplace_fee_policy_tests::f15_combined_conservation
+[ PASS    ] 0xbeef::marketplace_fee_policy_tests::f16_excessive_deductions
+[ PASS    ] 0xbeef::marketplace_fee_policy_tests::f17_u64_boundary
+[ PASS    ] 0xbeef::marketplace_fee_policy_tests::f18_zero_price_policy
+[ PASS    ] 0xbeef::marketplace_fee_policy_tests::f19_storage_reimbursement_defaults_and_update
+[ PASS    ] 0xbeef::marketplace_fee_policy_tests::f20_storage_reimbursement_authorization
+[ PASS    ] 0xbeef::marketplace_fee_policy_tests::f21_storage_reimbursement_cap
+[ PASS    ] 0xbeef::marketplace_tests::g01_create_listing
+[ PASS    ] 0xbeef::settlement_v1_tests::audit_v1_admin_cannot_cancel
+[ PASS    ] 0xbeef::settlement_v2_tests::audit_v2_cancel_charges_no_reimbursement
+[ PASS    ] 0xbeef::marketplace_tests::g02_monotonic_ids
+[ PASS    ] 0xbeef::settlement_v2_tests::audit_v2_old_admin_cannot_update_registry
+[ PASS    ] 0xbeef::settlement_v1_tests::audit_v1_buy_then_cancel_rejected
+[ PASS    ] 0xbeef::marketplace_tests::g03_asset_key_uniqueness
+[ PASS    ] 0xbeef::settlement_v2_tests::audit_v2_revocation_does_not_block_existing_buy
+[ PASS    ] 0xbeef::marketplace_tests::g04_cross_standard_key_separation
+[ PASS    ] 0xbeef::settlement_v1_tests::audit_v1_cancel_paused_preserves_other_escrow_and_balances
+[ PASS    ] 0xbeef::marketplace_tests::g05_cancel_listing
+[ PASS    ] 0xbeef::settlement_v2_tests::v201_successful_listing
+[ PASS    ] 0xbeef::settlement_v1_tests::audit_v1_cancel_then_buy_rejected
+[ PASS    ] 0xbeef::marketplace_tests::g06_unauthorized_cancel
+[ PASS    ] 0xbeef::settlement_v2_tests::v202_successful_cancel
+[ PASS    ] 0xbeef::settlement_v1_tests::audit_v1_double_buy_rejected
+[ PASS    ] 0xbeef::marketplace_tests::g07_buy_listing
+[ PASS    ] 0xbeef::settlement_v2_tests::v203_successful_buy
+[ PASS    ] 0xbeef::marketplace_tests::g08_seller_buys_own_listing
+[ PASS    ] 0xbeef::settlement_v1_tests::audit_v1_preexisting_buyer_capability_after_purchase
+[ PASS    ] 0xbeef::marketplace_tests::g09_nonexistent_listing
+[ PASS    ] 0xbeef::settlement_v2_tests::v204_unowned_object
+[ PASS    ] 0xbeef::settlement_v1_tests::audit_v1_seller_capability_revives_after_cancel
+[ PASS    ] 0xbeef::marketplace_tests::g10_cancelled_replay
+[ PASS    ] 0xbeef::settlement_v2_tests::v205_nested_ownership
+[ PASS    ] 0xbeef::settlement_v1_tests::v101_successful_escrow
+[ PASS    ] 0xbeef::marketplace_tests::g11_sold_replay
+[ PASS    ] 0xbeef::settlement_v2_tests::v206_wrong_resource_type
+[ PASS    ] 0xbeef::marketplace_tests::g12_wrong_expected_price
+[ PASS    ] 0xbeef::settlement_v1_tests::v102_cancel_returns_exact_token
+[ PASS    ] 0xbeef::marketplace_tests::g13_immutable_price
+[ PASS    ] 0xbeef::settlement_v2_tests::v207_collection_identity
+[ PASS    ] 0xbeef::settlement_v1_tests::v103_buy_delivers_exact_token
+[ PASS    ] 0xbeef::marketplace_tests::g14_fee_snapshot
+[ PASS    ] 0xbeef::settlement_v2_tests::v208_ungated_transfer_disabled
+[ PASS    ] 0xbeef::settlement_v1_tests::v104_unowned_token_listing_fails
+[ PASS    ] 0xbeef::marketplace_tests::g15_recipient_rotation
+[ PASS    ] 0xbeef::settlement_v2_tests::v209_token_level_royalty
+[ PASS    ] 0xbeef::settlement_v1_tests::v105_wrong_identity_fails
+[ PASS    ] 0xbeef::marketplace_tests::g16_royalty_snapshot
+[ PASS    ] 0xbeef::marketplace_tests::g17_global_pause
+[ PASS    ] 0xbeef::settlement_v2_tests::v210_inherited_royalty
+[ PASS    ] 0xbeef::settlement_v1_tests::v106_nonzero_property_version
+[ PASS    ] 0xbeef::marketplace_tests::g18_v1_adapter_pause
+[ PASS    ] 0xbeef::settlement_v2_tests::v211_no_royalty
+[ PASS    ] 0xbeef::settlement_v1_tests::v107_semi_fungible_rejected
+[ PASS    ] 0xbeef::marketplace_tests::g19_v2_adapter_pause
+[ PASS    ] 0xbeef::marketplace_tests::g20_cancellation_during_pause
+[ PASS    ] 0xbeef::settlement_v1_tests::v108_exact_amount_is_one
+[ PASS    ] 0xbeef::settlement_v2_tests::v212_mutable_royalty_snapshot
+[ PASS    ] 0xbeef::marketplace_tests::g21_pause_authorization
+[ PASS    ] 0xbeef::settlement_v1_tests::v109_exact_royalty_is_snapshotted
+[ PASS    ] 0xbeef::settlement_v2_tests::v213_isolated_capability_scope
+[ PASS    ] 0xbeef::marketplace_tests::g22_event_consistency
+[ PASS    ] 0xbeef::settlement_v1_tests::v110_malformed_royalty_rejected
+[ PASS    ] 0xbeef::settlement_v2_tests::v214_no_nft_capabilities_retained
+[ PASS    ] 0xbeef::marketplace_tests::g23_storage_reimbursement_snapshot
+[ PASS    ] 0xbeef::marketplace_tests::g24_wrong_expected_storage_reimbursement
+[ PASS    ] 0xbeef::settlement_v2_tests::v215_seller_cannot_move_escrowed_nft
+[ PASS    ] 0xbeef::settlement_v1_tests::v111_mutable_royalty_uses_listing_snapshot
+[ PASS    ] 0xbeef::settlement_v2_tests::v216_admin_cannot_move_escrow
+[ PASS    ] 0xbeef::settlement_v1_tests::v112_creator_royalty_payment
+[ PASS    ] 0xbeef::settlement_v2_tests::v217_reviewed_collection_registry
+[ PASS    ] 0xbeef::settlement_v1_tests::v113_cancel_does_not_require_direct_transfer_opt_in
+[ PASS    ] 0xbeef::settlement_v2_tests::v218_unreviewed_collection_rejected
+[ PASS    ] 0xbeef::settlement_v1_tests::v114_buy_initializes_buyer_token_store
+[ PASS    ] 0xbeef::settlement_v2_tests::v219_retained_creator_transfer_ref_threat
+[ PASS    ] 0xbeef::settlement_v1_tests::v115_property_mutation_cannot_touch_escrow
+[ PASS    ] 0xbeef::settlement_v1_tests::v116_admin_has_no_escrow_seizure_path
+[ PASS    ] 0xbeef::settlement_v2_tests::v220_unrelated_assets_untouched
+[ PASS    ] 0xbeef::settlement_v2_tests::v221_malformed_native_royalty_rejected_at_source
+[ PASS    ] 0xbeef::settlement_v1_tests::v117_seller_cannot_double_spend_escrow
+[ PASS    ] 0xbeef::settlement_v2_tests::v222_pause_does_not_trap_cancellation
+[ PASS    ] 0xbeef::settlement_v1_tests::v118_unrelated_token_remains_untouched
+[ PASS    ] 0xbeef::settlement_v2_tests::v223_wrong_expected_price
+[ PASS    ] 0xbeef::settlement_v1_tests::v119_preexisting_withdraw_capability_cannot_withdraw_escrow
+[ PASS    ] 0xbeef::settlement_v2_tests::v224_cancel_then_buy_fails
+[ PASS    ] 0xbeef::settlement_v1_tests::v120_buyer_controls_token_after_settlement
+[ PASS    ] 0xbeef::settlement_v2_tests::v225_buy_then_cancel_fails
+[ PASS    ] 0xbeef::settlement_v2_tests::v226_v2_pause_blocks_listing
+[ PASS    ] 0xbeef::settlement_v2_tests::v227_global_pause_blocks_buy
+[ PASS    ] 0xbeef::settlement_v2_tests::v228_revocation_does_not_trap_existing_escrow
+[ PASS    ] 0xbeef::settlement_v2_tests::v229_nonadmin_cannot_update_registry
+[ PASS    ] 0xbeef::settlement_v2_tests::v230_noncollection_registry_entry_rejected
+[ PASS    ] 0xbeef::settlement_v2_tests::v231_insufficient_payment_aborts_purchase
+[ PASS    ] 0xbeef::settlement_v2_tests::v232_double_buy_fails
+[ PASS    ] 0xbeef::settlement_v2_tests::v233_wrong_storage_reimbursement_leaves_purchase_unexecutable
+[ PASS    ] 0xbeef::settlement_v2_tests::v234_lightweight_escrow_has_no_terminal_shell
+Test result: OK. Total tests: 114; passed: 114; failed: 0
+{
+  "Result": "Success"
+}

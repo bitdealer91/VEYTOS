@@ -1,0 +1,11 @@
+{
+  "baseline": "d77a27b",
+  "productionSources": {
+    "move/launchpad/sources/fee_policy.move": "6ed52a946791432b0d9fe6981d8068cbdc4b09ec515fdbd20874dc483f315d4f",
+    "move/launchpad/sources/launchpad.move": "9289ddb5cf12c00ca6f4375b28e8229bd808d6daa4dd1985df32882f7a512497",
+    "move/marketplace/sources/marketplace.move": "114653ce581797d0dde158a3cf3af4e30b7b6c3c8a2284715e7a1b52fdb47730",
+    "move/marketplace/sources/marketplace_fee_policy.move": "372f30d603fe1c58fbd3ff04aedce2ffcb7726efe161aa72a89ee3a0fceea4ac",
+    "move/marketplace/sources/settlement_v1.move": "eb513428356770484055eed2a6de5e532b2c2e95b3b63bd073a129a151650198",
+    "move/marketplace/sources/settlement_v2.move": "78598303891e6759a53949b89788d80da51663772c9fe96aecfbbbbf783d958a"
+  }
+}

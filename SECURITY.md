@@ -1,5 +1,10 @@
 # Security status
 
+Phase 3C current review package: [auditor handoff](docs/audit/AUDIT_HANDOFF.md),
+[coverage gaps](docs/audit/TEST_COVERAGE_MATRIX.md), and
+[mainnet release gate](docs/MAINNET_RELEASE_GATE.md). No independent external audit
+has been completed. Phase 3C leaves all production Move source unchanged.
+
 The launchpad is an early implementation and is **not audited or mainnet-ready**.
 The fee policy and native Digital Asset launchpad passed 82 Move tests and real
 testnet Gate A: creator launch, independent buyer mint, owner/counter/event checks
@@ -50,7 +55,7 @@ and verify published metadata. Do not describe this development package as immut
 
 The V2 fee policy, shared lifecycle and isolated escrow implementation passed 73
 marketplace Move tests and live Aptos testnet Gate D. It remains unaudited,
-upgradeable and not mainnet-ready. V1 settlement is not implemented. See
+upgradeable and not mainnet-ready. V1 settlement is now implemented; the counts in this historical paragraph predate it. See
 `docs/MARKETPLACE_ARCHITECTURE.md` and `docs/MARKETPLACE_TESTNET_ACCEPTANCE.md`.
 
 - **Fake listings and ownership claims:** entry functions derive identity and owner
@@ -83,7 +88,7 @@ upgradeable and not mainnet-ready. V1 settlement is not implemented. See
   `u64` only after bounds checks, floors each deduction from gross and assigns the
   complete remainder to seller. Conservation is asserted.
 - **Escrow authority leakage:** V1 stores a linear `Token` value in a private table.
-  V2 uses one untransferable, nondeletable escrow object and one private ExtendRef per
+  V2 uses one unique signer address without an ObjectCore shell and one private ExtendRef per
   listing. No token capability or generated signer is returned or exposed.
 - **Admin compromise:** separate secondary fee policy is capped at 5% and rotates
   admin with two signatures. Admin can pause and change future fees/treasury, but
@@ -103,11 +108,13 @@ upgradeable and not mainnet-ready. V1 settlement is not implemented. See
 
 Residual risks requiring external review include package upgrades, V2 retained
 creator capabilities, unusual framework-compatible token configurations, royalty
-policy expectations, storage growth from terminal records/escrow shells, and gas
+policy expectations, storage growth from terminal records (current V2 leaves no ObjectCore shell), and gas
 bounds under adversarial state. Testnet also showed that purchase-time removal of
 the escrow table entry refunds storage to the buyer transaction sender even though
 the seller paid listing-time storage costs. Sale-price conservation is exact, but
-this network-cost allocation needs an explicit mainnet policy decision.
+the implemented separate reimbursement snapshots require fresh mainnet calibration.
+Source defaults are V1=0 and V2=926400 octas; V1 testnet acceptance configured
+926400 explicitly. See the audit limitations and storage economics document.
 
 ## Required review areas before launch
 

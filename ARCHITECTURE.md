@@ -1,5 +1,9 @@
 # Mintos — Phase 1 architecture
 
+Historical Phase 1 design: later marketplace/indexer work supersedes several status
+statements below. For the current Phase 3C security boundary, framework pins,
+custody and operational assumptions, use [AUDIT_HANDOFF](docs/audit/AUDIT_HANDOFF.md).
+
 Status: Phase 1A / Gate A passed on real testnet; not audited or mainnet-ready.
 Research date: 2026-09-23. Scope: creator self-service NFT launchpad on Aptos.
 Tagline: The NFT home of Aptos. Product copy comes from `packages/config`.

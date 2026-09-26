@@ -1,0 +1,16 @@
+
+> veytos@0.0.1 test:frontend
+> npm run test --workspace @veytos/web
+
+
+> @veytos/web@0.1.0 test
+> vitest run
+
+
+ RUN  v5.0.1 /Users/maksim/projects/Mintera/apps/web
+
+
+ Test Files  8 passed (8)
+      Tests  57 passed (57)
+   Start at  18:57:17
+   Duration  1.85s (environment 61%, tests 11%, import 11%, setup 9%, transform 8%)

@@ -114,9 +114,9 @@ configuration. The representative NFT used direct linear `0x3::token::Token` cus
 nonzero `property_version`.
 
 The first Token V1 cancellation deleted the private escrow table item and shared active-asset
-table item, refunding `926,400` octas to the seller transaction sender. The adapter therefore uses
-the same initial `926,400` octa reimbursement as V2, but this is a measured result rather than an
-assumption. The value remains independently configurable through the V1 policy field.
+table item, refunding `926,400` octas to the seller transaction sender. The acceptance run explicitly configured
+`926,400` octas for V1, matching its measured sample. The production source initialization
+default for V1 is **zero**, unlike V2; this operational configuration is not a source default. The value remains independently configurable through the V1 policy field.
 
 Token V1 LIST also removed the NFT's row from the seller's `TokenStore`. That deletion generated a
 `480,400` octa refund to the seller while the same transaction charged `1,448,800` octas for new

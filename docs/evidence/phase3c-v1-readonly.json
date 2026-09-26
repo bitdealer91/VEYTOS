@@ -1,0 +1,180 @@
+{
+  "observedAt": "2026-09-26T15:58:49.728866+00:00",
+  "network": "mainnet",
+  "operation": "read-only ledger/resource/table queries; no signing or transaction submission",
+  "source": "https://api.mainnet.aptoslabs.com/v1",
+  "collections": [
+    {
+      "name": "Aptos Monkeys",
+      "creator": "0xf932dcb9835e681b21d2f411ef99f4f5e577e6ac299eebee2272a39fb348f702",
+      "sample": "AptosMonkeys #1",
+      "tokenDataHandle": "0xdbf0eaecdbacc59c9aecc83cea1365faa9aa6fb1f8a85f3048ab291a6238378f",
+      "tokenData": {
+        "default_properties": {
+          "map": {
+            "data": []
+          }
+        },
+        "description": "",
+        "largest_property_version": "0",
+        "maximum": "1",
+        "mutability_config": {
+          "description": true,
+          "maximum": true,
+          "properties": true,
+          "royalty": true,
+          "uri": true
+        },
+        "name": "AptosMonkeys #1",
+        "royalty": {
+          "payee_address": "0x89e272841c2381ec63e7d8ccf6a70bd784b2a9dda6d6425aeb31657f4a5619c0",
+          "royalty_points_denominator": "10000",
+          "royalty_points_numerator": "500"
+        },
+        "supply": "1",
+        "uri": "ipfs://bafybeihnochxvsv6h43qvg4snenpeasoml66nwxhuiadfzkefix7vbetyq/1.json"
+      },
+      "ledgerHeaders": {
+        "x-aptos-chain-id": "1",
+        "x-aptos-ledger-version": "7372467990",
+        "x-aptos-ledger-oldest-version": "7222667993",
+        "x-aptos-ledger-timestampusec": "1790438351253200",
+        "x-aptos-epoch": "17423",
+        "x-aptos-block-height": "1072101906",
+        "x-aptos-oldest-block-height": "1047690675"
+      }
+    },
+    {
+      "name": "Aptomingos",
+      "creator": "0xc0e3fbf8ae61056d66ce624d71ccf1888f879355cc4e364ef117249b5e3160a8",
+      "sample": "Aptomingo #1",
+      "tokenDataHandle": "0x6436e04f8c26e378ab6cd463fbeb3a040d0bf9b01e16387044f9c6fc29946b6",
+      "tokenData": {
+        "default_properties": {
+          "map": {
+            "data": []
+          }
+        },
+        "description": "",
+        "largest_property_version": "0",
+        "maximum": "1",
+        "mutability_config": {
+          "description": true,
+          "maximum": true,
+          "properties": true,
+          "royalty": true,
+          "uri": true
+        },
+        "name": "Aptomingo #1",
+        "royalty": {
+          "payee_address": "0x4230ae221d653cc39b40140f11783a45b557fe560b21461dacbd46094bf1b7b3",
+          "royalty_points_denominator": "10000",
+          "royalty_points_numerator": "800"
+        },
+        "supply": "1",
+        "uri": "https://arweave.net/AMVJChjrZgKxrs6egoRehMQ_4qsUK176zlf5HHQFOFk"
+      },
+      "ledgerHeaders": {
+        "x-aptos-chain-id": "1",
+        "x-aptos-ledger-version": "7372468113",
+        "x-aptos-ledger-oldest-version": "7222668118",
+        "x-aptos-ledger-timestampusec": "1790438352478867",
+        "x-aptos-epoch": "17423",
+        "x-aptos-block-height": "1072101929",
+        "x-aptos-oldest-block-height": "1047690698"
+      }
+    },
+    {
+      "name": "Bruh Bears",
+      "creator": "0x043ec2cb158e3569842d537740fd53403e992b9e7349cc5d3dfaa5aff8faaef2",
+      "sample": "Bruh Bear #1",
+      "tokenDataHandle": "0xba0ae903f5d5c58d5570157824f18b243d0529959e9a12669ab32a03524a1846",
+      "tokenData": {
+        "default_properties": {
+          "map": {
+            "data": []
+          }
+        },
+        "description": "",
+        "largest_property_version": "1",
+        "maximum": "1",
+        "mutability_config": {
+          "description": true,
+          "maximum": true,
+          "properties": true,
+          "royalty": true,
+          "uri": true
+        },
+        "name": "Bruh Bear #1",
+        "royalty": {
+          "payee_address": "0x5aa4efe9703ffba6082906721756da68b9f7e8d256ed719cf49c40cab3938650",
+          "royalty_points_denominator": "10000",
+          "royalty_points_numerator": "550"
+        },
+        "supply": "1",
+        "uri": "ipfs://bafybeibf75g6wku4pwupmqskzfoyshuwvsh7anypf7s24cydmyxtcidyym/1.json"
+      },
+      "ledgerHeaders": {
+        "x-aptos-chain-id": "1",
+        "x-aptos-ledger-version": "7372468286",
+        "x-aptos-ledger-oldest-version": "7222668296",
+        "x-aptos-ledger-timestampusec": "1790438353630518",
+        "x-aptos-epoch": "17423",
+        "x-aptos-block-height": "1072101965",
+        "x-aptos-oldest-block-height": "1047690733"
+      }
+    },
+    {
+      "name": "Pontem Space Pirates",
+      "creator": "0xc46dd298b89d38314b486b2182a6163c4c955dce3509bf30751c307f5ecc2f36",
+      "sample": "Space Pirate #1",
+      "tokenDataHandle": "0x53c9b18b912930a91df1d727e0333cac55b830405e2a4b305772c88fec2f3845",
+      "tokenData": {
+        "default_properties": {
+          "map": {
+            "data": []
+          }
+        },
+        "description": "",
+        "largest_property_version": "0",
+        "maximum": "1",
+        "mutability_config": {
+          "description": true,
+          "maximum": true,
+          "properties": true,
+          "royalty": true,
+          "uri": true
+        },
+        "name": "Space Pirate #1",
+        "royalty": {
+          "payee_address": "0xf9359556f1101567722a17cabe506670e0627d20b0b8048cfa9ab9a4f719f771",
+          "royalty_points_denominator": "10000",
+          "royalty_points_numerator": "0"
+        },
+        "supply": "1",
+        "uri": "ipfs://bafybeif5ivdrbtbrzhfcicrizmmew5v22kud2lvtajl43x5d2jji4nybje/1.json"
+      },
+      "ledgerHeaders": {
+        "x-aptos-chain-id": "1",
+        "x-aptos-ledger-version": "7372468394",
+        "x-aptos-ledger-oldest-version": "7222668394",
+        "x-aptos-ledger-timestampusec": "1790438354619403",
+        "x-aptos-epoch": "17423",
+        "x-aptos-block-height": "1072101988",
+        "x-aptos-oldest-block-height": "1047690757"
+      }
+    }
+  ],
+  "ledger": {
+    "chain_id": 1,
+    "epoch": "17423",
+    "ledger_version": "7372467844",
+    "oldest_ledger_version": "7222667853",
+    "ledger_timestamp": "1790438350125432",
+    "node_role": "full_node",
+    "oldest_block_height": "1047690646",
+    "block_height": "1072101877",
+    "git_hash": "b5756b2a83883b004f05a89dca27faa85059b298",
+    "encryption_key": null
+  }
+}

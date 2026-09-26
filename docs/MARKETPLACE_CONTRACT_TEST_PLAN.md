@@ -1,5 +1,10 @@
 # Marketplace contract test plan
 
+Phase 3C review: this is the original scenario plan, not a coverage certificate.
+[TEST_COVERAGE_MATRIX](audit/TEST_COVERAGE_MATRIX.md) records actual named tests,
+partial/missing cases and source-order differences. Current V2 escrow uses a unique
+signer address without an ObjectCore shell; shell references below are historical.
+
 Status: Phase 2A approved. Phase 2B implements this plan test-first. V2 settlement
 precedes V1 and must pass testnet Gate D before any V1 implementation begins.
 
