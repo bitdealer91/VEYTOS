@@ -16,7 +16,7 @@ Required production variables are documented in `apps/web/.env.example`. `APTOS_
 
 ## Worker recovery
 
-The worker commits events, listing state, launchpad events, and its next ledger version in one database transaction. Inserts are conflict-safe. A crash rolls back the batch; restart the same command and processing resumes from `indexer_checkpoints`. Run only one worker per `(network, marketplace module)` until database advisory locking is added.
+The worker commits marketplace events, listing state, launchpad events, and its next ledger version in one database transaction. Inserts are conflict-safe. A crash rolls back the batch; restart the same command and processing resumes from `indexer_checkpoints`. A PostgreSQL advisory lock prevents two workers for the same processor from racing. Web discovery reads `CollectionCreated` addresses from this projection and verifies each drop through the launchpad fullnode view; configured address/hash lists are local fallbacks only.
 
 ## Troubleshooting
 
