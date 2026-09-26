@@ -1,7 +1,8 @@
 'use client';
-import { useId, useRef, useState } from 'react';
+import Link from 'next/link';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
-import { Wallet, X, ArrowUpRight, LogOut } from 'lucide-react';
+import { Wallet, X, ArrowUpRight, LogOut, Copy, UserRound, Check, ChevronDown } from 'lucide-react';
 import { explorer } from '@/lib/config';
 import { useWalletError } from './providers';
 import { readableError } from '@veytos/aptos/domain';
@@ -9,13 +10,16 @@ import { brand } from '@mintos/config';
 import { trackBetaEvent } from './beta-analytics';
 import { reportClientError } from '@/lib/observability';
 export function WalletButton({label='Connect wallet'}:{label?:string}) {
-  const titleId=useId();const wallet=useWallet(); const dialog=useRef<HTMLDialogElement>(null);const [busy,setBusy]=useState('');const [error,setError]=useState('');const providerError=useWalletError();
+  const titleId=useId();const wallet=useWallet(); const dialog=useRef<HTMLDialogElement>(null);const menu=useRef<HTMLDivElement>(null);const [menuOpen,setMenuOpen]=useState(false);const [copied,setCopied]=useState(false);const [busy,setBusy]=useState('');const [error,setError]=useState('');const providerError=useWalletError();
   const account=wallet.account;const ready=wallet.connected&&!!account;
+  useEffect(()=>{if(!menuOpen)return;function close(event:MouseEvent){if(!menu.current?.contains(event.target as Node))setMenuOpen(false);}function escape(event:KeyboardEvent){if(event.key==='Escape')setMenuOpen(false);}document.addEventListener('mousedown',close);document.addEventListener('keydown',escape);return()=>{document.removeEventListener('mousedown',close);document.removeEventListener('keydown',escape);};},[menuOpen]);
   async function connect(name:Parameters<typeof wallet.connect>[0]){setError('');providerError.clear();setBusy(String(name));try{await wallet.connect(name);trackBetaEvent('wallet_connected',{wallet:String(name)});}catch(e){setError(readableError(e));reportClientError(e,'wallet_adapter');}finally{setBusy('');}}
   const buttonLabel=wallet.connected&&wallet.account?`${wallet.account.address.toString().slice(0,6)}…${wallet.account.address.toString().slice(-4)}`:label;
-  return <><button className="button wallet-button" aria-label={buttonLabel} onClick={()=>dialog.current?.showModal()}><Wallet size={16}/><span>{buttonLabel}</span></button>
+  async function copyAddress(){if(!account)return;await navigator.clipboard.writeText(account.address.toString());setCopied(true);setTimeout(()=>setCopied(false),1600);}
+  return <div className="wallet-control" ref={menu}><button className="button wallet-button" aria-label={ready?`Wallet ${buttonLabel}. Open account menu`:buttonLabel} aria-haspopup={ready?'menu':'dialog'} aria-expanded={ready?menuOpen:undefined} onClick={()=>ready?setMenuOpen(value=>!value):dialog.current?.showModal()}><Wallet size={16}/><span>{buttonLabel}</span>{ready&&<ChevronDown className="wallet-chevron" size={14}/>}</button>
+    {ready&&account&&menuOpen&&<div className="wallet-menu" role="menu"><div className="wallet-menu-account"><span className="eyebrow">CONNECTED · APTOS</span><strong>{buttonLabel}</strong></div><Link role="menuitem" href={`/profile/${account.address.toString()}`} onClick={()=>setMenuOpen(false)}><UserRound size={16}/>Profile</Link><button role="menuitem" onClick={copyAddress}>{copied?<Check size={16}/>:<Copy size={16}/>} {copied?'Copied':'Copy address'}</button><a role="menuitem" target="_blank" rel="noreferrer" href={explorer('account',account.address.toString())}><ArrowUpRight size={16}/>View on Explorer</a><div className="wallet-menu-separator"/><button role="menuitem" onClick={async()=>{setMenuOpen(false);await wallet.disconnect();}}><LogOut size={16}/>Disconnect</button></div>}
     <dialog ref={dialog} className="dialog" aria-labelledby={titleId}><div className="dialog-head"><span className="eyebrow">{brand.name} · APTOS</span><button className="icon-button" aria-label="Close wallet dialog" onClick={()=>dialog.current?.close()}><X size={20}/></button></div><h2 id={titleId}>{ready?'Your wallet':'A collection starts with a connection.'}</h2><p className="muted">{ready?'You control your assets. Connecting does not create an authenticated account.':'Choose an Aptos wallet. Your keys stay with you.'}</p>
     {ready&&account?<div className="stack"><a className="button primary" target="_blank" rel="noreferrer" href={explorer('account',account.address.toString())}>View account on Aptos <ArrowUpRight size={16}/></a><button className="button" onClick={async()=>{await wallet.disconnect();dialog.current?.close();}}><LogOut size={16}/>Disconnect</button></div>:wallet.connected?<p className="notice">Refreshing the selected wallet account…</p>:<div className="stack">{wallet.wallets.map(w=><button key={w.name} className="wallet-option" disabled={!!busy} onClick={()=>connect(w.name)}><span>{w.name}</span><span>{busy===w.name?'Connecting…':<ArrowUpRight size={18}/>}</span></button>)}{!wallet.wallets.length&&<p>Looking for compatible wallets…</p>}<a className="wallet-option" href="https://petra.app" target="_blank" rel="noreferrer"><span>Get Petra <small>Browser extension & mobile</small></span><ArrowUpRight size={18}/></a></div>}
     {(error||providerError.message)&&<p className="notice error" role="alert">{error||providerError.message}</p>}
-    {ready&&<p className="notice success" role="status">Wallet connected. You can close this panel.</p>}<p className="caption muted">Only approve transactions you understand. {brand.name} will never ask for your recovery phrase.</p></dialog></>;
+    {ready&&<p className="notice success" role="status">Wallet connected. You can close this panel.</p>}<p className="caption muted">Only approve transactions you understand. {brand.name} will never ask for your recovery phrase.</p></dialog></div>;
 }
