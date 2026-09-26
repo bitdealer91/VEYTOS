@@ -32,7 +32,10 @@ const publicSchema = z.object({
   NEXT_PUBLIC_MARKETPLACE_ADDRESS: optionalAddress,
   NEXT_PUBLIC_APP_URL: z.url().default("http://localhost:3000"),
   NEXT_PUBLIC_IPFS_GATEWAY: z.url().default("https://ipfs.io/ipfs/"),
+  NEXT_PUBLIC_ARWEAVE_GATEWAY: z.url().default("https://arweave.net/"),
   NEXT_PUBLIC_APTOS_FULLNODE_URL: z.url().optional(),
+  NEXT_PUBLIC_APTOS_INDEXER_URL: z.url().optional(),
+  NEXT_PUBLIC_FEEDBACK_URL: z.url().optional(),
 });
 
 export function readPublicConfig(env: Record<string, string | undefined>) {

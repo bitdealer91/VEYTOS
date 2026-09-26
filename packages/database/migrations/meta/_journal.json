@@ -8,6 +8,20 @@
       "when": 1790162113673,
       "tag": "0000_faulty_harrier",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790162113674,
+      "tag": "0001_marketplace_projection",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790162113675,
+      "tag": "0002_beta_launchpad_projection",
+      "breakpoints": true
     }
   ]
 }

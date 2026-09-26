@@ -1,0 +1,25 @@
+name: Public beta issue
+description: Report a reproducible VEYTOS testnet beta problem
+title: "[Beta] "
+labels: ["beta"]
+body:
+  - type: markdown
+    attributes:
+      value: "Never include a seed phrase, private key, or wallet recovery information. Transaction hashes and public wallet addresses are public blockchain data."
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: [Browse, Wallet, Mint, List, Cancel, Buy, Metadata, Other]
+    validations: { required: true }
+  - type: textarea
+    id: steps
+    attributes:
+      label: What happened?
+      description: Include short reproduction steps and an optional public testnet transaction hash.
+    validations: { required: true }
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and wallet
+      placeholder: "Chrome 140, Petra"

@@ -1,10 +1,9 @@
 import { isIpfsUri } from '../../../../packages/domain/src/metadata';
 import { config } from './config';
 export function gatewayUrl(uri: string) {
-  if(!isIpfsUri(uri))return null;
-  const gateway=new URL(config.NEXT_PUBLIC_IPFS_GATEWAY);
-  if(gateway.protocol!=='https:')return null;
-  return `${gateway.href.replace(/\/$/,'')}/${uri.slice(7)}`;
+  if(isIpfsUri(uri)){const gateway=new URL(config.NEXT_PUBLIC_IPFS_GATEWAY);if(gateway.protocol!=='https:')return null;return `${gateway.href.replace(/\/$/,'')}/${uri.slice(7)}`;}
+  if(uri.startsWith('ar://')){const gateway=new URL(config.NEXT_PUBLIC_ARWEAVE_GATEWAY);if(gateway.protocol!=='https:')return null;return `${gateway.href.replace(/\/$/,'')}/${uri.slice(5)}`;}
+  try{const url=new URL(uri);return url.protocol==='https:'?url.href:null;}catch{return null;}
 }
 export async function loadMetadata(uri: string):Promise<{image:string|null;description:string|null}> {
   const url=gatewayUrl(uri);if(!url)throw new Error('Metadata unavailable');

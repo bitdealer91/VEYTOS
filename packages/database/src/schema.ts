@@ -188,6 +188,13 @@ export const marketplaceEvents = pgTable("marketplace_events", {
   check("marketplace_event_type", sql`${t.eventType} IN ('LISTED','CANCELLED','PURCHASED')`),
 ]);
 
+export const launchpadEvents = pgTable("launchpad_events", {
+  network: network().notNull(), moduleAddress: text("module_address").notNull(),
+  transactionVersion: u64("transaction_version").notNull(), eventIndex: integer("event_index").notNull(),
+  transactionHash: text("transaction_hash").notNull(), eventType: text("event_type").notNull(),
+  payload: jsonb().notNull(), chainTimestamp: timestamp("chain_timestamp", { withTimezone: true }).notNull(),
+}, (t) => [primaryKey({ columns: [t.network,t.moduleAddress,t.transactionVersion,t.eventIndex] }),index("launchpad_activity_version_idx").on(t.network,t.moduleAddress,t.transactionVersion),u64Check("launchpad_event_version_u64",t.transactionVersion)]);
+
 export const authChallenges = pgTable("auth_challenges", {
   id: uuid().defaultRandom().primaryKey(), nonceHash: text("nonce_hash").notNull().unique(),
   domain: text().notNull(), uri: text().notNull(), network: network().notNull(),

@@ -6,6 +6,18 @@ import type { TokenIdentity } from '@veytos/aptos/types';
 import { aptos, marketChain } from './chain';
 import { marketplaceAddress, network } from './config';
 
+export type BrowseListing={listing_id:string;standard:'v1'|'v2';asset_key:string;collection_key:string;seller_address:string;price_octas:string;listed_version:string};
+export const marketplaceBrowse=cache(async(options:{standard?:string;collection?:string;minPrice?:string;maxPrice?:string;sort?:string;limit?:number}={})=>{
+  if(!process.env.DATABASE_URL||!marketplaceAddress)return {items:[] as BrowseListing[],configured:false};
+  const limit=Math.min(100,Math.max(1,options.limit??48));const clauses=['network=$1','module_address=$2',"status='ACTIVE'"];const values:unknown[]=[network,marketplaceAddress];
+  if(options.standard==='v1'||options.standard==='v2'){values.push(options.standard);clauses.push(`standard=$${values.length}`);}
+  if(options.collection){values.push(`%${options.collection.replace(/[%_]/g,'')}%`);clauses.push(`collection_key ILIKE $${values.length}`);}
+  if(options.minPrice&&/^\d+$/.test(options.minPrice)){values.push(options.minPrice);clauses.push(`price_octas >= $${values.length}`);}
+  if(options.maxPrice&&/^\d+$/.test(options.maxPrice)){values.push(options.maxPrice);clauses.push(`price_octas <= $${values.length}`);}
+  const order=options.sort==='price-asc'?'price_octas ASC':options.sort==='price-desc'?'price_octas DESC':'listed_version DESC';values.push(limit);
+  const pool=new pg.Pool({connectionString:process.env.DATABASE_URL,max:1});try{const result=await pool.query<BrowseListing>(`SELECT listing_id,standard,asset_key,collection_key,seller_address,price_octas,listed_version FROM marketplace_listings WHERE ${clauses.join(' AND ')} ORDER BY ${order} LIMIT $${values.length}`,values);return {items:result.rows,configured:true};}finally{await pool.end();}
+});
+
 export const activeListingFor = cache(async (identity: TokenIdentity, collectionId?: string) => {
   // Trading pages use the fullnode's canonical active_assets table. The database
   // and Indexer are projections for discovery and must never override this read.

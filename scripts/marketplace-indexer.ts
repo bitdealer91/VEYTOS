@@ -10,6 +10,8 @@ const network = process.env.APTOS_NETWORK;
 assert(network === 'testnet' || network === 'mainnet' || network === 'devnet', 'APTOS_NETWORK is required');
 const moduleAddress = canonical(process.env.MARKETPLACE_ADDRESS || '');
 const endpoint = process.env.APTOS_FULLNODE_URL || `https://api.${network}.aptoslabs.com/v1`;
+const launchpadAddress = process.env.LAUNCHPAD_ADDRESS ? canonical(process.env.LAUNCHPAD_ADDRESS) : null;
+const apiKey=process.env.APTOS_API_KEY;
 const processor = `marketplace:${moduleAddress}`;
 const pool = new pg.Pool({ connectionString: databaseUrl, max: 2 });
 
@@ -18,8 +20,8 @@ async function checkpoint(client: pg.PoolClient) {
     'SELECT next_version FROM indexer_checkpoints WHERE network=$1 AND processor=$2', [network, processor],
   );
   if (result.rows[0]) return BigInt(result.rows[0].next_version);
-  const configured = process.env.MARKETPLACE_START_VERSION;
-  assert(configured && /^\d+$/.test(configured), 'MARKETPLACE_START_VERSION is required for first run');
+  const configured = process.env.BETA_INDEXER_START_VERSION || process.env.MARKETPLACE_START_VERSION;
+  assert(configured && /^\d+$/.test(configured), 'BETA_INDEXER_START_VERSION is required for first run');
   return BigInt(configured);
 }
 
@@ -28,7 +30,7 @@ async function runBatch() {
   try {
     await client.query('BEGIN');
     const start = await checkpoint(client);
-    const response = await fetch(`${endpoint}/transactions?start=${start}&limit=100`);
+    const response = await fetch(`${endpoint}/transactions?start=${start}&limit=100`,{headers:apiKey?{Authorization:`Bearer ${apiKey}`}:{}});
     if (!response.ok) throw new Error(`Fullnode transaction fetch failed: ${response.status}`);
     const transactions = await response.json() as unknown[];
     let next = start;
@@ -36,6 +38,7 @@ async function runBatch() {
       const tx = transaction as { version?: string; success?: boolean };
       assert(tx.version && /^\d+$/.test(tx.version), 'Transaction version missing');
       next = BigInt(tx.version) + 1n;
+      if(tx.success&&launchpadAddress){const raw=transaction as {hash:string;timestamp:string;events?:Array<{type:string;data:unknown}>};for(const [eventIndex,event] of (raw.events||[]).entries()){if(!event.type.startsWith(`${launchpadAddress}::launchpad::`))continue;await client.query(`INSERT INTO launchpad_events(network,module_address,transaction_version,event_index,transaction_hash,event_type,payload,chain_timestamp) VALUES($1,$2,$3,$4,$5,$6,$7,to_timestamp($8)) ON CONFLICT DO NOTHING`,[network,launchpadAddress,tx.version,eventIndex,raw.hash,event.type.slice(`${launchpadAddress}::launchpad::`.length),JSON.stringify(event.data),raw.timestamp]);}}
       for (const event of projectMarketplaceTransaction(transaction, moduleAddress)) {
         const inserted = await client.query(
           `INSERT INTO marketplace_events
@@ -80,9 +83,5 @@ async function runBatch() {
   }
 }
 
-try {
-  const count = await runBatch();
-  console.log(`Processed ${count} transactions for ${processor}`);
-} finally {
-  await pool.end();
-}
+const once=process.argv.includes('--once');const interval=Math.max(1000,Number(process.env.INDEXER_POLL_INTERVAL_MS||3000));
+try{do{try{const count=await runBatch();console.log(`Processed ${count} transactions for ${processor}`);if(once)break;await new Promise(resolve=>setTimeout(resolve,count?100:interval));}catch(error){console.error(error);if(once)throw error;await new Promise(resolve=>setTimeout(resolve,interval));}}while(true);}finally{await pool.end();}
