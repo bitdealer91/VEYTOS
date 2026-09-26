@@ -1,0 +1,4 @@
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
+const event=z.object({name:z.enum(['page_view','wallet_connected','mint_started','mint_completed','listing_started','listing_completed','cancellation_completed','purchase_started','purchase_completed','collection_viewed','nft_viewed']),path:z.string().max(256),properties:z.record(z.string(),z.union([z.string().max(128),z.number(),z.boolean()])).default({})});
+export async function POST(request:Request){if(request.headers.get('dnt')==='1')return new NextResponse(null,{status:204});const parsed=event.safeParse(await request.json().catch(()=>null));if(!parsed.success)return NextResponse.json({error:'Invalid event'},{status:400});console.info(JSON.stringify({kind:'product_event',...parsed.data,at:new Date().toISOString()}));return new NextResponse(null,{status:204});}

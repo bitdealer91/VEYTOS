@@ -25,6 +25,7 @@
     "testnet:marketplace-v2": "node --import tsx scripts/marketplace-v2-testnet.ts",
     "testnet:marketplace-v1": "node --import tsx scripts/marketplace-v1-testnet.ts",
     "indexer:marketplace": "node --import tsx scripts/marketplace-indexer.ts",
+    "indexer:marketplace:once": "node --import tsx scripts/marketplace-indexer.ts --once",
     "testnet:marketplace-frontend-setup": "node --import tsx scripts/marketplace-frontend-testnet-setup.ts",
     "mainnet:nft-smoke": "node --import tsx scripts/mainnet-nft-smoke.ts",
     "move:compile": "node scripts/move.mjs compile",

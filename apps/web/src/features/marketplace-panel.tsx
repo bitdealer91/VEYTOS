@@ -15,6 +15,8 @@ import { PriceDisplay, ExternalLink } from '@/components/ui';
 import { WalletButton } from '@/components/wallet';
 import { TransactionStatus } from './mint-panel';
 import { WalletAddress } from '@/components/chain-ui';
+import { trackBetaEvent } from '@/components/beta-analytics';
+import { reportClientError } from '@/lib/observability';
 
 type Action = 'list' | 'cancel' | 'buy';
 type ExplicitTransition = Action | 'wallet' | null;
@@ -166,7 +168,7 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
             setTerminalStatus(listingStatus || null);
             try { localStorage.setItem(confirmedKey, JSON.stringify({ version: result.receipt.version, owner: nextOwner, action: value.action, listingStatus })); } catch {}
           }
-          setPhase('success'); clear();
+          setPhase('success'); clear();trackBetaEvent(value.action==='list'?'listing_completed':value.action==='cancel'?'cancellation_completed':'purchase_completed',{standard:nft.standard});
           setMessage(value.action === 'list' ? 'Listing is active on Aptos.' : value.action === 'cancel' ? 'Listing cancelled. Your NFT has been returned.' : 'Purchase verified. The NFT is now owned by the buyer.');
           invalidateProjections();
           setTransition(null);
@@ -176,7 +178,7 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
       }
       setTransition(null);
       setPhase('unknown'); setMessage('Confirmation is taking longer than expected. The hash is saved; no transaction will be retried automatically.');
-    } catch { setTransition(null); setPhase('unknown'); setMessage('Chain reconciliation is temporarily unavailable. Keep this hash and check again.'); }
+    } catch(error) { reportClientError(error,'marketplace_reconciliation');setTransition(null); setPhase('unknown'); setMessage('Chain reconciliation is temporarily unavailable. Keep this hash and check again.'); }
   }
   async function submit() {
     if (!account || signing.current || !marketplaceAddress) return;
@@ -219,6 +221,7 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
       const data = action === 'list' ? marketChain().listPayload(nft.identity, economics!.price.toString())
         : action === 'cancel' ? marketChain().cancelPayload(nft.standard, reviewedListing!.id) : marketChain().buyPayload(reviewedListing!);
       save(value); requested = true; stage = 'wallet'; setPhase('wallet'); setMessage('Review this transaction in your Aptos wallet.');
+      if(action==='list')trackBetaEvent('listing_started',{standard:nft.standard});else if(action==='buy')trackBetaEvent('purchase_started',{standard:nft.standard});
       const response = await wallet.signAndSubmitTransaction({ data });
       if (!/^0x[0-9a-f]{64}$/i.test(response.hash)) throw new Error('Unknown submission');
       value = { ...value, hash: response.hash }; save(value); setPhase('submitted');
@@ -226,6 +229,7 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
     } catch (error) {
       const diagnostic = marketplaceErrorDiagnostic(error, stage);
       console.error('[VEYTOS marketplace transaction]', diagnostic);
+      reportClientError(error,`marketplace_${stage}`);
       try { localStorage.setItem(`${key}:last-error`, JSON.stringify({ ...diagnostic, action, at: new Date().toISOString(), hash: value?.hash || null })); } catch {}
       const rejected = definitiveRejection(error);
       if (value?.hash || (requested && !rejected)) { setPhase('unknown'); setMessage(value?.hash ? 'The transaction hash is retained for reconciliation.' : 'No hash was returned. Submission is not confirmed; check wallet activity before another action.'); }
