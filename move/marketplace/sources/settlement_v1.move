@@ -1,8 +1,9 @@
 /// Token V1 settlement using direct custody of one exact linear Token value.
 module marketplace::settlement_v1 {
     use std::signer;
-    use std::string::String;
+    use std::string::{Self, String};
     use aptos_std::table::{Self, Table};
+    use aptos_token::property_map;
     use aptos_token::token::{Self, Token, TokenId};
     use marketplace::marketplace;
 
@@ -14,6 +15,8 @@ module marketplace::settlement_v1 {
     const EINVALID_ROYALTY: u64 = 6;
     const EESCROW_NOT_FOUND: u64 = 7;
     const EESCROW_MISMATCH: u64 = 8;
+    const ECREATOR_BURNABLE: u64 = 9;
+    const EUNSUPPORTED_PROPERTY_VERSION: u64 = 10;
 
     const STANDARD_V1: u8 = 1;
 
@@ -68,6 +71,17 @@ module marketplace::settlement_v1 {
         let token_data_id = token::create_token_data_id(creator, collection_name, token_name);
         assert!(token::get_tokendata_maximum(token_data_id) == 1, ENOT_UNIQUE_NFT);
         assert!(token::balance_of(seller_address, token_id) == 1, ENOT_EXACT_OWNER);
+
+        // Token V1 creator burn reads TokenData.default_properties for every
+        // property version. The pinned framework exposes those defaults through
+        // get_property_map only for property_version zero; nonzero versions return
+        // per-token properties instead and therefore cannot prove burn safety.
+        assert!(property_version == 0, EUNSUPPORTED_PROPERTY_VERSION);
+        let properties = token::get_property_map(seller_address, token_id);
+        let creator_burn_key = string::utf8(b"TOKEN_BURNABLE_BY_CREATOR");
+        if (property_map::contains_key(&properties, &creator_burn_key)) {
+            assert!(!property_map::read_bool(&properties, &creator_burn_key), ECREATOR_BURNABLE);
+        };
 
         let royalty = token::get_royalty(token_id);
         let royalty_payee = token::get_royalty_payee(&royalty);
