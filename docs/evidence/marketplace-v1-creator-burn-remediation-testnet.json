@@ -1,0 +1,433 @@
+{
+  "network": "testnet",
+  "chainId": 2,
+  "verifiedAt": "2026-09-28T12:15:25.322Z",
+  "frameworkRevision": "831c39cff4c5a8ead98ddffe0edfc4ba51623e91",
+  "sdk": "7.3.0",
+  "sourceDigest": "e2001140d28318af966dff53791cd6288f351dae36e3fe35c31dac86a72b449e",
+  "moduleAddress": "0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91",
+  "roles": {
+    "admin": "0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91",
+    "seller": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+    "buyer": "0xc2c1bf1b5e5413aa466c7edd7fb196be10e052d949eb8056a61e2badd91d54d5",
+    "treasury": "0xed6fc41816b13e2151a8e4a66c72247b7b927c264c84976bda91d918d23049aa",
+    "royaltyRecipient": "0xdf06f553f91c6f861b1569da5b89d0c436fe3885310da962053386e678d972d9"
+  },
+  "asset": {
+    "standard": "TOKEN_V1",
+    "creator": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+    "collectionName": "VEYTOS V1 Creator Burn Safety",
+    "tokenName": "Safe Legacy NFT #1",
+    "propertyVersion": "0"
+  },
+  "rejectedAssets": {
+    "creatorBurnableVersionZero": {
+      "creator": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+      "collectionName": "VEYTOS V1 Creator Burn Safety",
+      "tokenName": "Creator Burnable Legacy NFT #2",
+      "propertyVersion": "0",
+      "submitted": true,
+      "transactionHash": "0xbb7b4ccf686f2e9f2d51a7c8d0683264fca7a3b4a9c346a1386eac39098bc12d",
+      "transactionVersion": "11463703192",
+      "success": false,
+      "vmStatus": "Move abort in 0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91::settlement_v1: ECREATOR_BURNABLE(0x9): ",
+      "gasUsed": "86",
+      "gasUnitPrice": "100",
+      "sellerBalanceBefore": "1",
+      "sellerBalanceAfter": "1",
+      "nextListingIdBefore": "3",
+      "nextListingIdAfter": "3",
+      "buyerBalanceBefore": "31220000",
+      "buyerBalanceAfter": "31220000",
+      "treasuryBalanceBefore": "4402000",
+      "treasuryBalanceAfter": "4402000",
+      "royaltyBalanceBefore": "86359000",
+      "royaltyBalanceAfter": "86359000"
+    },
+    "nonzeroPropertyVersion": {
+      "creator": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+      "collectionName": "VEYTOS V1 Creator Burn Safety",
+      "tokenName": "Nonzero Property Version Legacy NFT #1",
+      "propertyVersion": "1",
+      "submitted": true,
+      "transactionHash": "0x9027a3ee6bd295fd02a9ff9d3cf6d3ff28247f39fda922456d6e19ed4978de7f",
+      "transactionVersion": "11463704255",
+      "success": false,
+      "vmStatus": "Move abort in 0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91::settlement_v1: EUNSUPPORTED_PROPERTY_VERSION(0xa): ",
+      "gasUsed": "81",
+      "gasUnitPrice": "100",
+      "sellerBalanceBefore": "1",
+      "sellerBalanceAfter": "1",
+      "nextListingIdBefore": "3",
+      "nextListingIdAfter": "3",
+      "buyerBalanceBefore": "31220000",
+      "buyerBalanceAfter": "31220000",
+      "treasuryBalanceBefore": "4402000",
+      "treasuryBalanceAfter": "4402000",
+      "royaltyBalanceBefore": "86359000",
+      "royaltyBalanceAfter": "86359000"
+    }
+  },
+  "ownership": {
+    "before": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+    "duringEscrow": {
+      "modulePrivateLinearCustody": true
+    },
+    "afterCancel": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+    "afterBuy": "0xc2c1bf1b5e5413aa466c7edd7fb196be10e052d949eb8056a61e2badd91d54d5"
+  },
+  "listings": {
+    "first": {
+      "id": "1",
+      "finalStatus": "CANCELLED"
+    },
+    "second": {
+      "id": "2",
+      "finalStatus": "SOLD"
+    }
+  },
+  "economics": {
+    "grossOctas": "10000000",
+    "platformFeeBps": "200",
+    "platformFeeOctas": "200000",
+    "royaltyNumerator": "750",
+    "royaltyDenominator": "10000",
+    "royaltyOctas": "750000",
+    "sellerProceedsOctas": "9050000",
+    "storageReimbursementOctas": "933600",
+    "buyerGrossGasChargeOctas": "506600",
+    "buyerStorageRefundOctas": "933600",
+    "buyerNetGasChargeOctas": "-427000",
+    "conserved": true
+  },
+  "storageEconomics": {
+    "firstList": {
+      "execution_gas_units": "80",
+      "io_gas_units": "62",
+      "storage_fee_octas": "1459600",
+      "storage_fee_refund_octas": "487600",
+      "total_charge_gas_units": "14738"
+    },
+    "cancel": {
+      "execution_gas_units": "73",
+      "io_gas_units": "42",
+      "storage_fee_octas": "487600",
+      "storage_fee_refund_octas": "933600",
+      "total_charge_gas_units": "4990"
+    },
+    "secondList": {
+      "execution_gas_units": "80",
+      "io_gas_units": "62",
+      "storage_fee_octas": "1459600",
+      "storage_fee_refund_octas": "487600",
+      "total_charge_gas_units": "14738"
+    },
+    "buy": {
+      "execution_gas_units": "88",
+      "io_gas_units": "103",
+      "storage_fee_octas": "487600",
+      "storage_fee_refund_octas": "933600",
+      "total_charge_gas_units": "5066"
+    }
+  },
+  "package": {
+    "name": "VeytosMarketplace",
+    "upgradePolicy": {
+      "policy": 1
+    },
+    "upgradeNumber": "0",
+    "sourceDigest": "753B462186372670546749C637AC9EA3B0D11627F85812F80EF9388DFE407737",
+    "deployedModules": [
+      {
+        "name": "marketplace",
+        "sha256": "473c49604b01323faf30395adfbe154d0c31e7f38e190a1860081db49ef31365",
+        "matchesPublished": true
+      },
+      {
+        "name": "marketplace_fee_policy",
+        "sha256": "5b27255bb68789dfb05c22a37630cdda6ee36feb72b8a28f4c488981f75c0f5a",
+        "matchesPublished": true
+      },
+      {
+        "name": "settlement_v1",
+        "sha256": "1afb94eef9957401e0bb536205d5633489def50cdac7ea0b2e2257878f5be896",
+        "matchesPublished": true
+      },
+      {
+        "name": "settlement_v2",
+        "sha256": "7faef7faf81575a5e2218eda86a8e6ff3782d24ba75d26a6864390fb2d1f2831",
+        "matchesPublished": true
+      }
+    ]
+  },
+  "transactions": {
+    "fund-v1-admin": {
+      "hash": "0x2f29cbcf9c51a84f43f987a0b8873393fb559fded5bbbd7dc4c615165aa6e833",
+      "version": "11462158309",
+      "success": true,
+      "gasUsed": "5414",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "publish": {
+      "hash": "0xdcb57b89840c559626cbb247e834e48393b992a224b1556a23f5a639b4dfe047",
+      "version": "11462161854",
+      "success": true,
+      "gasUsed": "127943",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "initialize-fee-policy": {
+      "hash": "0x8358a714395054f46ebb8d9a3e6703575458ffeb8ee2c25e4ddfaa709c206d70",
+      "version": "11462162254",
+      "success": true,
+      "gasUsed": "4788",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "initialize-marketplace": {
+      "hash": "0xe62e39497f65d5dd382137b5e9013d6c92e69da3d5dc4fd675d108e448d4c842",
+      "version": "11462162565",
+      "success": true,
+      "gasUsed": "4789",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "initialize-v1": {
+      "hash": "0x3bcd6925d0da34dc3f41a52f1b39fea9dcd42f740304c2083e99503741cc6b6d",
+      "version": "11462162823",
+      "success": true,
+      "gasUsed": "4515",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "create-v1-collection": {
+      "hash": "0xaa731241e18017926280f312c06cffe0c974e0e3d2a87991ac08e64b59cb85b2",
+      "version": "11462163058",
+      "success": true,
+      "gasUsed": "4784",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "create-safe-v1-token": {
+      "hash": "0xc0db99dc5e435f9e88f05d5759ab8b8c311312d2b8d037bd201fead83b98c10e",
+      "version": "11462163355",
+      "success": true,
+      "gasUsed": "10084",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "create-creator-burnable-v1-token": {
+      "hash": "0xc3a3249c138dfaad4579a6f388064803a2f5ef86e718d0d64e6ebbc7c8f8873b",
+      "version": "11462163737",
+      "success": true,
+      "gasUsed": "10457",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "create-nonzero-version-v1-token": {
+      "hash": "0x0acea4ceb6fe0c3b10abfeb5213faf625f78b67a52569cadabd4a1412174448f",
+      "version": "11462164125",
+      "success": true,
+      "gasUsed": "10448",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "mutate-nonzero-fixture-to-property-version-one": {
+      "hash": "0x4e442ac5db22c8f28ac116b17a4d0353756786a4edabfb117efdb5c8839cbb8f",
+      "version": "11462164397",
+      "success": true,
+      "gasUsed": "5119",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "create-creator-burnable-v1-token-bcs-bool": {
+      "hash": "0x00a3e3df3a9cf31d219f4b7e5875645096546dd7fde21f8aa37d68e7769eced7",
+      "version": "11462177370",
+      "success": true,
+      "gasUsed": "10445",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "list-first": {
+      "hash": "0x36b7e84b533ff1fc16e7454f2ea0f7ff1b8feb6dd6d63d353dfde871a13b5db6",
+      "version": "11462178235",
+      "success": true,
+      "gasUsed": "14738",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "cancel-first": {
+      "hash": "0x8af7b47f3ec263665149f9208c7eb30fbb6f8c1ca1d086eff78a545265191ce8",
+      "version": "11462178505",
+      "success": true,
+      "gasUsed": "4990",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "configure-v1-storage-reimbursement": {
+      "hash": "0xd15de5f330a0f6cf9a3683f293d623bc456319798767d274b1bb7bdbf27ba5b9",
+      "version": "11462178968",
+      "success": true,
+      "gasUsed": "42",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "list-second": {
+      "hash": "0x56a29aee7ad803ebf56ca24eeb3f6d28e4d0d5e26a044a21a5803c6319dd5a9d",
+      "version": "11462179244",
+      "success": true,
+      "gasUsed": "14738",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "buy-second": {
+      "hash": "0x2e93e93396484077cd48f9c6ef0c9616f6f43ded1f23e4d34ad76a27b5da34a8",
+      "version": "11462179527",
+      "success": true,
+      "gasUsed": "5066",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "reject-creator-burnable-version-zero": {
+      "hash": "0xbb7b4ccf686f2e9f2d51a7c8d0683264fca7a3b4a9c346a1386eac39098bc12d",
+      "version": "11463703192",
+      "success": false,
+      "gasUsed": "86",
+      "gasUnitPrice": "100",
+      "vmStatus": "Move abort in 0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91::settlement_v1: ECREATOR_BURNABLE(0x9): "
+    },
+    "reject-nonzero-property-version": {
+      "hash": "0x9027a3ee6bd295fd02a9ff9d3cf6d3ff28247f39fda922456d6e19ed4978de7f",
+      "version": "11463704255",
+      "success": false,
+      "gasUsed": "81",
+      "gasUnitPrice": "100",
+      "vmStatus": "Move abort in 0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91::settlement_v1: EUNSUPPORTED_PROPERTY_VERSION(0xa): "
+    }
+  },
+  "deploymentTransaction": "0xdcb57b89840c559626cbb247e834e48393b992a224b1556a23f5a639b4dfe047",
+  "listTransaction": "0x36b7e84b533ff1fc16e7454f2ea0f7ff1b8feb6dd6d63d353dfde871a13b5db6",
+  "cancelTransaction": "0x8af7b47f3ec263665149f9208c7eb30fbb6f8c1ca1d086eff78a545265191ce8",
+  "relistTransaction": "0x56a29aee7ad803ebf56ca24eeb3f6d28e4d0d5e26a044a21a5803c6319dd5a9d",
+  "buyTransaction": "0x2e93e93396484077cd48f9c6ef0c9616f6f43ded1f23e4d34ad76a27b5da34a8",
+  "eventEvidence": {
+    "listed": [
+      {
+        "guid": {
+          "creation_number": "0",
+          "account_address": "0x0"
+        },
+        "sequence_number": "0",
+        "type": "0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91::marketplace::NFTListed",
+        "data": {
+          "asset": {
+            "collection": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+            "standard": 1,
+            "v1_collection": "VEYTOS V1 Creator Burn Safety",
+            "v1_creator": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+            "v1_property_version": "0",
+            "v1_token": "Safe Legacy NFT #1",
+            "v2_token": "0x0"
+          },
+          "fee_bps": "200",
+          "gross_price": "10000000",
+          "listing_id": "1",
+          "royalty_denominator": "10000",
+          "royalty_numerator": "750",
+          "royalty_payee": "0xdf06f553f91c6f861b1569da5b89d0c436fe3885310da962053386e678d972d9",
+          "seller": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+          "storage_reimbursement": "0",
+          "timestamp": "1790590913"
+        }
+      },
+      {
+        "guid": {
+          "creation_number": "0",
+          "account_address": "0x0"
+        },
+        "sequence_number": "0",
+        "type": "0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91::marketplace::NFTListed",
+        "data": {
+          "asset": {
+            "collection": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+            "standard": 1,
+            "v1_collection": "VEYTOS V1 Creator Burn Safety",
+            "v1_creator": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+            "v1_property_version": "0",
+            "v1_token": "Safe Legacy NFT #1",
+            "v2_token": "0x0"
+          },
+          "fee_bps": "200",
+          "gross_price": "10000000",
+          "listing_id": "2",
+          "royalty_denominator": "10000",
+          "royalty_numerator": "750",
+          "royalty_payee": "0xdf06f553f91c6f861b1569da5b89d0c436fe3885310da962053386e678d972d9",
+          "seller": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+          "storage_reimbursement": "933600",
+          "timestamp": "1790590917"
+        }
+      }
+    ],
+    "cancelled": {
+      "guid": {
+        "creation_number": "0",
+        "account_address": "0x0"
+      },
+      "sequence_number": "0",
+      "type": "0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91::marketplace::ListingCancelled",
+      "data": {
+        "asset": {
+          "collection": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+          "standard": 1,
+          "v1_collection": "VEYTOS V1 Creator Burn Safety",
+          "v1_creator": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+          "v1_property_version": "0",
+          "v1_token": "Safe Legacy NFT #1",
+          "v2_token": "0x0"
+        },
+        "listing_id": "1",
+        "seller": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+        "timestamp": "1790590915"
+      }
+    },
+    "purchased": {
+      "guid": {
+        "creation_number": "0",
+        "account_address": "0x0"
+      },
+      "sequence_number": "0",
+      "type": "0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91::marketplace::NFTPurchased",
+      "data": {
+        "asset": {
+          "collection": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+          "standard": 1,
+          "v1_collection": "VEYTOS V1 Creator Burn Safety",
+          "v1_creator": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+          "v1_property_version": "0",
+          "v1_token": "Safe Legacy NFT #1",
+          "v2_token": "0x0"
+        },
+        "buyer": "0xc2c1bf1b5e5413aa466c7edd7fb196be10e052d949eb8056a61e2badd91d54d5",
+        "gross_price": "10000000",
+        "listing_id": "2",
+        "platform_fee": "200000",
+        "platform_fee_recipient": "0xed6fc41816b13e2151a8e4a66c72247b7b927c264c84976bda91d918d23049aa",
+        "royalty": "750000",
+        "royalty_recipient": "0xdf06f553f91c6f861b1569da5b89d0c436fe3885310da962053386e678d972d9",
+        "seller": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+        "seller_proceeds": "9050000",
+        "storage_reimbursement": "933600",
+        "timestamp": "1790590918"
+      }
+    }
+  },
+  "limitations": [
+    "Testnet package uses compatible upgrades during development.",
+    "Representative Token V1 assets were constructed on testnet; no valuable mainnet NFT was transacted.",
+    "Unsafe LIST evidence consists of committed-abort testnet transactions; historical reads at version-1 and the abort version demonstrate unchanged custody, listing ID, buyer, treasury and royalty balances. The seller paid only transaction gas.",
+    "No external audit has been completed.",
+    "No marketplace frontend action was implemented."
+  ]
+}

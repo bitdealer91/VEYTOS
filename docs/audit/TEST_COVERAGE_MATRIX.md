@@ -110,15 +110,15 @@ Module: `settlement_v1_tests`. Tests: `v102_cancel_returns_exact_token`, `v103_b
 
 ## V102 — partially covered
 
-Module: `settlement_v1_tests`. Tests: `v106_nonzero_property_version`.
+Module: `settlement_v1_tests`. Tests: `v106_nonzero_property_version`, `audit_v1_nonzero_property_version_rejected_when_default_burn_state_is_unobservable`, `audit_v1_safe_property_version_zero_accepted`. Testnet: safe property-version-zero lifecycle plus committed `EUNSUPPORTED_PROPERTY_VERSION(0xa)` rejection in [remediation evidence](../evidence/marketplace-v1-creator-burn-remediation-testnet.json). Independent tuple-field collision coverage remains incomplete.
 
 ## V103 — partially covered
 
 Module: `settlement_v1_tests`. Tests: `v101_successful_escrow`, `v108_exact_amount_is_one`, `v119_preexisting_withdraw_capability_cannot_withdraw_escrow`.
 
-## V104 — partially covered
+## V104 — covered
 
-Module: `settlement_v1_tests`. Tests: `v104_unowned_token_listing_fails`, `v107_semi_fungible_rejected`, `v110_malformed_royalty_rejected`.
+Module: `settlement_v1_tests`. Tests: `v104_unowned_token_listing_fails`, `v107_semi_fungible_rejected`, `v110_malformed_royalty_rejected`, `audit_v1_safe_property_version_zero_accepted`, `audit_v1_creator_burnable_rejected_before_custody`, `audit_v1_malformed_creator_burn_property_rejected`, `audit_v1_nonzero_property_version_rejected_when_default_burn_state_is_unobservable`, `audit_v1_reserved_creator_burn_flag_cannot_be_enabled_after_listing`. Testnet: safe LIST/CANCEL/RELIST/BUY and committed creator-burn/nonzero-version aborts with unchanged token, listing and payment state in [remediation evidence](../evidence/marketplace-v1-creator-burn-remediation-testnet.json).
 
 ## V105 — partially covered
 
@@ -168,8 +168,8 @@ Module: `none (release verification required)`. Tests: `No package-policy integr
 - G04/G06/G09/G12: missing exhaustive property-version key comparisons, all unauthorized actor/adapter combinations, unknown-ID buy, and both sides of price mismatch. New V1 admin cancel test adds a concrete privilege regression.
 - G17–G21/A13: V1 actual custody cancellation under global+adapter pause was missing; added it. All eight global/V1/V2 pause combinations with both standards remain incomplete.
 - G22: common event helper checks a subset of fields, not every identity, timestamp and reimbursement across adapters. Success tests do not all check events, balances and custody as the plan requested.
-- V105/V106: wrong-name and nonzero-version buy exist; all wrong tuple fields, nonzero-version cancel and independent key comparisons remain partial.
-- V107/V110/V115: maximum!=1, zero balance and zero royalty denominator are exercised; balance>1 with otherwise accepted state, zero-payee native V1 royalty, numerator>denominator in adapter, explicit creator burn attempt and missing/corrupt TokenData variations remain incomplete. New pure quote test covers numerator>denominator, not adapter construction.
+- V105/V106: wrong-name coverage exists; all wrong tuple fields and independent key comparisons remain partial. Nonzero property versions now fail closed at LIST and therefore cannot reach cancel/buy in a new listing.
+- V107/V110/V115: maximum!=1, zero balance, zero royalty denominator, creator-burn true, malformed creator-burn type and nonzero property version are exercised with exact abort locations. Balance>1 with otherwise accepted state, zero-payee native V1 royalty, numerator>denominator in adapter and other missing/corrupt TokenData variations remain incomplete. New pure quote test covers numerator>denominator, not adapter construction.
 - V116/V117/V118: old tests mostly observe absent wallet balance/unrelated list-time balance. Added real admin-cancel abort and two simultaneous V1 escrows with cancellation isolation. Buy isolation and unrelated pending claims still need fixtures.
 - V119/V120: old V120 created a capability AFTER purchase; it did not test pre-existing buyer delegation. Added actual pre-existing buyer capability and seller capability after cancellation. These demonstrate a residual standard risk, not a marketplace exploit.
 - V213/V215/V216 and several V1 negative tests accept any abort. Exact framework abort locations/codes should be tightened after reviewing fixture reachability; a generic setup abort could falsely pass. V214 checks no escrow ObjectCore, not a static proof of all absent token capabilities.
@@ -177,8 +177,8 @@ Module: `none (release verification required)`. Tests: `No package-policy integr
 - A01–A07: insufficient-payment generic abort and replay tests exist, but forced fee/royalty/delivery failures, corrupt escrow fixtures and separate committed-transaction rollback/race evidence are incomplete. A single expected-abort test rolls back its setup too; do not equate it with a committed first purchase followed by a failed replay.
 - A08–A12: source derives identities; UI/indexer tests exist separately, but the Move suite does not exercise hostile metadata limits, adversarial input gas bounds, stale provider integration or complete ambiguity reconciliation.
 - A14: code inspection plus transfer-abort tests support the operational boundary; no package-publish/upgrade adversarial test proves release governance or immutable metadata.
-- Storage: new cancel-balance checks complement existing snapshot/expected-value tests. V1 nonzero reimbursement settlement, recipient aliasing, refund calibration across identity lengths and sponsored gas payer remain open integration cases. Unit tests do not execute FeeStatement accounting.
+- Storage: new cancel-balance checks complement existing snapshot/expected-value tests. The remediation testnet run settled V1 with a measured 933600-octa reimbursement and captured FeeStatements. Recipient aliasing, calibration across identity lengths, sponsored gas payer and future protocol-pricing changes remain open integration cases.
 
 ## Specification corrections, not production changes
 
-V2 escrow now uses a unique signer address without an ObjectCore shell (V201/V202 wording in the old plan is historical). V1 is implemented; old SECURITY.md implementation/test counts are historical. The release source default for V1 reimbursement is zero even though the acceptance run configured 926400 octas. Upgradeability and registry compromise remain trust assumptions, not test failures.
+V2 escrow now uses a unique signer address without an ObjectCore shell (V201/V202 wording in the old plan is historical). V1 is implemented; old SECURITY.md implementation/test counts are historical. The release source default for V1 reimbursement is zero; the 2026-09-28 remediation acceptance measured and configured 933600 octas for its exact fixture, while older acceptance used a different calibration. Upgradeability and registry compromise remain trust assumptions, not test failures.

@@ -106,7 +106,7 @@ Exact V1 creator/collection/token tuple is preserved from withdrawal through del
 
 ## V102
 
-Exact property_version is preserved; versions must never be collapsed to token-data identity.
+Exact property_version is preserved; versions must never be collapsed to token-data identity. The supported settlement subset requires property_version=0 because the pinned production API does not expose authoritative TokenData defaults through `get_property_map` for nonzero versions.
 
 ## V103
 
@@ -114,7 +114,7 @@ One exact linear Token of amount one is privately escrowed, not a general wallet
 
 ## V104
 
-TokenData maximum=1 and seller exact balance=1 are required; malformed royalty or missing identity aborts.
+TokenData maximum=1, property_version=0 and seller exact balance=1 are required. Before custody, the adapter reads authoritative TokenData default properties and rejects `TOKEN_BURNABLE_BY_CREATOR=true`; malformed creator-burn state, malformed royalty or missing identity aborts. Absence of the reserved property or a well-formed false value is the supported creator-burn condition under the pinned framework.
 
 ## V105
 

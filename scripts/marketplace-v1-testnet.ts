@@ -83,7 +83,7 @@ assert.equal(ledger.chain_id, 2, "Wrong network");
 
 const collectionName = "VEYTOS V1 Creator Burn Safety";
 const tokenName = "Safe Legacy NFT #1";
-const unsafeTokenName = "Creator Burnable Legacy NFT #1";
+const unsafeTokenName = "Creator Burnable Legacy NFT #2";
 const nonzeroTokenName = "Nonzero Property Version Legacy NFT #1";
 const propertyVersion = 0n;
 async function aptBalance(account: Account, version?: string) {
@@ -204,36 +204,94 @@ const entry = (name: string, signer: Account, data: InputGenerateTransactionPayl
   });
 
 async function expectListRejection(name: string, nameOfToken: string, version: bigint, expectedAbort: RegExp) {
+  const stepName = `reject-${name}`;
+  let step = journal.steps[stepName];
+  if (!step) {
+    const transaction = await aptos.transaction.build.simple({
+      sender: seller.accountAddress,
+      data: {
+        function: `${moduleAddress}::settlement_v1::list`,
+        functionArguments: [roles.seller, collectionName, nameOfToken, version.toString(), "10000000"],
+      },
+      options: { maxGasAmount: 100_000 },
+    });
+    const [simulation] = await aptos.transaction.simulate.simple({ signerPublicKey: seller.publicKey, transaction });
+    assert(simulation && !simulation.success, `${name}: unsafe LIST simulation unexpectedly succeeded`);
+    assert.match(simulation.vm_status, expectedAbort, `${name}: unexpected simulation abort: ${simulation.vm_status}`);
+    const senderAuthenticator = aptos.transaction.sign({ signer: seller, transaction });
+    const input = { transaction, senderAuthenticator };
+    step = {
+      hash: generateUserTransactionHash(input),
+      signedBytes: Buffer.from(generateSignedTransaction(input)).toString("hex"),
+    };
+    journal.steps[stepName] = step;
+    await saveJournal();
+  }
+  const lookup = await fetch(`${TESTNET_FULLNODE}/transactions/by_hash/${step.hash}`);
+  if (shouldResubmit(lookup.status)) {
+    const response = await fetch(`${TESTNET_FULLNODE}/transactions`, {
+      method: "POST",
+      headers: { "content-type": "application/x.aptos.signed_transaction+bcs" },
+      body: Buffer.from(step.signedBytes, "hex"),
+    });
+    if (!response.ok) throw new Error(`${name}: rejection submission HTTP ${response.status}: ${await response.text()}`);
+  }
+  const result = await aptos.waitForTransaction({
+    transactionHash: step.hash,
+    options: { checkSuccess: false, timeoutSecs: 60 },
+  }) as UserTransactionResponse;
+  assert.equal(result.type, "user_transaction");
+  assert.equal(canonical(result.sender), roles.seller);
+  assert(!result.success, `${name}: unsafe LIST unexpectedly committed successfully`);
+  assert.match(result.vm_status, expectedAbort, `${name}: unexpected committed abort: ${result.vm_status}`);
+  Object.assign(step, {
+    version: result.version,
+    success: result.success,
+    gasUsed: result.gas_used,
+    gasUnitPrice: result.gas_unit_price,
+    vmStatus: result.vm_status,
+  });
+  await saveJournal();
+
+  const beforeVersion = (BigInt(result.version) - 1n).toString();
   const [nextBefore] = await aptos.view<[string]>({
     payload: { function: `${moduleAddress}::marketplace::next_listing_id`, functionArguments: [] },
+    options: { ledgerVersion: BigInt(beforeVersion) },
   });
-  const balanceBefore = await tokenBalance(roles.seller, nameOfToken, version);
-  const transaction = await aptos.transaction.build.simple({
-    sender: seller.accountAddress,
-    data: {
-      function: `${moduleAddress}::settlement_v1::list`,
-      functionArguments: [roles.seller, collectionName, nameOfToken, version.toString(), "10000000"],
-    },
-    options: { maxGasAmount: 100_000 },
-  });
-  const [simulation] = await aptos.transaction.simulate.simple({ signerPublicKey: seller.publicKey, transaction });
-  assert(simulation && !simulation.success, `${name}: unsafe LIST simulation unexpectedly succeeded`);
-  assert.match(simulation.vm_status, expectedAbort, `${name}: unexpected abort: ${simulation.vm_status}`);
   const [nextAfter] = await aptos.view<[string]>({
     payload: { function: `${moduleAddress}::marketplace::next_listing_id`, functionArguments: [] },
+    options: { ledgerVersion: BigInt(result.version) },
   });
-  const balanceAfter = await tokenBalance(roles.seller, nameOfToken, version);
-  assert.equal(balanceAfter, balanceBefore, `${name}: simulation changed seller custody`);
-  assert.equal(nextAfter, nextBefore, `${name}: simulation changed marketplace state`);
+  const [balanceBefore, balanceAfter, buyerBefore, buyerAfter, treasuryBefore, treasuryAfter, royaltyBefore, royaltyAfter] = await Promise.all([
+    tokenBalance(roles.seller, nameOfToken, version, beforeVersion),
+    tokenBalance(roles.seller, nameOfToken, version, result.version),
+    aptBalance(buyer, beforeVersion), aptBalance(buyer, result.version),
+    aptBalance(treasury, beforeVersion), aptBalance(treasury, result.version),
+    aptBalance(royaltyRecipient, beforeVersion), aptBalance(royaltyRecipient, result.version),
+  ]);
+  assert.equal(balanceAfter, balanceBefore, `${name}: failed transaction changed seller custody`);
+  assert.equal(nextAfter, nextBefore, `${name}: failed transaction changed marketplace state`);
+  assert.equal(buyerAfter, buyerBefore, `${name}: failed LIST changed buyer funds`);
+  assert.equal(treasuryAfter, treasuryBefore, `${name}: failed LIST paid the marketplace treasury`);
+  assert.equal(royaltyAfter, royaltyBefore, `${name}: failed LIST paid the royalty recipient`);
   return {
-    submitted: false,
-    success: simulation.success,
-    vmStatus: simulation.vm_status,
-    gasUsed: simulation.gas_used,
+    submitted: true,
+    transactionHash: result.hash,
+    transactionVersion: result.version,
+    success: result.success,
+    vmStatus: result.vm_status,
+    gasUsed: result.gas_used,
+    gasUnitPrice: result.gas_unit_price,
     sellerBalanceBefore: balanceBefore.toString(),
     sellerBalanceAfter: balanceAfter.toString(),
     nextListingIdBefore: nextBefore,
     nextListingIdAfter: nextAfter,
+    buyerBalanceBefore: buyerBefore.toString(),
+    buyerBalanceAfter: buyerAfter.toString(),
+    treasuryBalanceBefore: treasuryBefore.toString(),
+    treasuryBalanceAfter: treasuryAfter.toString(),
+    royaltyBalanceBefore: royaltyBefore.toString(),
+    royaltyBalanceAfter: royaltyAfter.toString(),
   };
 }
 
@@ -319,12 +377,12 @@ try {
       [false, false, false, false, true], [], [], [],
     ],
   });
-  await entry("create-creator-burnable-v1-token", seller, {
+  await entry("create-creator-burnable-v1-token-bcs-bool", seller, {
     function: "0x3::token::create_token_script",
     functionArguments: [
       collectionName, unsafeTokenName, "Unsafe creator-burnable Token V1 fixture", "1", "1",
       "ipfs://veytos-v1-burn-safety/unsafe.json", roles.royaltyRecipient, "10000", "750",
-      [false, false, false, false, false], ["TOKEN_BURNABLE_BY_CREATOR"], ["0x01"], ["bool"],
+      [false, false, false, false, false], ["TOKEN_BURNABLE_BY_CREATOR"], [[1]], ["bool"],
     ],
   });
   await entry("create-nonzero-version-v1-token", seller, {
@@ -339,7 +397,11 @@ try {
     function: "0x3::token::mutate_token_properties",
     functionArguments: [roles.seller, roles.seller, collectionName, nonzeroTokenName, "0", "1", [], [], []],
   });
-  assert.equal(await tokenBalance(roles.seller), 1n, "Seller must own the safe version-zero asset");
+  if (journal.steps["buy-second"]?.success) {
+    assert.equal(await tokenBalance(roles.buyer), 1n, "Buyer must retain the previously purchased safe version-zero asset");
+  } else {
+    assert.equal(await tokenBalance(roles.seller), 1n, "Seller must own the safe version-zero asset before the lifecycle");
+  }
   assert.equal(await tokenBalance(roles.seller, unsafeTokenName, 0n), 1n, "Seller must own the unsafe fixture before rejection");
   assert.equal(await tokenBalance(roles.seller, nonzeroTokenName, 1n), 1n, "Seller must own the nonzero-version fixture before rejection");
 
@@ -503,7 +565,7 @@ try {
     limitations: [
       "Testnet package uses compatible upgrades during development.",
       "Representative Token V1 assets were constructed on testnet; no valuable mainnet NFT was transacted.",
-      "Unsafe LIST evidence is a fullnode simulation that was never signed or submitted; unchanged balance and next-listing-id reads demonstrate no custody or marketplace state change.",
+      "Unsafe LIST evidence consists of committed-abort testnet transactions; historical reads at version-1 and the abort version demonstrate unchanged custody, listing ID, buyer, treasury and royalty balances. The seller paid only transaction gas.",
       "No external audit has been completed.",
       "No marketplace frontend action was implemented.",
     ],

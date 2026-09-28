@@ -1,16 +1,16 @@
 # Independent security challenge review
 
-Date: 2026-09-28. Reviewed branch: `feature/audit-readiness` at `54450c0`, with security-test commit `88ccd57` immediately below it. Baseline main: `d77a27b`.
+Date: 2026-09-28. Reviewed branch: `feature/audit-readiness` at `54450c0`, with security-test commit `88ccd57` immediately below it. Baseline main: `d77a27b`. Remediation follow-up: exploit evidence `a294f3a`, production fix `edbac21`, client/acceptance preparation `4480ced`, and [Aptos Testnet remediation evidence](../evidence/marketplace-v1-creator-burn-remediation-testnet.json).
 
-This is an independent challenge of the audit-readiness package, not an external audit report. Production Move sources and manifests were reviewed as authoritative where documentation differed. No production Move code was changed. One test-only regression was added after reproducing a concrete Token V1 buyer-risk path.
+This is an independent challenge of the audit-readiness package, not an external audit report. Production Move sources and manifests were reviewed as authoritative where documentation differed. The original review made no production change and added one exploit regression. The later, separately committed remediation narrows V1 support and is recorded without deleting the original finding.
 
 ## Executive decision
 
-- **READY FOR EXTERNAL AUDIT: YES.** The code, trust boundaries, evidence and known gaps are sufficiently organized for intake. The exact reviewed artifact must be frozen, and the HIGH V1 creator-burn finding below must be included in scope and remediated/retested before any audit is treated as complete.
-- **READY FOR PUBLIC TESTNET BETA: YES, ignoring missing infrastructure credentials.** Limit V1 to controlled fixtures or keep V1 paused until the creator-burn behavior is fixed; disclose compatible upgrade and testnet-only authority. This is not approval for value-bearing use.
-- **READY FOR MAINNET: NO.** A concrete V1 buyer-protection defect exists; no external audit is complete; both packages remain compatible; governance is proposed rather than implemented; current-mainnet framework behavior, reimbursement calibration, V2 dossiers, public beta and operational gates remain incomplete.
+- **READY FOR EXTERNAL AUDIT: YES.** The code, trust boundaries, evidence and known gaps are sufficiently organized for intake. The audit scope must include both the original creator-burn exploit and remediation commits/evidence.
+- **READY FOR PUBLIC TESTNET BETA: YES.** Supported V1 is limited on chain to property_version=0, maximum=1, exact ownership, creator-burn absent or well-formed false, and the existing withdrawal/royalty/economic predicates. Every other V1 configuration remains fail-closed. This is not approval for value-bearing use.
+- **READY FOR MAINNET: NO.** The V1 creator-burn finding is remediated for the restricted supported subset, but no external audit is complete; both packages remain compatible; governance is proposed rather than implemented; current-mainnet framework behavior, V2 dossiers, public beta and operational gates remain incomplete.
 
-Finding count: **0 CRITICAL, 3 HIGH, 1 MEDIUM, 1 LOW, 2 INFORMATIONAL**.
+Finding inventory: **0 CRITICAL, 3 HIGH, 1 MEDIUM, 1 LOW, 2 INFORMATIONAL**; one HIGH below is now **REMEDIATED** and retained for history.
 
 ## Baseline reproduced
 
@@ -28,17 +28,19 @@ The branch changes no production `.move` file or Move manifest relative to `d77a
 
 ### HIGH — Token V1 creator-burn authority survives sale
 
-- **Affected module:** `marketplace::settlement_v1`, principally `list` at `move/marketplace/sources/settlement_v1.move:52` and delivery in `buy` at line 134. The relevant dependency is `0x3::token::burn_by_creator` in the pinned Aptos Token V1 framework.
+**Status: REMEDIATED.** Production commit `edbac21` rejects creator-burnable or malformed property-version-zero assets before withdrawal and rejects every nonzero property version because authoritative TokenData defaults are not exposed by the pinned production API for those versions. Regression coverage is in `settlement_v1_tests`; package `0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91` completed restricted V1 testnet acceptance recorded in [marketplace-v1-creator-burn-remediation-testnet.json](../evidence/marketplace-v1-creator-burn-remediation-testnet.json).
+
+- **Affected module:** `marketplace::settlement_v1`, principally `list` and delivery in `buy`. The relevant dependency is `0x3::token::burn_by_creator` in the pinned Aptos Token V1 framework.
 - **Preconditions:** TokenData has `maximum == 1`, the seller owns exactly one matching TokenId, and TokenData default properties contain the reserved boolean `TOKEN_BURNABLE_BY_CREATOR = true`. The token otherwise passes current identity, balance and royalty checks.
 - **Failure/exploit path:** a creator mints the burnable token; a holder lists it; VEYTOS accepts and escrows it; a buyer pays and receives it; the creator calls `0x3::token::burn_by_creator` against the buyer's TokenStore. The sale remains SOLD and payment remains final while the buyer's balance becomes zero.
 - **Impact:** irreversible post-purchase loss of the purchased NFT at creator discretion. V1 has no reviewed-collection registry and the Move adapter does not inspect this reserved TokenData property.
-- **Existing mitigation:** private escrow prevents creator burn while the linear Token is inside VEYTOS's table. The compatibility documents require per-token validation and the four sampled TokenData rows had empty default property maps, but neither the contract nor frontend eligibility enforces the creator-burn condition for arbitrary direct callers.
-- **Recommended action:** review a production design separately. At minimum, reject creator-burnable V1 TokenData on chain. Because the pinned public API does not expose TokenData default properties cleanly for every nonzero property-version case, consider a deny-by-default V1 registry/provenance policy or a narrower supported V1 subset rather than relying on frontend reads. Add buyer-facing disclosure only as defense in depth, not as the sole control.
+- **Existing mitigation:** private escrow prevented creator burn only during custody. The remediation now enforces the supported safety predicate before custody: version zero exposes authoritative TokenData defaults through `get_property_map`; true or malformed creator-burn state aborts, and nonzero versions abort because the required default-property proof is unavailable. Frontend messaging is defense in depth only.
+- **Recommended action:** retain the narrow fail-closed policy and include the exact framework pin/API assumption in external review. Do not broaden nonzero-version support without a supported authoritative default-property accessor and renewed review/acceptance.
 - **Blocks external audit:** **No**; it should be an explicit audit finding/remediation item.
-- **Blocks mainnet:** **Yes** for enabled arbitrary V1 listing.
-- **Reproducibility:** confirmed by the new passing test `audit_v1_creator_burn_authority_survives_purchase`.
+- **Blocks mainnet:** **No for the exact restricted remediation artifact**; arbitrary/general V1 listing remains unsupported, and unrelated mainnet blockers remain.
+- **Reproducibility:** the original exploit is preserved by `audit_v1_creator_burn_authority_survives_purchase`; after remediation it aborts at LIST with `ECREATOR_BURNABLE`. Focused tests also cover safe version zero, malformed burn state, reserved-property mutation and nonzero-version rejection. Testnet committed-abort evidence records `ECREATOR_BURNABLE(0x9)` and `EUNSUPPORTED_PROPERTY_VERSION(0xa)` with unchanged custody/listing/payment state.
 
-No production code was modified after this defect was identified.
+The original review stopped before production modification. Remediation was reviewed and committed separately as `edbac21`.
 
 ### HIGH — Compatible publisher authority remains total custody authority
 
@@ -137,9 +139,9 @@ No production code was modified after this defect was identified.
 | V207 | Code | Covered | Revoke blocks new list, not existing buy; cancel remains available if token is movable. |
 | V208 | Convention, not on-chain provenance proof | Partial | Test proves ungated transfer is insufficient; safe review itself is operational. |
 | V101 | Code | Partial | Exact tuple is retained, but all wrong-field and terminal combinations are not directly asserted. |
-| V102 | Code | Partial | property_version is in TokenId/asset key and one nonzero success exists; collision matrix is incomplete. |
+| V102 | Code | Partial | property_version is in TokenId/asset key; supported listings require zero and nonzero values abort before custody. Independent tuple collision coverage remains incomplete. |
 | V103 | Code + Token V1 linearity | Partial | Exact Token amount is privately stored; malformed/delegated variants remain incomplete. |
-| V104 | Code for max/balance/royalty; incomplete V1 safety predicate | Partial | Stated checks exist, but the invariant set omits creator-burnable TokenData accepted by production code. |
+| V104 | Code + pinned Token V1 property API + testnet acceptance | Covered | Version zero authoritative defaults are checked before custody; creator-burn true/malformed and every nonzero version fail closed. |
 | V105 | Code | Partial | No broad withdrawal authority exists; buy/cancel/unrelated pending-state coverage is incomplete. |
 | V106 | Code | Covered | Cancel authenticates seller and uses signer deposit without pause/opt-in dependency. |
 | V107 | Framework + code custody isolation | Covered | Delegation cannot reach private table but revives for its recorded owner after return. |
@@ -151,13 +153,13 @@ No production code was modified after this defect was identified.
 | A02 | Code signer/state checks | Partial | Direct-chain authority is real; the negative actor/adapter matrix is not exhaustive. |
 | A03 | Release ceremony/package metadata | Not covered and currently false | Both manifests remain compatible; no immutable publish/rejection evidence exists. |
 
-**Revised coverage for the stated 38:** **19 covered / 17 partial / 2 not covered**. The earlier 20/16/2 is defensible only if S03's source ordering plus a same-transaction expected failure is called full coverage. This review does not. The 38-obligation inventory is also incomplete: it needs a separate V1 post-delivery creator-authority obligation. The new test covers the existence of that failure path; production does not prevent it.
+**Post-remediation coverage for the stated 38:** **20 covered / 16 partial / 2 not covered**. S03 remains partial rather than inflating source ordering and same-transaction expected failure into committed replay proof. V104 is upgraded because production now enforces the restricted creator-burn predicate and focused unit plus testnet evidence exercise both accepted and rejected states. The separate V1 post-delivery creator-authority obligation is also covered for the supported subset; general/nonzero V1 remains unsupported.
 
 ## Disposition of non-fully-covered areas
 
 ### A — owner remediation before audit sign-off
 
-- **V104 plus omitted V1 creator authority:** retain the new regression and review a production fix separately. This does not prevent audit intake, but it blocks a clean audit conclusion and mainnet V1 enablement.
+- **V104 plus omitted V1 creator authority — completed for restricted V1:** exploit evidence is preserved; `edbac21` fails closed before custody; focused regressions and testnet committed-abort evidence cover creator-burn true, malformed state and nonzero versions. External audit should challenge the exact pin/API assumption rather than treating general V1 as supported.
 - **M09/A02:** tighten high-value authorization tests to exact abort locations for every privileged setter/registry path where cheap; this reduces false-positive expected failures.
 - **S03:** add a two-transaction committed replay/balance check to acceptance evidence, not another same-transaction expected-failure test.
 
@@ -197,7 +199,7 @@ No test was added merely to raise the count. The creator-burn test was added bec
 - Authenticated `deposit_token` returns the exact linear Token and does not require receiver direct-transfer opt-in.
 - Missing TokenData/TokenStore and malformed royalty paths fail closed under the pin, though exact abort coverage is incomplete.
 - No unrelated-token withdrawal path was found.
-- **Exploit constructed:** creator-burnable V1 passes listing and sale, after which the creator burns it from the buyer. This is distinct from escrow safety: custody is safe during escrow but buyer ownership is not durable.
+- **Historical exploit preserved and remediated:** before `edbac21`, creator-burnable V1 passed listing and sale, after which the creator burned it from the buyer. The supported adapter now permits only property-version zero after authoritative default-property inspection; true/malformed burn state and every nonzero version abort before custody. This does not make unsupported legacy configurations safe.
 
 ## Economic challenge
 
@@ -266,12 +268,12 @@ Official current documentation continues to describe FeeStatement storage refund
 
 ## V1 legacy collection assessment
 
-The evidence supports exactly **REQUIRES PER-TOKEN VALIDATION** for Aptos Monkeys, Aptomingos, Bruh Bears and Pontem Space Pirates. Each sampled row showed maximum/supply 1/1 and a structurally plausible royalty, but the reads were separate snapshots and did not establish the current holder's TokenStore amount, exact owned property_version, real withdrawal, outstanding delegations, creator-burn flag for every token, later mutation or collection-wide behavior. Bruh Bears' sampled TokenData largest property version of 1 reinforces that version zero must never be assumed.
+The evidence supports exactly **REQUIRES PER-TOKEN VALIDATION** for Aptos Monkeys, Aptomingos, Bruh Bears and Pontem Space Pirates. Each sampled row showed maximum/supply 1/1 and a structurally plausible royalty, but the reads were separate snapshots and did not establish the current holder's TokenStore amount, exact owned property_version, real withdrawal, outstanding delegations, later mutation or collection-wide behavior. The adapter now reads creator-burn state authoritatively only for property-version zero and rejects nonzero versions. Bruh Bears' sampled TokenData largest property version of 1 reinforces that collection recognition cannot imply support.
 
-The four sampled default property maps were empty, so the new creator-burn exploit is not established for those exact samples. It does invalidate any policy that checks only maximum/balance/royalty. No collection is promoted to generally supported.
+The four sampled default property maps were empty, so the original creator-burn exploit was not established for those exact samples. No collection is promoted to generally supported: an actual property-version-zero owner/token must pass every on-chain predicate at listing time.
 
 ## Test added and validation target
 
-Added `audit_v1_creator_burn_authority_survives_purchase` in `move/marketplace/tests/settlement_v1_tests.move`. It constructs maximum-1, valid-royalty TokenData with the native reserved creator-burn flag, completes LIST/BUY, then proves the creator can burn the buyer's token after payment while the listing remains SOLD.
+The original `audit_v1_creator_burn_authority_survives_purchase` test preserves the exploit path and now expects the remediated LIST abort. Added focused tests cover safe version zero, creator-burn true, malformed creator-burn type, nonzero property version and reserved-property mutation. Aptos Testnet package `0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91` completed safe LIST/CANCEL/RELIST/BUY with exact economics and committed unsafe LIST aborts; see [public evidence](../evidence/marketplace-v1-creator-burn-remediation-testnet.json).
 
-Expected final Move count: **197** (82 launchpad + 115 marketplace). Final validation must rerun both Move packages, Node/TypeScript, frontend, typecheck, production build and `git diff --check` after this document is added.
+Final validation target: **202 Move tests** (82 launchpad + 120 marketplace), Node/TypeScript, frontend, typecheck, production build and `git diff --check`.
