@@ -1,0 +1,1022 @@
+{
+  "launchpad::fee_policy": {
+    "path": "move/launchpad/sources/fee_policy.move",
+    "tests": [
+      {
+        "name": "configuration_events",
+        "expectedFailure": false,
+        "specificAbort": false
+      }
+    ]
+  },
+  "launchpad::fee_policy_tests": {
+    "path": "move/launchpad/tests/fee_policy_tests.move",
+    "tests": [
+      {
+        "name": "initializes_fee_and_recipient",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "fee_split_conserves_revenue",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "fee_rounding_is_batch_invariant",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "zero_price_and_zero_fee",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "full_u64_range_uses_wide_intermediate",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "total_overflow_rejected",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "zero_quantity_rejected",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "quote_fee_cap",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "admin_can_update_fee_recipient_and_pause",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "unauthorized_fee_update",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "unauthorized_recipient_update",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "unauthorized_pause",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "admin_cannot_exceed_fee_cap",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "zero_recipient_rejected",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "zero_recipient_update_rejected",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "unauthorized_initialization",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "cannot_reinitialize",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "admin_transfer_requires_acceptance",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "wrong_account_cannot_accept",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "old_admin_loses_authority",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "zero_nominee_rejected",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "unauthorized_admin_proposal",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "acceptance_without_nomination_rejected",
+        "expectedFailure": true,
+        "specificAbort": true
+      }
+    ]
+  },
+  "launchpad::launchpad_tests": {
+    "path": "move/launchpad/tests/launchpad_tests.move",
+    "tests": [
+      {
+        "name": "prepare_append_finalize_native_collection",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "multi_mint_transfers_native_tokens_and_exact_payments",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "single_mint_and_free_mint",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "fee_snapshot_rounding_and_treasury_rotation",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "holder_transfers_while_platform_paused",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "mint_before_start",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "mint_at_end",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "mint_after_end",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "mint_not_finalized",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "mint_platform_paused",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "mint_creator_paused",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "mint_admin_paused",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "admin_cannot_clear_creator_pause",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "wallet_lifetime_limit",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "remaining_supply_limit",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "sold_out",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "quantity_zero",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "quantity_over_limit",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "wrong_expected_price",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "max_total_protection",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "unauthorized_append",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "unauthorized_finalize",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "unauthorized_creator_pause",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "unauthorized_admin_pause",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "metadata_overwrite",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "metadata_gap",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "duplicate_metadata_uri",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "duplicate_metadata_name",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "incomplete_finalize",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "metadata_supply_mismatch",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "post_finalize_append",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "double_finalize",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "zero_supply",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "excessive_supply",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "invalid_wallet_limit",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "invalid_transaction_limit",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "invalid_schedule",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "past_schedule",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "expired_finalize",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "fee_review_mismatch",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "prepare_paused",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "invalid_metadata_uri",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "exact_maximum_supply_and_open_ended_schedule",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "pause_unpause_restores_minting",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "max_price_uses_u128_and_pays_native_apt",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "mint_total_overflow",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "insufficient_apt",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "invalid_royalty",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "changed_fee_before_preparation_requires_review",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "finalize_platform_paused",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "metadata_chunk_bound",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "metadata_array_length_mismatch",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "duplicate_uri_across_chunks",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "creator_cannot_transfer_authority",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "creator_cannot_transfer_native_collection",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "creator_cannot_mint_as_native_collection_owner",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "creator_cannot_mint_as_native_creator",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "admin_cannot_seize_holder_nft",
+        "expectedFailure": true,
+        "specificAbort": true
+      }
+    ]
+  },
+  "marketplace::marketplace_fee_policy": {
+    "path": "move/marketplace/sources/marketplace_fee_policy.move",
+    "tests": [
+      {
+        "name": "configuration_events",
+        "expectedFailure": false,
+        "specificAbort": false
+      }
+    ]
+  },
+  "marketplace::marketplace_fee_policy_tests": {
+    "path": "move/marketplace/tests/marketplace_fee_policy_tests.move",
+    "tests": [
+      {
+        "name": "f01_initialize_defaults",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "f02_initialization_authorization",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "f03_reinitialization",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "f04_fee_update",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "f05_fee_cap",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "f06_fee_authorization",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "f07_recipient_update",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "f08_invalid_recipient",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "f09_recipient_authorization",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "f10_two_step_admin_transfer",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "f11_wrong_admin_acceptance",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "f12_two_percent_exact_quote",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "f13_fee_rounding",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "f14_royalty_rounding",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "f15_combined_conservation",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "f16_excessive_deductions",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "f17_u64_boundary",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "f18_zero_price_policy",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "f19_storage_reimbursement_defaults_and_update",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "f20_storage_reimbursement_authorization",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "f21_storage_reimbursement_cap",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "audit_old_admin_cannot_pause",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "audit_u128_product_boundary",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "audit_royalty_numerator_over_denominator",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "audit_zero_recipient_update",
+        "expectedFailure": true,
+        "specificAbort": true
+      }
+    ]
+  },
+  "marketplace::marketplace_tests": {
+    "path": "move/marketplace/tests/marketplace_tests.move",
+    "tests": [
+      {
+        "name": "g01_create_listing",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "g02_monotonic_ids",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "g03_asset_key_uniqueness",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "g04_cross_standard_key_separation",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "g05_cancel_listing",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "g06_unauthorized_cancel",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "g07_buy_listing",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "g08_seller_buys_own_listing",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "g09_nonexistent_listing",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "g10_cancelled_replay",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "g11_sold_replay",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "g12_wrong_expected_price",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "g13_immutable_price",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "g14_fee_snapshot",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "g15_recipient_rotation",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "g16_royalty_snapshot",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "g17_global_pause",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "g18_v1_adapter_pause",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "g19_v2_adapter_pause",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "g20_cancellation_during_pause",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "g21_pause_authorization",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "g22_event_consistency",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "g23_storage_reimbursement_snapshot",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "g24_wrong_expected_storage_reimbursement",
+        "expectedFailure": true,
+        "specificAbort": true
+      }
+    ]
+  },
+  "marketplace::settlement_v1_tests": {
+    "path": "move/marketplace/tests/settlement_v1_tests.move",
+    "tests": [
+      {
+        "name": "v101_successful_escrow",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "v102_cancel_returns_exact_token",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "v103_buy_delivers_exact_token",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "v104_unowned_token_listing_fails",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "v105_wrong_identity_fails",
+        "expectedFailure": true,
+        "specificAbort": false
+      },
+      {
+        "name": "v106_nonzero_property_version",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "v107_semi_fungible_rejected",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "v108_exact_amount_is_one",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "v109_exact_royalty_is_snapshotted",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "v110_malformed_royalty_rejected",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "v111_mutable_royalty_uses_listing_snapshot",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "v112_creator_royalty_payment",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "v113_cancel_does_not_require_direct_transfer_opt_in",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "v114_buy_initializes_buyer_token_store",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "v115_property_mutation_cannot_touch_escrow",
+        "expectedFailure": true,
+        "specificAbort": false
+      },
+      {
+        "name": "v116_admin_has_no_escrow_seizure_path",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "v117_seller_cannot_double_spend_escrow",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "v118_unrelated_token_remains_untouched",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "v119_preexisting_withdraw_capability_cannot_withdraw_escrow",
+        "expectedFailure": true,
+        "specificAbort": false
+      },
+      {
+        "name": "v120_buyer_controls_token_after_settlement",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "audit_v1_cancel_paused_preserves_other_escrow_and_balances",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "audit_v1_cancel_then_buy_rejected",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "audit_v1_double_buy_rejected",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "audit_v1_buy_then_cancel_rejected",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "audit_v1_admin_cannot_cancel",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "audit_v1_seller_capability_revives_after_cancel",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "audit_v1_preexisting_buyer_capability_after_purchase",
+        "expectedFailure": false,
+        "specificAbort": false
+      }
+    ]
+  },
+  "marketplace::settlement_v2_tests": {
+    "path": "move/marketplace/tests/settlement_v2_tests.move",
+    "tests": [
+      {
+        "name": "v201_successful_listing",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "v202_successful_cancel",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "v203_successful_buy",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "v204_unowned_object",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "v205_nested_ownership",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "v206_wrong_resource_type",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "v207_collection_identity",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "v208_ungated_transfer_disabled",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "v209_token_level_royalty",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "v210_inherited_royalty",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "v211_no_royalty",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "v212_mutable_royalty_snapshot",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "v213_isolated_capability_scope",
+        "expectedFailure": true,
+        "specificAbort": false
+      },
+      {
+        "name": "v214_no_nft_capabilities_retained",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "v215_seller_cannot_move_escrowed_nft",
+        "expectedFailure": true,
+        "specificAbort": false
+      },
+      {
+        "name": "v216_admin_cannot_move_escrow",
+        "expectedFailure": true,
+        "specificAbort": false
+      },
+      {
+        "name": "v217_reviewed_collection_registry",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "v218_unreviewed_collection_rejected",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "v219_retained_creator_transfer_ref_threat",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "v220_unrelated_assets_untouched",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "v221_malformed_native_royalty_rejected_at_source",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "v222_pause_does_not_trap_cancellation",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "v223_wrong_expected_price",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "v224_cancel_then_buy_fails",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "v225_buy_then_cancel_fails",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "v226_v2_pause_blocks_listing",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "v227_global_pause_blocks_buy",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "v228_revocation_does_not_trap_existing_escrow",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "v229_nonadmin_cannot_update_registry",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "v230_noncollection_registry_entry_rejected",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "v231_insufficient_payment_aborts_purchase",
+        "expectedFailure": true,
+        "specificAbort": false
+      },
+      {
+        "name": "v232_double_buy_fails",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "v233_wrong_storage_reimbursement_leaves_purchase_unexecutable",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "v234_lightweight_escrow_has_no_terminal_shell",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "audit_v2_revocation_does_not_block_existing_buy",
+        "expectedFailure": false,
+        "specificAbort": false
+      },
+      {
+        "name": "audit_v2_old_admin_cannot_update_registry",
+        "expectedFailure": true,
+        "specificAbort": true
+      },
+      {
+        "name": "audit_v2_cancel_charges_no_reimbursement",
+        "expectedFailure": false,
+        "specificAbort": false
+      }
+    ]
+  }
+}

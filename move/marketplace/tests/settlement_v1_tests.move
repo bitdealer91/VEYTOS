@@ -1,5 +1,6 @@
 #[test_only]
 module marketplace::settlement_v1_tests {
+    use std::bcs;
     use std::signer;
     use std::string;
     use aptos_framework::account;
@@ -140,6 +141,7 @@ module marketplace::settlement_v1_tests {
     }
 
     #[test]
+    #[expected_failure(abort_code = 10, location = marketplace::settlement_v1)]
     fun v106_nonzero_property_version() {
         let (_, seller, buyer, _) = setup();
         mint_with(&seller, b"mutable", 1, 500, 10000, false, true);
@@ -293,5 +295,218 @@ module marketplace::settlement_v1_tests {
         assert!(token::get_token_amount(&withdrawn) == 1, 100);
         token::deposit_token(&buyer, withdrawn);
         assert!(token::balance_of(@0xb, token_id) == 1, 101);
+    }
+
+    #[test]
+    fun audit_v1_cancel_paused_preserves_other_escrow_and_balances() {
+        let (admin, seller, _, _) = setup();
+        let first = mint(&seller, b"one");
+        let second = mint(&seller, b"two");
+        let a = list(&seller, b"one", 0);
+        let b = list(&seller, b"two", 0);
+        marketplace_fee_policy::set_global_paused(&admin, true);
+        marketplace_fee_policy::set_v1_paused(&admin, true);
+        let buyer_before = coin::balance<AptosCoin>(@0xb);
+        settlement_v1::cancel(&seller, a);
+        assert!(token::balance_of(@0xa, first) == 1, 100);
+        assert!(token::balance_of(@0xa, second) == 0, 101);
+        assert!(settlement_v1::has_escrow(b), 102);
+        assert!(marketplace::listing_status(b) == 1, 103);
+        assert!(coin::balance<AptosCoin>(@0xb) == buyer_before, 104);
+        assert!(coin::balance<AptosCoin>(@0xa) == 0, 105);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 7, location = marketplace::settlement_v1)]
+    fun audit_v1_cancel_then_buy_rejected() {
+        let (_, seller, buyer, _) = setup();
+        mint(&seller, b"one");
+        let id = list(&seller, b"one", 0);
+        settlement_v1::cancel(&seller, id);
+        settlement_v1::buy(&buyer, id, PRICE, 0);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 7, location = marketplace::settlement_v1)]
+    fun audit_v1_double_buy_rejected() {
+        let (_, seller, buyer, _) = setup();
+        mint(&seller, b"one");
+        let id = list(&seller, b"one", 0);
+        settlement_v1::buy(&buyer, id, PRICE, 0);
+        settlement_v1::buy(&buyer, id, PRICE, 0);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 7, location = marketplace::settlement_v1)]
+    fun audit_v1_buy_then_cancel_rejected() {
+        let (_, seller, buyer, _) = setup();
+        mint(&seller, b"one");
+        let id = list(&seller, b"one", 0);
+        settlement_v1::buy(&buyer, id, PRICE, 0);
+        settlement_v1::cancel(&seller, id);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 2, location = marketplace::marketplace)]
+    fun audit_v1_admin_cannot_cancel() {
+        let (admin, seller, _, _) = setup();
+        mint(&seller, b"one");
+        settlement_v1::cancel(&admin, list(&seller, b"one", 0));
+    }
+
+    #[test]
+    fun audit_v1_seller_capability_revives_after_cancel() {
+        let (_, seller, _, _) = setup();
+        let token_id = mint(&seller, b"one");
+        let cap = token::create_withdraw_capability(&seller, token_id, 1, 1000);
+        let id = list(&seller, b"one", 0);
+        settlement_v1::cancel(&seller, id);
+        let value = token::withdraw_with_capability(cap);
+        assert!(token::get_token_amount(&value) == 1, 100);
+        assert!(token::balance_of(@0xa, token_id) == 0, 101);
+        token::deposit_token(&seller, value);
+    }
+
+    #[test]
+    fun audit_v1_preexisting_buyer_capability_after_purchase() {
+        let (_, seller, buyer, _) = setup();
+        let token_id = mint(&seller, b"one");
+        token::deposit_token(&buyer, token::withdraw_token(&seller, token_id, 1));
+        let cap = token::create_withdraw_capability(&buyer, token_id, 1, 1000);
+        token::deposit_token(&seller, token::withdraw_token(&buyer, token_id, 1));
+        let id = list(&seller, b"one", 0);
+        settlement_v1::buy(&buyer, id, PRICE, 0);
+        let value = token::withdraw_with_capability(cap);
+        assert!(token::get_token_amount(&value) == 1, 100);
+        assert!(marketplace::listing_status(id) == 3, 101);
+        token::deposit_token(&buyer, value);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 9, location = marketplace::settlement_v1)]
+    fun audit_v1_creator_burn_authority_survives_purchase() {
+        let (_, seller, buyer, _) = setup();
+        let token_data_id = token::create_tokendata(
+            &seller,
+            string::utf8(b"V1 Collection"),
+            string::utf8(b"creator burnable"),
+            string::utf8(b"description"),
+            1,
+            string::utf8(b"ipfs://token"),
+            @0xf,
+            10000,
+            500,
+            token::create_token_mutability_config(&vector[false, false, false, false, false]),
+            vector[string::utf8(b"TOKEN_BURNABLE_BY_CREATOR")],
+            vector[bcs::to_bytes<bool>(&true)],
+            vector[string::utf8(b"bool")],
+        );
+        let token_id = token::mint_token(&seller, token_data_id, 1);
+        let id = list(&seller, b"creator burnable", 0);
+        settlement_v1::buy(&buyer, id, PRICE, 0);
+        assert!(token::balance_of(@0xb, token_id) == 1, 100);
+
+        token::burn_by_creator(
+            &seller,
+            @0xb,
+            string::utf8(b"V1 Collection"),
+            string::utf8(b"creator burnable"),
+            0,
+            1,
+        );
+        assert!(token::balance_of(@0xb, token_id) == 0, 101);
+        assert!(marketplace::listing_status(id) == 3, 102);
+        assert!(coin::balance<AptosCoin>(@0xa) == 93000000, 103);
+    }
+
+    #[test]
+    fun audit_v1_safe_property_version_zero_accepted() {
+        let (_, seller, buyer, _) = setup();
+        let token_id = mint(&seller, b"safe version zero");
+        let id = list(&seller, b"safe version zero", 0);
+        settlement_v1::buy(&buyer, id, PRICE, 0);
+        assert!(token::balance_of(@0xb, token_id) == 1, 100);
+        assert!(marketplace::listing_status(id) == 3, 101);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 9, location = marketplace::settlement_v1)]
+    fun audit_v1_creator_burnable_rejected_before_custody() {
+        let (_, seller, _, _) = setup();
+        let token_data_id = token::create_tokendata(
+            &seller,
+            string::utf8(b"V1 Collection"),
+            string::utf8(b"reject creator burn"),
+            string::utf8(b"description"),
+            1,
+            string::utf8(b"ipfs://token"),
+            @0xf,
+            10000,
+            500,
+            token::create_token_mutability_config(&vector[false, false, false, false, false]),
+            vector[string::utf8(b"TOKEN_BURNABLE_BY_CREATOR")],
+            vector[bcs::to_bytes<bool>(&true)],
+            vector[string::utf8(b"bool")],
+        );
+        token::mint_token(&seller, token_data_id, 1);
+        list(&seller, b"reject creator burn", 0);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 10, location = marketplace::settlement_v1)]
+    fun audit_v1_nonzero_property_version_rejected_when_default_burn_state_is_unobservable() {
+        let (_, seller, _, _) = setup();
+        mint_with(&seller, b"unobservable defaults", 1, 500, 10000, false, true);
+        token::mutate_token_properties(
+            &seller,
+            @0xa,
+            @0xa,
+            string::utf8(b"V1 Collection"),
+            string::utf8(b"unobservable defaults"),
+            0,
+            1,
+            vector[],
+            vector[],
+            vector[],
+        );
+        list(&seller, b"unobservable defaults", 1);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 196614, location = aptos_token::property_map)]
+    fun audit_v1_malformed_creator_burn_property_rejected() {
+        let (_, seller, _, _) = setup();
+        let token_data_id = token::create_tokendata(
+            &seller,
+            string::utf8(b"V1 Collection"),
+            string::utf8(b"malformed burn flag"),
+            string::utf8(b"description"),
+            1,
+            string::utf8(b"ipfs://token"),
+            @0xf,
+            10000,
+            500,
+            token::create_token_mutability_config(&vector[false, false, false, false, false]),
+            vector[string::utf8(b"TOKEN_BURNABLE_BY_CREATOR")],
+            vector[bcs::to_bytes<u64>(&0)],
+            vector[string::utf8(b"u64")],
+        );
+        token::mint_token(&seller, token_data_id, 1);
+        list(&seller, b"malformed burn flag", 0);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 327720, location = aptos_token::token)]
+    fun audit_v1_reserved_creator_burn_flag_cannot_be_enabled_after_listing() {
+        let (_, seller, _, _) = setup();
+        let token_id = mint_with(&seller, b"reserved mutation", 1, 500, 10000, false, true);
+        list(&seller, b"reserved mutation", 0);
+        token::mutate_tokendata_property(
+            &seller,
+            token::get_tokendata_id(token_id),
+            vector[string::utf8(b"TOKEN_BURNABLE_BY_CREATOR")],
+            vector[bcs::to_bytes<bool>(&true)],
+            vector[string::utf8(b"bool")],
+        );
     }
 }

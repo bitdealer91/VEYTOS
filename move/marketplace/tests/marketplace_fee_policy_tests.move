@@ -159,4 +159,33 @@ module marketplace::marketplace_fee_policy_tests {
         marketplace_fee_policy::initialize(publisher, @0xa);
         marketplace_fee_policy::set_v2_storage_reimbursement(publisher, 10000001);
     }
+
+    #[test(publisher = @marketplace, successor = @0xb)]
+    #[expected_failure(abort_code = 1, location = marketplace::marketplace_fee_policy)]
+    fun audit_old_admin_cannot_pause(publisher: &signer, successor: &signer) {
+        marketplace_fee_policy::initialize(publisher, @0xa);
+        marketplace_fee_policy::propose_admin(publisher, @0xb);
+        marketplace_fee_policy::accept_admin(successor);
+        marketplace_fee_policy::set_global_paused(publisher, true);
+    }
+
+    #[test]
+    fun audit_u128_product_boundary() {
+        let max = 18446744073709551615;
+        let (fee, royalty, seller) = marketplace_fee_policy::quote_sale(max, 0, max - 1, max);
+        assert!(fee == 0 && royalty == max - 1 && seller == 1, 100);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 4, location = marketplace::marketplace_fee_policy)]
+    fun audit_royalty_numerator_over_denominator() {
+        marketplace_fee_policy::quote_sale(100, 200, 2, 1);
+    }
+
+    #[test(publisher = @marketplace)]
+    #[expected_failure(abort_code = 3, location = marketplace::marketplace_fee_policy)]
+    fun audit_zero_recipient_update(publisher: &signer) {
+        marketplace_fee_policy::initialize(publisher, @0xa);
+        marketplace_fee_policy::set_recipient(publisher, @0x0);
+    }
 }

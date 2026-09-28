@@ -450,4 +450,36 @@ module marketplace::settlement_v2_tests {
         assert!(!object::object_exists<object::ObjectCore>(escrow), 101);
         assert!(marketplace::listing_status(id) == 2, 102);
     }
+
+    #[test]
+    fun audit_v2_revocation_does_not_block_existing_buy() {
+        let (admin, seller, buyer, _, collection_address) = setup();
+        let nft = mint(&seller, collection_address, b"one");
+        let id = list(&seller, nft);
+        marketplace::set_v2_collection_reviewed(&admin, collection_address, 1, false);
+        settlement_v2::buy(&buyer, id, PRICE, 926400);
+        assert!(object::owner(object::address_to_object<Token>(nft)) == @0xb, 100);
+        assert!(marketplace::listing_status(id) == 3, 101);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 2, location = marketplace::marketplace)]
+    fun audit_v2_old_admin_cannot_update_registry() {
+        let (admin, _, _, successor, collection_address) = setup();
+        marketplace_fee_policy::propose_admin(&admin, @0xd);
+        marketplace_fee_policy::accept_admin(&successor);
+        marketplace::set_v2_collection_reviewed(&admin, collection_address, 1, false);
+    }
+
+    #[test]
+    fun audit_v2_cancel_charges_no_reimbursement() {
+        let (_, seller, _, _, collection_address) = setup();
+        let nft = mint(&seller, collection_address, b"one");
+        let id = list(&seller, nft);
+        let buyer_before = coin::balance<AptosCoin>(@0xb);
+        settlement_v2::cancel(&seller, id);
+        assert!(coin::balance<AptosCoin>(@0xb) == buyer_before, 100);
+        assert!(coin::balance<AptosCoin>(@0xa) == 0, 101);
+        assert!(object::owner(object::address_to_object<Token>(nft)) == @0xa, 102);
+    }
 }
