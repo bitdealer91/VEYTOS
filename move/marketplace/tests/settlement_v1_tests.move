@@ -1,5 +1,6 @@
 #[test_only]
 module marketplace::settlement_v1_tests {
+    use std::bcs;
     use std::signer;
     use std::string;
     use aptos_framework::account;
@@ -378,5 +379,41 @@ module marketplace::settlement_v1_tests {
         assert!(token::get_token_amount(&value) == 1, 100);
         assert!(marketplace::listing_status(id) == 3, 101);
         token::deposit_token(&buyer, value);
+    }
+
+    #[test]
+    fun audit_v1_creator_burn_authority_survives_purchase() {
+        let (_, seller, buyer, _) = setup();
+        let token_data_id = token::create_tokendata(
+            &seller,
+            string::utf8(b"V1 Collection"),
+            string::utf8(b"creator burnable"),
+            string::utf8(b"description"),
+            1,
+            string::utf8(b"ipfs://token"),
+            @0xf,
+            10000,
+            500,
+            token::create_token_mutability_config(&vector[false, false, false, false, false]),
+            vector[string::utf8(b"TOKEN_BURNABLE_BY_CREATOR")],
+            vector[bcs::to_bytes<bool>(&true)],
+            vector[string::utf8(b"bool")],
+        );
+        let token_id = token::mint_token(&seller, token_data_id, 1);
+        let id = list(&seller, b"creator burnable", 0);
+        settlement_v1::buy(&buyer, id, PRICE, 0);
+        assert!(token::balance_of(@0xb, token_id) == 1, 100);
+
+        token::burn_by_creator(
+            &seller,
+            @0xb,
+            string::utf8(b"V1 Collection"),
+            string::utf8(b"creator burnable"),
+            0,
+            1,
+        );
+        assert!(token::balance_of(@0xb, token_id) == 0, 101);
+        assert!(marketplace::listing_status(id) == 3, 102);
+        assert!(coin::balance<AptosCoin>(@0xa) == 93000000, 103);
     }
 }
