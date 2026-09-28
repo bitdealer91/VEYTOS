@@ -22,7 +22,7 @@ import { MarketplacePanel } from '../src/features/marketplace-panel';
 const config: MarketplaceConfig = { chainId: 2, feeBps: '200', recipient: `0x${'e'.repeat(64)}`, globalPaused: false, v1Paused: false, v2Paused: false, admin: `0x${'f'.repeat(64)}`, v1StorageReimbursement: '800000', v2StorageReimbursement: '926400' };
 const nft: NormalizedNFT = { standard: 'v2', identity: { standard: 'v2', address: token }, tokenId: token, collectionId: collection, owner: seller, amount: '1', name: 'Verified NFT', description: '', metadataUri: '', image: null, collectionName: 'Verified collection', collectionCreator: seller, collectionMetadataUri: '', lastTransactionVersion: '1', maximum: null, properties: null, royalty: null, isSoulbound: false };
 const listing: MarketplaceListing = { id: '9', seller, standard: 'v2', identity: nft.identity, collectionId: collection, price: '1000000000', feeBps: '200', storageReimbursement: '926400', royaltyPayee: seller, royaltyNumerator: '750', royaltyDenominator: '10000', status: 'ACTIVE', escrowAddress: `0x${'9'.repeat(64)}` };
-const v1Nft: NormalizedNFT = { ...nft, standard: 'v1', identity: { standard: 'v1', creator: seller, collection: 'Legacy Collection', name: 'Legacy NFT #1', propertyVersion: '1' }, tokenId: `0x${'1'.repeat(64)}`, collectionId: `0x${'2'.repeat(64)}`, name: 'Legacy NFT #1', collectionName: 'Legacy Collection', maximum: '1', royalty: { payee: seller, numerator: '750', denominator: '10000' } };
+const v1Nft: NormalizedNFT = { ...nft, standard: 'v1', identity: { standard: 'v1', creator: seller, collection: 'Legacy Collection', name: 'Legacy NFT #1', propertyVersion: '0' }, tokenId: `0x${'1'.repeat(64)}`, collectionId: `0x${'2'.repeat(64)}`, name: 'Legacy NFT #1', collectionName: 'Legacy Collection', maximum: '1', royalty: { payee: seller, numerator: '750', denominator: '10000' } };
 const v1Listing: MarketplaceListing = { ...listing, id: '10', standard: 'v1', identity: v1Nft.identity, collectionId: v1Nft.collectionId, storageReimbursement: '800000', escrowAddress: undefined };
 const key = `${'veytos:market:testnet'}:${moduleAddress}:${token}:`;
 
@@ -183,9 +183,20 @@ test('V1 listing review preserves property version and exact economics', async (
   await waitFor(() => expect(screen.getByRole('button', { name: 'Review listing' }).hasAttribute('disabled')).toBe(false));
   fireEvent.click(screen.getByRole('button', { name: 'Review listing' }));
   const dialog = screen.getByRole('dialog');
-  expect(dialog.textContent).toContain('Token V1 · property version 1');
+  expect(dialog.textContent).toContain('Token V1 · property version 0');
   expect(dialog.textContent).toContain('0.2'); expect(dialog.textContent).toContain('0.75');
   expect(dialog.textContent).toContain('9.05'); expect(dialog.textContent).toContain('0.008');
+});
+
+test('unsupported V1 configuration is blocked with a human-readable message', async () => {
+  mocks.eligibility.mockResolvedValue({
+    eligible: false,
+    reasons: ['This legacy NFT configuration is not supported for marketplace trading.'],
+    royalty: null,
+  });
+  mount({ ...v1Nft, identity: { ...v1Nft.identity, propertyVersion: '1' } });
+  expect(await screen.findByText('This legacy NFT configuration is not supported for marketplace trading.')).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Review listing' }).hasAttribute('disabled')).toBe(true);
 });
 
 test('active V1 seller sees escrow custody and Cancel without an ownership diagnostic', () => {
@@ -243,7 +254,7 @@ test('V1 BUY shows SOLD and the exact buyer after balance reconciliation', async
 test('purchased V1 token can be relisted when exact balance overrides stale discovery ownership', async () => {
   mocks.wallet.account.address.toString = () => buyer;
   const stale = { ...v1Nft, owner: seller, amount: '0' };
-  localStorage.setItem(`veytos:confirmed:testnet:${moduleAddress}:${v1Nft.tokenId}:1`, JSON.stringify({ version: '31', owner: buyer, action: 'buy', listingStatus: 'SOLD' }));
+  localStorage.setItem(`veytos:confirmed:testnet:${moduleAddress}:${v1Nft.tokenId}:0`, JSON.stringify({ version: '31', owner: buyer, action: 'buy', listingStatus: 'SOLD' }));
   mount(stale, null, config, { listing: null, owner: null, ledgerVersion: '30' });
   fireEvent.change(await screen.findByLabelText('Price in APT'), { target: { value: '0.1' } });
   await waitFor(() => expect(screen.getByRole('button', { name: 'Review listing' }).hasAttribute('disabled')).toBe(false));

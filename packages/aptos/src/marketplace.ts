@@ -67,6 +67,7 @@ export function marketplacePaused(config: MarketplaceConfig, standard: 'v1' | 'v
 export type MarketplacePreparationStage = 'configuration' | 'asset-state' | 'eligibility' | 'payload' | 'wallet' | 'reconciliation';
 export function marketplaceErrorMessage(error: unknown, stage: MarketplacePreparationStage) {
   const message = error instanceof Error ? error.message : String(error);
+  if (/ECREATOR_BURNABLE|EUNSUPPORTED_PROPERTY_VERSION/i.test(message)) return 'This legacy NFT configuration is not supported for marketplace trading.';
   if (/reject|denied|4001|user cancel/i.test(message)) return 'Request cancelled in your wallet. No transaction was submitted.';
   if (/INSUFFICIENT|insufficient.*balance|balance.*(gas|fee)/i.test(message)) return 'Your balance is too low for the price, storage reimbursement, and gas.';
   if (/EPRICE_CHANGED|EMAX_TOTAL|price changed/i.test(message)) return 'The listing price changed. Review the new price before buying.';
@@ -235,6 +236,7 @@ export function marketplace(aptos: Aptos, packageAddress: string) {
     const reasons: string[] = [];
     let royalty = nft.royalty;
     if (nft.identity.standard === 'v1') {
+      if (BigInt(nft.identity.propertyVersion) !== 0n) reasons.push('This legacy NFT configuration is not supported for marketplace trading.');
       const [balance] = await aptos.view<[string]>({
         payload: {
           function: `${module}::settlement_v1::token_balance`,

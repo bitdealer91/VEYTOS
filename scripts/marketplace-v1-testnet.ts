@@ -38,9 +38,9 @@ assert(accountStat.isFile());
 assert.equal(accountStat.mode & 0o077, 0, "Testnet account file must have owner-only permissions");
 
 const secrets = JSON.parse(await readFile(accountsPath, "utf8")) as Record<string, SecretRecord>;
-if (!secrets.marketplaceV1Admin) {
+if (!secrets.marketplaceV1BurnSafetyAdmin) {
   const generated = Account.generate();
-  secrets.marketplaceV1Admin = {
+  secrets.marketplaceV1BurnSafetyAdmin = {
     address: generated.accountAddress.toStringLong(),
     privateKey: generated.privateKey.toString(),
   };
@@ -62,7 +62,7 @@ const load = (role: string) => {
 const address = (account: Account) => account.accountAddress.toStringLong();
 const canonical = (value: string) => AccountAddress.from(value).toStringLong();
 
-const admin = load("marketplaceV1Admin");
+const admin = load("marketplaceV1BurnSafetyAdmin");
 const seller = load("marketplaceBuyer");
 const buyer = load("buyer");
 const treasury = load("marketplaceTreasury");
@@ -81,9 +81,11 @@ const aptos = new Aptos(new AptosConfig({ network: Network.TESTNET }));
 const ledger = await aptos.getLedgerInfo();
 assert.equal(ledger.chain_id, 2, "Wrong network");
 
-const collectionName = "VEYTOS V1 Gate D";
-const tokenName = "Legacy Property NFT #1";
-const propertyVersion = 1n;
+const collectionName = "VEYTOS V1 Creator Burn Safety";
+const tokenName = "Safe Legacy NFT #1";
+const unsafeTokenName = "Creator Burnable Legacy NFT #1";
+const nonzeroTokenName = "Nonzero Property Version Legacy NFT #1";
+const propertyVersion = 0n;
 async function aptBalance(account: Account, version?: string) {
   const [value] = await aptos.view<[string]>({
     payload: {
@@ -96,13 +98,13 @@ async function aptBalance(account: Account, version?: string) {
   return BigInt(value);
 }
 
-async function tokenBalance(owner: string, version?: string) {
+async function tokenBalance(owner: string, name = tokenName, version = propertyVersion, ledgerVersion?: string) {
   const [value] = await aptos.view<[string]>({
     payload: {
       function: `${moduleAddress}::settlement_v1::token_balance`,
-      functionArguments: [owner, roles.seller, collectionName, tokenName, propertyVersion.toString()],
+      functionArguments: [owner, roles.seller, collectionName, name, version.toString()],
     },
-    ...(version ? { options: { ledgerVersion: BigInt(version) } } : {}),
+    ...(ledgerVersion ? { options: { ledgerVersion: BigInt(ledgerVersion) } } : {}),
   });
   return BigInt(value);
 }
@@ -123,7 +125,7 @@ type Journal = {
   chainId: 2;
   steps: Record<string, Step>;
 };
-const journalPath = ".testnet/marketplace-v1-journal.json";
+const journalPath = ".testnet/marketplace-v1-creator-burn-journal.json";
 let journal: Journal;
 try {
   journal = JSON.parse(await readFile(journalPath, "utf8")) as Journal;
@@ -201,6 +203,40 @@ const entry = (name: string, signer: Account, data: InputGenerateTransactionPayl
     return transaction;
   });
 
+async function expectListRejection(name: string, nameOfToken: string, version: bigint, expectedAbort: RegExp) {
+  const [nextBefore] = await aptos.view<[string]>({
+    payload: { function: `${moduleAddress}::marketplace::next_listing_id`, functionArguments: [] },
+  });
+  const balanceBefore = await tokenBalance(roles.seller, nameOfToken, version);
+  const transaction = await aptos.transaction.build.simple({
+    sender: seller.accountAddress,
+    data: {
+      function: `${moduleAddress}::settlement_v1::list`,
+      functionArguments: [roles.seller, collectionName, nameOfToken, version.toString(), "10000000"],
+    },
+    options: { maxGasAmount: 100_000 },
+  });
+  const [simulation] = await aptos.transaction.simulate.simple({ signerPublicKey: seller.publicKey, transaction });
+  assert(simulation && !simulation.success, `${name}: unsafe LIST simulation unexpectedly succeeded`);
+  assert.match(simulation.vm_status, expectedAbort, `${name}: unexpected abort: ${simulation.vm_status}`);
+  const [nextAfter] = await aptos.view<[string]>({
+    payload: { function: `${moduleAddress}::marketplace::next_listing_id`, functionArguments: [] },
+  });
+  const balanceAfter = await tokenBalance(roles.seller, nameOfToken, version);
+  assert.equal(balanceAfter, balanceBefore, `${name}: simulation changed seller custody`);
+  assert.equal(nextAfter, nextBefore, `${name}: simulation changed marketplace state`);
+  return {
+    submitted: false,
+    success: simulation.success,
+    vmStatus: simulation.vm_status,
+    gasUsed: simulation.gas_used,
+    sellerBalanceBefore: balanceBefore.toString(),
+    sellerBalanceAfter: balanceAfter.toString(),
+    nextListingIdBefore: nextBefore,
+    nextListingIdAfter: nextAfter,
+  };
+}
+
 const feeStatement = (transaction: UserTransactionResponse) => {
   const statement = transaction.events.find((event) => event.type === "0x1::transaction_fee::FeeStatement");
   assert(statement, `FeeStatement missing from ${transaction.hash}`);
@@ -273,21 +309,52 @@ try {
   });
   await entry("create-v1-collection", seller, {
     function: "0x3::token::create_collection_script",
-    functionArguments: [collectionName, "VEYTOS Token V1 Gate D collection", "ipfs://veytos-v1-gate-d", "10", [false, false, false]],
+    functionArguments: [collectionName, "VEYTOS Token V1 creator-burn safety fixtures", "ipfs://veytos-v1-burn-safety", "10", [false, false, false]],
   });
-  await entry("create-v1-token", seller, {
+  await entry("create-safe-v1-token", seller, {
     function: "0x3::token::create_token_script",
     functionArguments: [
-      collectionName, tokenName, "Representative legacy Token V1 NFT", "1", "1",
-      "ipfs://veytos-v1-gate-d/token.json", roles.royaltyRecipient, "10000", "750",
+      collectionName, tokenName, "Safe Token V1 marketplace fixture", "1", "1",
+      "ipfs://veytos-v1-burn-safety/safe.json", roles.royaltyRecipient, "10000", "750",
       [false, false, false, false, true], [], [], [],
     ],
   });
-  await entry("mutate-to-property-version-one", seller, {
-    function: "0x3::token::mutate_token_properties",
-    functionArguments: [roles.seller, roles.seller, collectionName, tokenName, "0", "1", [], [], []],
+  await entry("create-creator-burnable-v1-token", seller, {
+    function: "0x3::token::create_token_script",
+    functionArguments: [
+      collectionName, unsafeTokenName, "Unsafe creator-burnable Token V1 fixture", "1", "1",
+      "ipfs://veytos-v1-burn-safety/unsafe.json", roles.royaltyRecipient, "10000", "750",
+      [false, false, false, false, false], ["TOKEN_BURNABLE_BY_CREATOR"], ["0x01"], ["bool"],
+    ],
   });
-  assert.equal(await tokenBalance(roles.seller), 1n, "Seller must own exact property-version asset");
+  await entry("create-nonzero-version-v1-token", seller, {
+    function: "0x3::token::create_token_script",
+    functionArguments: [
+      collectionName, nonzeroTokenName, "Nonzero property-version Token V1 fixture", "1", "1",
+      "ipfs://veytos-v1-burn-safety/nonzero.json", roles.royaltyRecipient, "10000", "750",
+      [false, false, false, false, true], [], [], [],
+    ],
+  });
+  await entry("mutate-nonzero-fixture-to-property-version-one", seller, {
+    function: "0x3::token::mutate_token_properties",
+    functionArguments: [roles.seller, roles.seller, collectionName, nonzeroTokenName, "0", "1", [], [], []],
+  });
+  assert.equal(await tokenBalance(roles.seller), 1n, "Seller must own the safe version-zero asset");
+  assert.equal(await tokenBalance(roles.seller, unsafeTokenName, 0n), 1n, "Seller must own the unsafe fixture before rejection");
+  assert.equal(await tokenBalance(roles.seller, nonzeroTokenName, 1n), 1n, "Seller must own the nonzero-version fixture before rejection");
+
+  const unsafeRejection = await expectListRejection(
+    "creator-burnable-version-zero",
+    unsafeTokenName,
+    0n,
+    /ECREATOR_BURNABLE|0x9\b/i,
+  );
+  const nonzeroRejection = await expectListRejection(
+    "nonzero-property-version",
+    nonzeroTokenName,
+    1n,
+    /EUNSUPPORTED_PROPERTY_VERSION|0xa\b/i,
+  );
 
   const gross = 10_000_000n;
   const expectedFee = 200_000n;
@@ -305,7 +372,7 @@ try {
   assert.equal(firstListed.data.storage_reimbursement, "0");
   assert.equal(firstListed.data.royalty_numerator, "750");
   assert.equal(firstListed.data.royalty_denominator, "10000");
-  assert.equal(await tokenBalance(roles.seller, firstList.version), 0n);
+  assert.equal(await tokenBalance(roles.seller, tokenName, propertyVersion, firstList.version), 0n);
   const [firstEscrow] = await aptos.view<[boolean]>({
     payload: { function: `${moduleAddress}::settlement_v1::has_escrow`, functionArguments: [firstListingId] },
     options: { ledgerVersion: BigInt(firstList.version) },
@@ -315,7 +382,7 @@ try {
   const cancel = await entry("cancel-first", seller, {
     function: `${moduleAddress}::settlement_v1::cancel`, functionArguments: [firstListingId],
   });
-  assert.equal(await tokenBalance(roles.seller, cancel.version), 1n);
+  assert.equal(await tokenBalance(roles.seller, tokenName, propertyVersion, cancel.version), 1n);
   const refund = BigInt(feeStatement(cancel).storage_fee_refund_octas);
   assert(refund > 0n && refund <= 10_000_000n, `Invalid measured V1 refund: ${refund}`);
   const [firstStatus] = await aptos.view<[number]>({
@@ -335,7 +402,7 @@ try {
   const secondListingId = String(secondListed.data.listing_id);
   assert.equal(secondListed.data.storage_reimbursement, refund.toString());
   assert.notEqual(secondListingId, firstListingId);
-  assert.equal(await tokenBalance(roles.seller, secondList.version), 0n);
+  assert.equal(await tokenBalance(roles.seller, tokenName, propertyVersion, secondList.version), 0n);
 
   const beforeBuy = await Promise.all([
     aptBalance(buyer, secondList.version), aptBalance(seller, secondList.version),
@@ -357,8 +424,8 @@ try {
   assert.equal(afterBuy[1]! - beforeBuy[1]!, expectedSellerProceeds + refund);
   assert.equal(afterBuy[2]! - beforeBuy[2]!, expectedFee);
   assert.equal(afterBuy[3]! - beforeBuy[3]!, expectedRoyalty);
-  assert.equal(await tokenBalance(roles.buyer, buy.version), 1n);
-  assert.equal(await tokenBalance(roles.seller, buy.version), 0n);
+  assert.equal(await tokenBalance(roles.buyer, tokenName, propertyVersion, buy.version), 1n);
+  assert.equal(await tokenBalance(roles.seller, tokenName, propertyVersion, buy.version), 0n);
   const [secondStatus] = await aptos.view<[number]>({
     payload: { function: `${moduleAddress}::marketplace::listing_status`, functionArguments: [secondListingId] },
   });
@@ -389,7 +456,15 @@ try {
     sourceDigest,
     moduleAddress,
     roles,
-    asset: { standard: "TOKEN_V1", creator: roles.seller, collectionName, tokenName, propertyVersion: "1" },
+    asset: { standard: "TOKEN_V1", creator: roles.seller, collectionName, tokenName, propertyVersion: "0" },
+    rejectedAssets: {
+      creatorBurnableVersionZero: {
+        creator: roles.seller, collectionName, tokenName: unsafeTokenName, propertyVersion: "0", ...unsafeRejection,
+      },
+      nonzeroPropertyVersion: {
+        creator: roles.seller, collectionName, tokenName: nonzeroTokenName, propertyVersion: "1", ...nonzeroRejection,
+      },
+    },
     ownership: {
       before: roles.seller,
       duringEscrow: { modulePrivateLinearCustody: true },
@@ -428,12 +503,13 @@ try {
     limitations: [
       "Testnet package uses compatible upgrades during development.",
       "Representative Token V1 assets were constructed on testnet; no valuable mainnet NFT was transacted.",
+      "Unsafe LIST evidence is a fullnode simulation that was never signed or submitted; unchanged balance and next-listing-id reads demonstrate no custody or marketplace state change.",
       "No external audit has been completed.",
       "No marketplace frontend action was implemented.",
     ],
   };
-  await writeFile("docs/evidence/marketplace-v1-testnet.json", `${JSON.stringify(evidence, null, 2)}\n`);
-  console.log("Gate D-V1 verified. Evidence: docs/evidence/marketplace-v1-testnet.json");
+  await writeFile("docs/evidence/marketplace-v1-creator-burn-remediation-testnet.json", `${JSON.stringify(evidence, null, 2)}\n`);
+  console.log("V1 creator-burn remediation verified. Evidence: docs/evidence/marketplace-v1-creator-burn-remediation-testnet.json");
 } finally {
   await unlink(lockPath);
 }

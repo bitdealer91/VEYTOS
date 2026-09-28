@@ -114,10 +114,18 @@ test('V2 eligibility uses exact ObjectCore ownership instead of stale indexed qu
 test('V1 eligibility retains exact unique-token ownership checks', async () => {
   const aptos = { view: async () => ['0'] } as unknown as Aptos;
   const result = await marketplace(aptos, module).eligibility({
-    identity: v1, owner: seller, amount: '0', collectionId: creator, maximum: '1',
+    identity: { ...v1, propertyVersion: '0' }, owner: seller, amount: '0', collectionId: creator, maximum: '1',
     royalty: { payee: creator, numerator: '750', denominator: '10000' }, isSoulbound: false,
   }, seller);
   assert.equal(result.eligible, false); assert.match(result.reasons[0]!, /ownership state is not uniquely identifiable/);
+});
+test('V1 eligibility rejects nonzero property versions with a readable unsupported message', async () => {
+  const aptos = { view: async () => ['1'] } as unknown as Aptos;
+  const result = await marketplace(aptos, module).eligibility({
+    identity: v1, owner: seller, amount: '1', collectionId: creator, maximum: '1',
+    royalty: { payee: creator, numerator: '750', denominator: '10000' }, isSoulbound: false,
+  }, seller);
+  assert.equal(result.eligible, false); assert.deepEqual(result.reasons, ['This legacy NFT configuration is not supported for marketplace trading.']);
 });
 test('V1 eligibility accepts authoritative exact balance despite stale indexed seller and never reads V2 ObjectCore', async () => {
   let objectReads = 0;
@@ -136,6 +144,8 @@ test('marketplace preparation errors distinguish stale state, price, balance and
   assert.match(marketplaceErrorMessage(new Error('ELISTING_STALE'), 'asset-state'), /no longer available/);
   assert.match(marketplaceErrorMessage(new Error('EPRICE_CHANGED'), 'asset-state'), /price changed/);
   assert.match(marketplaceErrorMessage(new Error('INSUFFICIENT_BALANCE'), 'wallet'), /balance is too low/);
+  assert.equal(marketplaceErrorMessage(new Error('Transaction rejected: Move abort ECREATOR_BURNABLE'), 'wallet'), 'This legacy NFT configuration is not supported for marketplace trading.');
+  assert.equal(marketplaceErrorMessage(new Error('Move abort: EUNSUPPORTED_PROPERTY_VERSION'), 'wallet'), 'This legacy NFT configuration is not supported for marketplace trading.');
   assert.match(marketplaceErrorMessage(new Error('Fullnode state is older than the confirmed transaction'), 'asset-state'), /still updating/);
   assert.match(marketplaceErrorMessage(new Error('unexpected encoding'), 'payload'), /No funds were transferred/);
 });
