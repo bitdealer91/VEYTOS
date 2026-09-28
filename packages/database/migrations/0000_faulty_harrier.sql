@@ -172,6 +172,10 @@ CREATE TABLE "users" (
 	CONSTRAINT "user_address_format" CHECK ("users"."wallet_address" ~ '^0x[0-9a-f]{64}$')
 );
 --> statement-breakpoint
+CREATE UNIQUE INDEX "collection_id_network" ON "collections" USING btree ("id","network");
+--> statement-breakpoint
+CREATE UNIQUE INDEX "drop_id_network" ON "drops" USING btree ("id","network");
+--> statement-breakpoint
 ALTER TABLE "collection_drafts" ADD CONSTRAINT "collection_drafts_creator_id_users_id_fk" FOREIGN KEY ("creator_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "collection_reports" ADD CONSTRAINT "collection_reports_collection_id_collections_id_fk" FOREIGN KEY ("collection_id") REFERENCES "public"."collections"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "collection_reports" ADD CONSTRAINT "collection_reports_reporter_id_users_id_fk" FOREIGN KEY ("reporter_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -186,9 +190,7 @@ ALTER TABLE "sessions" ADD CONSTRAINT "sessions_user_id_users_id_fk" FOREIGN KEY
 ALTER TABLE "social_links" ADD CONSTRAINT "social_links_collection_id_collections_id_fk" FOREIGN KEY ("collection_id") REFERENCES "public"."collections"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "draft_creator_idx" ON "collection_drafts" USING btree ("creator_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "collection_chain_identity" ON "collections" USING btree ("network","address");--> statement-breakpoint
-CREATE UNIQUE INDEX "collection_id_network" ON "collections" USING btree ("id","network");--> statement-breakpoint
 CREATE INDEX "collection_creator_idx" ON "collections" USING btree ("network","creator_address");--> statement-breakpoint
-CREATE UNIQUE INDEX "drop_id_network" ON "drops" USING btree ("id","network");--> statement-breakpoint
 CREATE UNIQUE INDEX "drop_chain_identity" ON "drops" USING btree ("network","address");--> statement-breakpoint
 CREATE UNIQUE INDEX "mint_event_identity" ON "mints" USING btree ("network","transaction_version","event_index");--> statement-breakpoint
 CREATE UNIQUE INDEX "mint_token_identity" ON "mints" USING btree ("network","token_address");--> statement-breakpoint

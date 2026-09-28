@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { validateDatabaseEnvironment, validateDeploymentEnvironment } from '../deployment-runtime.ts';
 
@@ -37,4 +38,14 @@ test('deployment environment fails closed for public endpoints with embedded loc
 test('database verification can run independently after migrations', () => {
   assert.equal(validateDatabaseEnvironment({ DATABASE_URL: valid.DATABASE_URL }), valid.DATABASE_URL);
   assert.throws(() => validateDatabaseEnvironment({ DATABASE_URL: 'postgresql://localhost/veytos?sslmode=require' }));
+});
+
+test('composite unique indexes precede the foreign keys that require them', () => {
+  const migration = readFileSync('packages/database/migrations/0000_faulty_harrier.sql', 'utf8');
+  const collectionIndex = migration.indexOf('CREATE UNIQUE INDEX "collection_id_network"');
+  const collectionForeignKey = migration.indexOf('ADD CONSTRAINT "drops_collection_id_network_collections_id_network_fk"');
+  const dropIndex = migration.indexOf('CREATE UNIQUE INDEX "drop_id_network"');
+  const dropForeignKey = migration.indexOf('ADD CONSTRAINT "mints_drop_id_network_drops_id_network_fk"');
+  assert(collectionIndex >= 0 && collectionIndex < collectionForeignKey);
+  assert(dropIndex >= 0 && dropIndex < dropForeignKey);
 });
