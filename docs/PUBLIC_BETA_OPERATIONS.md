@@ -10,7 +10,18 @@ VEYTOS beta is an **Aptos Testnet** service. Test assets and test APT have no re
 - Use managed Aptos fullnode and Indexer endpoints for server/worker reads. Keep `APTOS_API_KEY` and `APTOS_INDEXER_API_KEY` server-side. Browser-safe endpoints may be set separately only when their credentials are explicitly public.
 - Aptos Indexer remains the ownership source for wallet discovery. The VEYTOS projection powers browsing and never authorizes List, Cancel, or Buy.
 
+The exact owner/repository boundary, production variables, deployment sequence, and acceptance evidence are listed in `docs/PUBLIC_BETA_DEPLOYMENT_CHECKLIST.md`. Vercel must build from the repository root so npm workspace packages are available. A Docker background-worker host and PostgreSQL may be supplied by the same provider, but the worker must remain a single continuously supervised instance.
+
 Required production variables are documented in `apps/web/.env.example`. `APTOS_NETWORK` and `NEXT_PUBLIC_APTOS_NETWORK` must both be `testnet`. Set the HTTPS deployment origin in `NEXT_PUBLIC_APP_URL`. `BETA_INDEXER_START_VERSION` is needed only when the durable checkpoint does not exist; it must cover both deployed packages.
+
+Apply and verify the database before starting the worker:
+
+```sh
+npm run db:migrate
+npm run db:verify
+```
+
+After the worker creates and advances its checkpoint, run `npm run deploy:preflight`. The preflight prints only non-secret status and counts. It rejects plaintext/localhost deployment settings and manual discovery seeds.
 
 `vercel.json` supplies the monorepo web build/output settings. `Dockerfile.indexer` is the portable worker image; deploy it to infrastructure with outbound HTTPS and PostgreSQL connectivity. The worker holds a PostgreSQL advisory lock keyed by network/module, so a second replica exits instead of racing the checkpoint.
 

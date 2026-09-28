@@ -34,6 +34,8 @@
     "move:marketplace:test": "node scripts/move.mjs test marketplace",
     "db:generate": "drizzle-kit generate --config packages/database/drizzle.config.ts",
     "db:migrate": "drizzle-kit migrate --config packages/database/drizzle.config.ts",
+    "db:verify": "node --import tsx scripts/deployment-preflight.ts --database-only",
+    "deploy:preflight": "node --import tsx scripts/deployment-preflight.ts --require-checkpoint",
     "dev": "npm run dev --workspace @veytos/web",
     "build": "npm run build --workspace @veytos/web",
     "start": "npm run start --workspace @veytos/web",
