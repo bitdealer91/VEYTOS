@@ -52,6 +52,7 @@ function identity(asset: z.infer<typeof assetSchema>): { identity: TokenIdentity
 
 export function projectMarketplaceTransaction(transaction: unknown, moduleAddress: string): MarketplaceProjectionEvent[] {
   const module = canonical(moduleAddress);
+  if (!transaction || typeof transaction !== 'object' || !('type' in transaction) || transaction.type !== 'user_transaction') return [];
   const tx = z.object({
     type: z.literal('user_transaction'), success: z.boolean(), version: integer,
     hash: z.string().regex(/^0x[0-9a-f]{64}$/i), timestamp: integer,

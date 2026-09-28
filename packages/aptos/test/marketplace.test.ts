@@ -170,6 +170,10 @@ test('projector ignores failed transactions and foreign modules', () => {
   assert.deepEqual(projectMarketplaceTransaction({...base,success:true},module),[]);
   assert.deepEqual(projectMarketplaceTransaction({...base,success:false,events:[{type:`${module}::marketplace::NFTListed`,data:listedData}]},module),[]);
 });
+test('projector ignores non-user transactions returned by the fullnode transaction stream', () => {
+  assert.deepEqual(projectMarketplaceTransaction({type:'block_metadata_transaction',version:'5'},module),[]);
+  assert.deepEqual(projectMarketplaceTransaction({type:'genesis_transaction',version:'0'},module),[]);
+});
 test('purchase projection retains buyer and exact gross price', () => {
   const data={...listedData,buyer,platform_fee_recipient:seller,platform_fee:'2',royalty_recipient:creator,royalty:'7',seller_proceeds:'91'};
   const [event]=projectMarketplaceTransaction({type:'user_transaction',success:true,version:'6',hash:`0x${'2'.repeat(64)}`,timestamp:'1000000',events:[{type:`${module}::marketplace::NFTPurchased`,data}]},module);
