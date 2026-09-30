@@ -13,3 +13,4 @@ move/**/build/
 .DS_Store
 
 *.tsbuildinfo
+.vercel
