@@ -118,6 +118,9 @@ browser, indexer, storage, and worker variables are also listed in
 - `DATABASE_URL`: server-only PostgreSQL DSN for migrations and product storage.
 - `IPFS_API_URL`, `IPFS_API_TOKEN`: server-only upload endpoint and credential.
 - `NEXT_PUBLIC_IPFS_GATEWAY`: public retrieval gateway; content URIs stay `ipfs://`.
+- `VEYTOS_FEATURED_DROPS` / `VEYTOS_HIDDEN_DROPS`: optional ordered public
+  launchpad curation; every configured address is still resolved and verified
+  through the Aptos launchpad view before rendering.
 - `NEXT_PUBLIC_APTOS_CONNECT_DAPP_ID`: optional public Aptos Connect identifier.
 - `APTOS_CLI`: executable path for local Move scripts; defaults to `aptos`.
 - `MINTOS_TESTNET_ACCOUNTS_FILE`: operator-only absolute path to disposable
