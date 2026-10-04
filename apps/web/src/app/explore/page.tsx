@@ -1,11 +1,33 @@
-import Link from 'next/link';
-import { discovery } from '@/lib/data';
-import { Explore } from '@/features/explore';
-import {ErrorState,EmptyState} from '@/components/ui';
-import {marketplaceBrowse} from '@/lib/marketplace-data';
-import {MarketplaceListingGrid} from '@/components/marketplace-browse';
-import {parseApt} from '../../../../../packages/domain/src/money';
-export const dynamic='force-dynamic';
-export const metadata={title:'Explore'};
-function price(value?:string){try{return value?parseApt(value).toString():undefined;}catch{return undefined;}}
-export default async function Page({searchParams}:{searchParams:Promise<{q?:string;standard?:string;collection?:string;min?:string;max?:string;sort?:string}>}){const params=await searchParams;const standard=params.standard==='v1'||params.standard==='v2'?params.standard:'';const query=(next:string)=>{const value=new URLSearchParams();if(next)value.set('standard',next);if(params.collection)value.set('collection',params.collection);if(params.min)value.set('min',params.min);if(params.max)value.set('max',params.max);if(params.sort)value.set('sort',params.sort);return `/explore${value.size?`?${value}`:''}`;};const [data,market]=await Promise.all([discovery(),marketplaceBrowse({standard,collection:params.collection||params.q,minPrice:price(params.min),maxPrice:price(params.max),sort:params.sort})]);return <><div className="page-title marketplace-title"><span className="eyebrow">APTOS · FIXED-PRICE MARKETPLACE</span><h1>Marketplace</h1><p>Discover real Token V1 and Digital Asset V2 listings on Aptos testnet.</p></div><section className="section marketplace-section"><div className="section-heading marketplace-heading"><div><h2>Listed NFTs</h2><p className="muted">Active listings indexed from verified VEYTOS events.</p></div><nav className="standard-switch" aria-label="Token standard"><Link aria-current={!standard?'page':undefined} href={query('')}>All</Link><Link aria-current={standard==='v2'?'page':undefined} href={query('v2')}><span>V2</span><small>Digital Asset</small></Link><Link aria-current={standard==='v1'?'page':undefined} href={query('v1')}><span>V1</span><small>Legacy Token</small></Link></nav></div><form className="market-filters">{standard&&<input type="hidden" name="standard" value={standard}/>}<input name="collection" defaultValue={params.collection||''} placeholder="Collection identity" aria-label="Collection identity"/><input name="min" inputMode="decimal" defaultValue={params.min||''} placeholder="Min APT" aria-label="Minimum price in APT"/><input name="max" inputMode="decimal" defaultValue={params.max||''} placeholder="Max APT" aria-label="Maximum price in APT"/><select name="sort" defaultValue={params.sort||'recent'}><option value="recent">Recently listed</option><option value="price-asc">Price: low to high</option><option value="price-desc">Price: high to low</option></select><button className="button" type="submit">Apply filters</button></form>{market.items.length?<MarketplaceListingGrid items={market.items}/>:<EmptyState title={market.failed?'Marketplace data is temporarily unavailable':'No active listings'} description={market.failed?'The browsing projection could not be reached. Trading pages continue to verify Aptos directly.':market.configured?'No listings match these filters.':'Marketplace browsing is unavailable until the beta indexer database is configured.'}/>}</section><section className="section launchpad-preview"><div className="section-heading"><div><span className="eyebrow">LAUNCHPAD</span><h2>New Aptos collections</h2><p className="muted">Live state read directly from the VEYTOS launchpad.</p></div><Link className="text-link" href="/drops">View launchpad →</Link></div>{data.errors>0&&<ErrorState/>}<Explore drops={data.drops} initialQuery={params.q||''}/></section></>;}
+import { Search } from 'lucide-react';
+import { EmptyState } from '@/components/ui';
+import { MarketplaceCollectionsTable } from '@/components/marketplace-collections';
+import { marketplaceCollections } from '@/lib/marketplace-data';
+
+export const dynamic = 'force-dynamic';
+export const metadata = { title: 'Marketplace Collections' };
+
+export default async function Page({ searchParams }: { searchParams: Promise<{ q?: string; sort?: string }> }) {
+  const params = await searchParams;
+  const sort = ['floor-asc', 'floor-desc', 'volume', 'active', 'listed'].includes(params.sort || '') ? params.sort : 'volume';
+  const result = await marketplaceCollections({ sort });
+  const query = (params.q || '').trim().toLowerCase();
+  const items = query ? result.items.filter((collection) =>
+    collection.name.toLowerCase().includes(query) || collection.creatorName?.toLowerCase().includes(query) ||
+    collection.creator.toLowerCase().includes(query) || collection.key.toLowerCase().includes(query)) : result.items;
+  return <>
+    <header className="market-collections-hero"><span className="eyebrow">APTOS · FIXED-PRICE MARKETPLACE</span><h1>Collections</h1><p>Discover and trade NFT collections on Aptos.</p></header>
+    <section className="market-collections-section">
+      <div className="market-collections-controls"><div className="market-collections-tab" aria-current="page">All Collections</div>
+        <form><label><Search size={16} /><input name="q" defaultValue={params.q || ''} placeholder="Search collections" aria-label="Search marketplace collections" /></label>
+          <select name="sort" defaultValue={sort} aria-label="Sort collections"><option value="volume">Volume (24h)</option><option value="active">Recently active</option><option value="listed">Most listed</option><option value="floor-asc">Floor: low to high</option><option value="floor-desc">Floor: high to low</option></select>
+          <button className="button" type="submit">Apply</button>
+        </form>
+      </div>
+      {result.metadataFailed && <p className="market-local-notice">Some optional collection artwork or metadata is unavailable. Trading metrics remain current.</p>}
+      {items.length ? <MarketplaceCollectionsTable items={items} /> : <EmptyState
+        title={result.failed ? 'Marketplace data is temporarily unavailable' : query ? 'No matching collections' : 'No marketplace collections yet'}
+        description={result.failed ? 'The indexed browsing projection could not be reached. No inferred or stale metrics are shown.' : result.configured ? query ? 'Try a collection name, creator, or Aptos address.' : 'Launchpad collections appear here automatically; external collections appear after a valid VEYTOS listing.' : 'Marketplace discovery is not configured yet.'}
+      />}
+    </section>
+  </>;
+}

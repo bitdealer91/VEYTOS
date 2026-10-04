@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { X } from 'lucide-react';
+import { ShieldCheck, X } from 'lucide-react';
 import type { NormalizedNFT } from '@veytos/aptos/discovery';
 import { encodeNFTIdentity, marketplaceErrorDiagnostic, marketplaceErrorMessage, quoteMarketplaceSale, marketplacePaused, type MarketplacePreparationStage } from '@veytos/aptos/marketplace';
 import type { MarketplaceAssetState, MarketplaceConfig, MarketplaceEconomics, MarketplaceListing, PendingMarketplaceTransaction, TransactionPhase } from '@veytos/aptos/types';
@@ -12,16 +12,18 @@ import { parseApt } from '../../../../packages/domain/src/money';
 import { marketChain } from '@/lib/chain';
 import { explorer, marketplaceAddress, network } from '@/lib/config';
 import { PriceDisplay } from '@/components/ui';
+import { Artwork } from '@/components/artwork';
 import { WalletButton } from '@/components/wallet';
 import { WalletAddress } from '@/components/chain-ui';
 import { trackBetaEvent } from '@/components/beta-analytics';
 import { reportClientError } from '@/lib/observability';
+import { writeMarketplaceSession } from '@/lib/marketplace-session';
 import {useTransactionToast} from '@/components/transaction-toasts';
 
 type Action = 'list' | 'cancel' | 'buy';
 type ExplicitTransition = Action | 'wallet' | null;
-export function MarketplacePanel({ nft, initialListing, initialConfig, initialAssetState }: {
-  nft: NormalizedNFT; initialListing: MarketplaceListing | null; initialConfig: MarketplaceConfig; initialAssetState?: MarketplaceAssetState;
+export function MarketplacePanel({ nft, initialListing, initialConfig, initialAssetState, initialAction }: {
+  nft: NormalizedNFT; initialListing: MarketplaceListing | null; initialConfig: MarketplaceConfig; initialAssetState?: MarketplaceAssetState; initialAction?: 'list';
 }) {
   const wallet = useWallet();
   const toast = useTransactionToast();
@@ -42,9 +44,11 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
   const [transition, setTransition] = useState<ExplicitTransition>(null);
   const [terminalStatus, setTerminalStatus] = useState<'SOLD' | null>(null);
   const walletScope = useRef<string | null>(null);
+  const initialDialogOpened = useRef(false);
   const currentWalletScope = `${account || 'disconnected'}:${wallet.network?.chainId ?? 'unknown'}`;
   const walletScopeChanging = walletScope.current !== null && walletScope.current !== currentWalletScope;
   const assetRoute = `${nft.tokenId}:${nft.identity.standard === 'v1' ? nft.identity.propertyVersion : ''}`;
+  const assetKey = encodeNFTIdentity(nft.identity);
   const confirmedKey = `veytos:confirmed:${network}:${marketplaceAddress}:${assetRoute}`;
   const assetQuery = useQuery({
     queryKey: ['market-asset', network, marketplaceAddress, assetRoute],
@@ -90,6 +94,27 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
       BigInt(listing?.storageReimbursement || (nft.standard === 'v1' ? config.v1StorageReimbursement : config.v2StorageReimbursement)),
     );
   } catch { economics = null; }
+
+  useEffect(() => {
+    if (!marketplaceAddress || !assetQuery.data.ledgerVersion) return;
+    if (!active || !listing) {
+      writeMarketplaceSession(network, marketplaceAddress, null, assetKey);
+      return;
+    }
+    const collectionKey = nft.standard === 'v2'
+      ? `v2:${nft.collectionId}`
+      : `v1:${nft.collectionCreator}:${nft.collectionName}`;
+    writeMarketplaceSession(network, marketplaceAddress, {
+      assetKey, collectionKey, listingId: listing.id, seller: listing.seller, price: listing.price,
+      listedVersion: assetQuery.data.ledgerVersion,
+      nft: { standard: nft.standard, tokenId: nft.tokenId, collectionId: nft.collectionId, name: nft.name, metadataUri: nft.metadataUri, collectionName: nft.collectionName },
+    }, assetKey);
+  }, [active, assetKey, assetQuery.data.ledgerVersion, listing, nft.collectionCreator, nft.collectionId, nft.collectionName, nft.metadataUri, nft.name, nft.standard, nft.tokenId]);
+
+  useEffect(() => {
+    if (initialAction !== 'list' || initialDialogOpened.current || !owner || active) return;
+    initialDialogOpened.current = true; setAction('list'); setMessage(''); setPhase('review'); dialog.current?.showModal();
+  }, [active, initialAction, owner]);
 
   function invalidateProjections() {
     const roots = ['market-eligibility', 'wallet-nfts', 'nft-detail', 'collection-market', 'market-activity'];
@@ -283,20 +308,25 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
     {message && <span className="sr-only">{message}</span>}
     {phase === 'unknown' && pending?.hash && <button className="button" onClick={() => reconcile(pending)}>Check transaction status</button>}
     {phase === 'unknown' && pending && !pending.hash && <div className="recovery"><p>No submission is confirmed. If your wallet shows this marketplace transaction, paste its hash to verify it. This never signs another transaction.</p><input type="text" aria-label="Recovery transaction hash" placeholder="0x… transaction hash" value={recoveryHash} onChange={(event) => setRecoveryHash(event.target.value)} /><button className="button" disabled={!/^0x[0-9a-f]{64}$/i.test(recoveryHash)} onClick={() => { const value = { ...pending, hash: recoveryHash }; save(value); void reconcile(value); }}>Verify wallet transaction</button><label><input type="checkbox" checked={checkedWallet} onChange={(event) => setCheckedWallet(event.target.checked)} />I closed the wallet request and checked its activity: no transaction was signed or submitted.</label><button className="button" disabled={!checkedWallet || signing.current} onClick={() => { clear(); setPending(null); setPhase('ready'); setMessage('Request cleared after your confirmation. Nothing was automatically retried.'); setCheckedWallet(false); }}>Clear unsubmitted request</button></div>}
-    <dialog className="dialog" ref={dialog} onCancel={() => setPhase('ready')}>
-      <div className="dialog-head"><span className="eyebrow">REVIEW {action.toUpperCase()}</span><button className="icon-button" aria-label="Close review" onClick={() => dialog.current?.close()}><X size={20}/></button></div>
-      <h2>{action === 'list' ? 'List NFT' : action === 'cancel' ? 'Cancel listing' : 'Buy NFT'}</h2>
-      <p>{nft.name} · {nft.standard === 'v1' ? `Token V1 · property version ${nft.identity.standard === 'v1' ? nft.identity.propertyVersion : ''}` : 'Digital Asset V2'}</p>
-      {economics && <div className="review-summary">
-        <div><span>{action === 'buy' ? 'Purchase price' : 'Sale price'}</span><PriceDisplay octas={economics.price.toString()} /></div>
-        <div><span>VEYTOS fee · {Number(listing?.feeBps || config.feeBps) / 100}%</span><PriceDisplay octas={economics.fee.toString()} /></div>
-        <div><span>Creator royalty</span><PriceDisplay octas={economics.royalty.toString()} /></div>
-        {action !== 'buy' && <div><span>Seller receives</span><PriceDisplay octas={economics.sellerProceeds.toString()} /></div>}
-        <div><span>Storage reimbursement</span><PriceDisplay octas={economics.storageReimbursement.toString()} /></div>
-        {action === 'buy' && <div><span>Total before gas</span><PriceDisplay octas={economics.buyerTotalBeforeGas.toString()} /></div>}
-      </div>}
-      <p className="caption muted">Aptos may return protocol storage refunds during successful settlement. The reimbursement shown above prevents that refund from changing the reviewed seller economics.</p>
-      <button className="button primary" disabled={locked || !rightNetwork || (action !== 'cancel' && !economics)} onClick={submit}>Confirm in wallet</button>
+    <dialog className="market-review-dialog" ref={dialog} onCancel={() => setPhase('ready')}>
+      <div className="market-review-top"><span className="eyebrow">VEYTOS · FIXED-PRICE MARKETPLACE</span><button className="icon-button" aria-label="Close review" onClick={() => dialog.current?.close()}><X size={20}/></button></div>
+      <div className="market-review-layout">
+        <div className="market-review-media"><Artwork uri={nft.metadataUri} name={nft.name || 'Unnamed NFT'} large /><div><span>{nft.collectionName || 'Unknown collection'}</span><strong>{nft.name || 'Unnamed NFT'}</strong></div></div>
+        <div className="market-review-content">
+          <div><span className="eyebrow">{action === 'list' ? 'CREATE LISTING' : action === 'cancel' ? 'RETURN TO WALLET' : 'PURCHASE REVIEW'}</span><h2>{action === 'list' ? 'List your NFT' : action === 'cancel' ? 'Cancel listing' : 'Buy NFT'}</h2><p>{nft.standard === 'v1' ? `Token V1 · property version ${nft.identity.standard === 'v1' ? nft.identity.propertyVersion : ''}` : 'Aptos Digital Asset V2'}</p></div>
+          {action === 'list' && <label className="market-dialog-price">Listing price<span><input value={priceInput} inputMode="decimal" placeholder="0.00" aria-label="Listing price in APT" onChange={(event) => setPriceInput(event.target.value)} /><strong>APT</strong></span><small>Enter the exact fixed price buyers will see.</small></label>}
+          {economics && <div className="market-review-economics"><h3>Settlement details</h3><div className="review-summary">
+            <div><span>{action === 'buy' ? 'Purchase price' : 'Sale price'}</span><PriceDisplay octas={economics.price.toString()} /></div>
+            <div><span>VEYTOS fee · {Number(listing?.feeBps || config.feeBps) / 100}%</span><PriceDisplay octas={economics.fee.toString()} /></div>
+            <div><span>Creator royalty</span><PriceDisplay octas={economics.royalty.toString()} /></div>
+            {action !== 'buy' && <div className="market-review-total"><span>You receive</span><PriceDisplay octas={economics.sellerProceeds.toString()} /></div>}
+            <div><span>Storage reimbursement</span><PriceDisplay octas={economics.storageReimbursement.toString()} /></div>
+            {action === 'buy' && <div className="market-review-total"><span>Total before gas</span><PriceDisplay octas={economics.buyerTotalBeforeGas.toString()} /></div>}
+          </div></div>}
+          <div className="market-review-trust"><ShieldCheck size={16}/><p>Final ownership, eligibility, fees and price are verified again from Aptos before your wallet is asked to sign.</p></div>
+          <button className="button primary market-review-submit" aria-label="Confirm in wallet" disabled={locked || !rightNetwork || (action !== 'cancel' && !economics)} onClick={submit}>{action === 'list' ? 'Confirm listing in wallet' : action === 'cancel' ? 'Confirm cancellation in wallet' : 'Confirm purchase in wallet'}</button>
+        </div>
+      </div>
     </dialog>
   </aside>;
 }

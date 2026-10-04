@@ -1,7 +1,7 @@
 import { afterEach, mock, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeAptos } from '../src/client.ts';
-import { discoverOwnedNFTs, NFTDiscoveryError, normalizeOwnershipRows } from '../src/discovery.ts';
+import { discoverNFTsByIdentity, discoverOwnedNFTs, NFTDiscoveryError, normalizeCollectionRows, normalizeOwnershipRows } from '../src/discovery.ts';
 
 const a = (digit: string) => `0x${digit.repeat(64)}`;
 const owner = a('1');
@@ -80,6 +80,35 @@ test('normalizes V2 token and collection object identities', () => {
   assert.deepEqual(result.items[0]?.identity, { standard: 'v2', address: v2Token });
   assert.equal(result.items[0]?.collectionId, v2Collection);
   assert.equal(result.items[0]?.standard, 'v2');
+});
+
+test('resolves a bounded group of listed NFT identities in one Indexer request', async () => {
+  let requests = 0;
+  mock.method(globalThis, 'fetch', async (_url: string | URL | Request, init?: RequestInit) => {
+    requests += 1;
+    const body = JSON.parse(String(init?.body)) as { variables: { where: { _or: unknown[] }; limit: number } };
+    assert.equal(body.variables.where._or.length, 2);
+    assert.equal(body.variables.limit, 4);
+    return new Response(JSON.stringify({ data: { current_token_ownerships_v2: [row('v1'), row('v2')] } }), { status: 200 });
+  });
+  const result = await discoverNFTsByIdentity('https://indexer.test/graphql', [
+    { standard: 'v1', creator: v1Creator, collection: 'OG Collection', name: 'OG #1', propertyVersion: '0' },
+    { standard: 'v2', address: v2Token },
+  ]);
+  assert.equal(requests, 1);
+  assert.equal(result.length, 2);
+});
+
+test('normalizes canonical V1 and V2 collection identities with trustworthy supply', () => {
+  const rows = [
+    { collection_id: v2Collection, collection_name: 'DA Collection', creator_address: v1Creator, token_standard: 'v2', uri: 'ipfs://da', description: 'Digital assets', current_supply: 8, max_supply: 10, last_transaction_version: 20 },
+    { collection_id: v1Collection, collection_name: 'OG Collection', creator_address: v1Creator, token_standard: 'v1', uri: 'ipfs://og', description: 'Legacy tokens', current_supply: 3, max_supply: null, last_transaction_version: 10 },
+  ];
+  const result = normalizeCollectionRows(rows);
+  assert.equal(result[0]?.key, `v2:${v2Collection}`);
+  assert.equal(result[0]?.currentSupply, '8');
+  assert.equal(result[1]?.key, `v1:${v1Creator}:OG Collection`);
+  assert.equal(result[1]?.currentSupply, '3');
 });
 
 test('missing and malformed metadata rows are rejected rather than guessed', () => {

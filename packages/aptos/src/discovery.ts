@@ -71,6 +71,23 @@ export type NFTDiscoveryResult = {
 
 export type NFTDiscoveryPage = NFTDiscoveryResult & { offset: number; hasMore: boolean };
 
+export type CollectionIdentity =
+  | { standard: 'v2'; collectionId: string }
+  | { standard: 'v1'; creator: string; name: string };
+
+export type NormalizedCollection = {
+  key: string;
+  standard: 'v1' | 'v2';
+  collectionId: string;
+  name: string;
+  creator: string;
+  description: string;
+  metadataUri: string;
+  currentSupply: string;
+  maxSupply: string | null;
+  lastTransactionVersion: string;
+};
+
 export class NFTDiscoveryError extends Error {
   readonly code: 'indexer-unavailable' | 'pagination-limit';
   constructor(code: NFTDiscoveryError['code'], message: string, options?: ErrorOptions) {
@@ -239,6 +256,38 @@ const ownershipQuery = `query nft($where: current_token_ownerships_v2_bool_exp!)
   }
 }`;
 
+const ownershipBatchQuery = `query nfts($where: current_token_ownerships_v2_bool_exp!, $limit: Int!) {
+  current_token_ownerships_v2(where:$where,order_by:[{last_transaction_version:desc}],limit:$limit) {
+    token_standard token_data_id property_version_v1 owner_address last_transaction_version amount is_soulbound_v2
+    current_token_data { collection_id description token_data_id token_name token_standard token_uri maximum token_properties
+      current_royalty_v1 { payee_address royalty_points_numerator royalty_points_denominator }
+      current_collection { collection_id collection_name creator_address token_standard uri } }
+  }
+}`;
+
+/** Resolve a bounded set of NFT identities with one Indexer request. */
+export async function discoverNFTsByIdentity(indexerUrl: string, identities: readonly TokenIdentity[]): Promise<NormalizedNFT[]> {
+  if (!identities.length) return [];
+  if (identities.length > 100) throw new RangeError('identities must contain at most 100 NFTs');
+  const where = identities.map((identity) => identity.standard === 'v2'
+    ? { token_standard: { _eq: 'v2' }, token_data_id: { _eq: canonical(identity.address) }, amount: { _gt: 0 } }
+    : {
+        token_standard: { _eq: 'v1' }, property_version_v1: { _eq: identity.propertyVersion }, amount: { _gt: 0 },
+        current_token_data: {
+          token_name: { _eq: identity.name },
+          current_collection: { creator_address: { _eq: canonical(identity.creator) }, collection_name: { _eq: identity.collection } },
+        },
+      });
+  const response = await fetch(indexerUrl, {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ query: ownershipBatchQuery, variables: { where: { _or: where }, limit: identities.length * 2 } }),
+  });
+  if (!response.ok) throw new NFTDiscoveryError('indexer-unavailable', `Indexer HTTP ${response.status}`);
+  const body = await response.json() as { data?: { current_token_ownerships_v2?: unknown[] }; errors?: unknown[] };
+  if (body.errors?.length || !body.data?.current_token_ownerships_v2) throw new NFTDiscoveryError('indexer-unavailable', 'Indexer GraphQL error');
+  return normalizeOwnershipRows(body.data.current_token_ownerships_v2).items;
+}
+
 export async function discoverNFTByIdentity(indexerUrl: string, identity: TokenIdentity): Promise<NormalizedNFT | null> {
   const where = identity.standard === 'v2'
     ? { token_standard: { _eq: 'v2' }, token_data_id: { _eq: canonical(identity.address) } }
@@ -260,4 +309,114 @@ export async function discoverNFTByIdentity(indexerUrl: string, identity: TokenI
   if (body.errors?.length || !body.data?.current_token_ownerships_v2) throw new NFTDiscoveryError('indexer-unavailable', 'Indexer GraphQL error');
   const result = normalizeOwnershipRows(body.data.current_token_ownerships_v2);
   return result.items.find((item) => encodeNFTIdentity(item.identity) === encodeNFTIdentity(identity)) ?? null;
+}
+
+const marketplaceCollectionSchema = z.object({
+  collection_id: address,
+  collection_name: z.string(),
+  creator_address: address,
+  token_standard: z.enum(['v1', 'v2']),
+  uri: z.string(),
+  description: z.string(),
+  current_supply: integer,
+  max_supply: integer.optional().nullable(),
+  last_transaction_version: integer,
+});
+
+function collectionKey(row: z.infer<typeof marketplaceCollectionSchema>) {
+  return row.token_standard === 'v2'
+    ? `v2:${row.collection_id}`
+    : `v1:${row.creator_address}:${row.collection_name}`;
+}
+
+export function normalizeCollectionRows(rows: readonly unknown[]): NormalizedCollection[] {
+  const collections = new Map<string, NormalizedCollection>();
+  for (const candidate of rows) {
+    const parsed = marketplaceCollectionSchema.safeParse(candidate);
+    if (!parsed.success) continue;
+    const row = parsed.data;
+    const key = collectionKey(row);
+    const previous = collections.get(key);
+    if (previous && BigInt(previous.lastTransactionVersion) >= BigInt(row.last_transaction_version)) continue;
+    collections.set(key, {
+      key,
+      standard: row.token_standard,
+      collectionId: row.collection_id,
+      name: row.collection_name,
+      creator: row.creator_address,
+      description: row.description,
+      metadataUri: row.uri,
+      currentSupply: row.current_supply,
+      maxSupply: row.max_supply ?? null,
+      lastTransactionVersion: row.last_transaction_version,
+    });
+  }
+  return [...collections.values()];
+}
+
+const collectionsQuery = `query marketplaceCollections($where: current_collections_v2_bool_exp!, $limit: Int!) {
+  current_collections_v2(where:$where,limit:$limit) {
+    collection_id collection_name creator_address token_standard uri description
+    current_supply max_supply last_transaction_version
+  }
+}`;
+
+const collectionOwnershipsQuery = `query marketplaceCollectionItems($where: current_token_ownerships_v2_bool_exp!, $limit: Int!) {
+  current_token_ownerships_v2(where:$where,order_by:[{last_transaction_version:desc}],limit:$limit) {
+    token_standard token_data_id property_version_v1 owner_address last_transaction_version amount is_soulbound_v2
+    current_token_data { collection_id description token_data_id token_name token_standard token_uri maximum token_properties
+      current_royalty_v1 { payee_address royalty_points_numerator royalty_points_denominator }
+      current_collection { collection_id collection_name creator_address token_standard uri } }
+  }
+}`;
+
+async function queryIndexer<T>(indexerUrl: string, query: string, variables: Record<string, unknown>): Promise<T> {
+  const response = await fetch(indexerUrl, {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ query, variables }),
+  });
+  if (!response.ok) throw new NFTDiscoveryError('indexer-unavailable', `Indexer HTTP ${response.status}`);
+  const body = await response.json() as { data?: T; errors?: unknown[] };
+  if (body.errors?.length || !body.data) throw new NFTDiscoveryError('indexer-unavailable', 'Indexer GraphQL error');
+  return body.data;
+}
+
+/** Resolve a bounded set of collection identities in one Indexer request. */
+export async function discoverCollectionsByIdentity(
+  indexerUrl: string,
+  identities: readonly CollectionIdentity[],
+): Promise<NormalizedCollection[]> {
+  if (!identities.length) return [];
+  const unique = identities.slice(0, 100).map((identity) => identity.standard === 'v2'
+    ? { token_standard: { _eq: 'v2' }, collection_id: { _eq: canonical(identity.collectionId) } }
+    : {
+        token_standard: { _eq: 'v1' }, creator_address: { _eq: canonical(identity.creator) },
+        collection_name: { _eq: identity.name },
+      });
+  const data = await queryIndexer<{ current_collections_v2?: unknown[] }>(indexerUrl, collectionsQuery, {
+    where: { _or: unique }, limit: unique.length,
+  });
+  if (!data.current_collections_v2) throw new NFTDiscoveryError('indexer-unavailable', 'Indexer collection data is unavailable');
+  return normalizeCollectionRows(data.current_collections_v2);
+}
+
+/** Load current owners and NFT metadata for one collection without per-item requests. */
+export async function discoverCollectionNFTs(
+  indexerUrl: string,
+  identity: CollectionIdentity,
+  limit = 100,
+): Promise<NFTDiscoveryResult> {
+  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) throw new RangeError('limit must be 1..100');
+  const collectionWhere = identity.standard === 'v2'
+    ? { collection_id: { _eq: canonical(identity.collectionId) } }
+    : { creator_address: { _eq: canonical(identity.creator) }, collection_name: { _eq: identity.name } };
+  const data = await queryIndexer<{ current_token_ownerships_v2?: unknown[] }>(indexerUrl, collectionOwnershipsQuery, {
+    where: {
+      amount: { _gt: 0 }, token_standard: { _eq: identity.standard },
+      current_token_data: { current_collection: collectionWhere },
+    },
+    limit,
+  });
+  if (!data.current_token_ownerships_v2) throw new NFTDiscoveryError('indexer-unavailable', 'Indexer collection inventory is unavailable');
+  return { ...normalizeOwnershipRows(data.current_token_ownerships_v2), pages: 1 };
 }

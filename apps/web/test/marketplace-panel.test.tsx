@@ -27,13 +27,20 @@ const v1Nft: NormalizedNFT = { ...nft, standard: 'v1', identity: { standard: 'v1
 const v1Listing: MarketplaceListing = { ...listing, id: '10', standard: 'v1', identity: v1Nft.identity, collectionId: v1Nft.collectionId, storageReimbursement: '800000', escrowAddress: undefined };
 const key = `${'veytos:market:testnet'}:${moduleAddress}:${token}:`;
 
-function mount(asset = nft, active: MarketplaceListing | null = null, initialConfig = config, chainState?: { listing: MarketplaceListing | null; owner: string | null; ledgerVersion: string }) {
+function mount(asset = nft, active: MarketplaceListing | null = null, initialConfig = config, chainState?: { listing: MarketplaceListing | null; owner: string | null; ledgerVersion: string }, initialAction?: 'list') {
   mocks.assetState.mockResolvedValue(chainState || { listing: active, owner: active?.escrowAddress || asset.owner, ledgerVersion: '2' });
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   const initialAssetState = chainState || { listing: active, owner: active?.escrowAddress || asset.owner, ledgerVersion: '2' };
-  const view = render(<QueryClientProvider client={client}><MarketplacePanel nft={asset} initialListing={active} initialConfig={initialConfig} initialAssetState={initialAssetState} /></QueryClientProvider>);
+  const view = render(<QueryClientProvider client={client}><MarketplacePanel nft={asset} initialListing={active} initialConfig={initialConfig} initialAssetState={initialAssetState} initialAction={initialAction} /></QueryClientProvider>);
   return { ...view, client, rerenderPanel: () => view.rerender(<QueryClientProvider client={client}><MarketplacePanel nft={asset} initialListing={active} initialConfig={initialConfig} initialAssetState={initialAssetState} /></QueryClientProvider>) };
 }
+
+test('profile listing deep link opens the focused listing window for the owner', async () => {
+  mount(nft, null, config, undefined, 'list');
+  expect(await screen.findByRole('dialog')).toBeTruthy();
+  expect(screen.getByRole('heading', { name: 'List your NFT' })).toBeTruthy();
+  expect(screen.getByLabelText('Listing price in APT')).toBeTruthy();
+});
 
 beforeEach(() => {
   onlineManager.setOnline(true);
