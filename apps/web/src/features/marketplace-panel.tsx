@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowUpRight, Check, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import type { NormalizedNFT } from '@veytos/aptos/discovery';
 import { encodeNFTIdentity, marketplaceErrorDiagnostic, marketplaceErrorMessage, quoteMarketplaceSale, marketplacePaused, type MarketplacePreparationStage } from '@veytos/aptos/marketplace';
 import type { MarketplaceAssetState, MarketplaceConfig, MarketplaceEconomics, MarketplaceListing, PendingMarketplaceTransaction, TransactionPhase } from '@veytos/aptos/types';
@@ -11,12 +11,12 @@ import { isUnresolved, networkMatches, readableError } from '@veytos/aptos/domai
 import { parseApt } from '../../../../packages/domain/src/money';
 import { marketChain } from '@/lib/chain';
 import { explorer, marketplaceAddress, network } from '@/lib/config';
-import { PriceDisplay, ExternalLink } from '@/components/ui';
+import { PriceDisplay } from '@/components/ui';
 import { WalletButton } from '@/components/wallet';
-import { TransactionStatus } from './mint-panel';
 import { WalletAddress } from '@/components/chain-ui';
 import { trackBetaEvent } from '@/components/beta-analytics';
 import { reportClientError } from '@/lib/observability';
+import {useTransactionToast} from '@/components/transaction-toasts';
 
 type Action = 'list' | 'cancel' | 'buy';
 type ExplicitTransition = Action | 'wallet' | null;
@@ -24,6 +24,7 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
   nft: NormalizedNFT; initialListing: MarketplaceListing | null; initialConfig: MarketplaceConfig; initialAssetState?: MarketplaceAssetState;
 }) {
   const wallet = useWallet();
+  const toast = useTransactionToast();
   const queryClient = useQueryClient();
   const account = wallet.account?.address.toString();
   const dialog = useRef<HTMLDialogElement>(null);
@@ -143,6 +144,15 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
     } catch { setPhase('unknown'); setMessage('Transaction recovery storage is unavailable.'); }
   }, [key, legacyKey]);
 
+  useEffect(()=>{
+    if(!message||phase==='ready'||phase==='review')return;
+    const currentAction=pending?.action||action;
+    const tone=phase==='success'?'success':phase==='failure'?'error':phase==='unknown'?'unknown':'pending';
+    const actionName=currentAction==='list'?'listing':currentAction==='cancel'?'cancellation':'purchase';
+    const title=phase==='success'?(currentAction==='list'?'NFT listed':currentAction==='cancel'?'Listing cancelled':'Purchase successful'):phase==='failure'?`${actionName[0].toUpperCase()}${actionName.slice(1)} unsuccessful`:phase==='wallet'?'Confirm in wallet':phase==='submitted'||phase==='confirming'?`${actionName[0].toUpperCase()}${actionName.slice(1)} submitted`:'Transaction status needs attention';
+    toast.show({id:`market:${assetRoute}`,title,message,tone,href:pending?.hash?explorer('txn',pending.hash):undefined});
+  },[action,assetRoute,message,pending?.action,pending?.hash,phase,toast]);
+
   function save(value: PendingMarketplaceTransaction) {
     setPending(value);
     try { localStorage.setItem(key, JSON.stringify(value)); } catch (error) { if (!value.hash) throw error; }
@@ -237,7 +247,7 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
     } finally { signing.current = false; }
   }
   function review(next: Action) {
-    setAction(next); setMessage(''); setPhase('review'); dialog.current?.showModal();
+    toast.dismiss(`market:${assetRoute}`);setAction(next); setMessage(''); setPhase('review'); dialog.current?.showModal();
   }
 
   if (!marketplaceAddress) return <aside className="market-panel"><p className="notice warning">Marketplace transactions are not configured for this network.</p></aside>;
@@ -270,10 +280,9 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
       : null}
     {!active && owner && eligibility.data && !eligibility.data.eligible && <p className="notice error">{eligibility.data.reasons[0]}</p>}
     {!active && wallet.connected && rightNetwork && !owner && !explicitTransition && <p className="notice">Only the current owner can list this NFT.</p>}
-    {message && <TransactionStatus phase={phase} hash={pending?.hash} message={message} />}
+    {message && <span className="sr-only">{message}</span>}
     {phase === 'unknown' && pending?.hash && <button className="button" onClick={() => reconcile(pending)}>Check transaction status</button>}
     {phase === 'unknown' && pending && !pending.hash && <div className="recovery"><p>No submission is confirmed. If your wallet shows this marketplace transaction, paste its hash to verify it. This never signs another transaction.</p><input type="text" aria-label="Recovery transaction hash" placeholder="0x… transaction hash" value={recoveryHash} onChange={(event) => setRecoveryHash(event.target.value)} /><button className="button" disabled={!/^0x[0-9a-f]{64}$/i.test(recoveryHash)} onClick={() => { const value = { ...pending, hash: recoveryHash }; save(value); void reconcile(value); }}>Verify wallet transaction</button><label><input type="checkbox" checked={checkedWallet} onChange={(event) => setCheckedWallet(event.target.checked)} />I closed the wallet request and checked its activity: no transaction was signed or submitted.</label><button className="button" disabled={!checkedWallet || signing.current} onClick={() => { clear(); setPending(null); setPhase('ready'); setMessage('Request cleared after your confirmation. Nothing was automatically retried.'); setCheckedWallet(false); }}>Clear unsubmitted request</button></div>}
-    {phase === 'success' && pending?.hash && <div className="trade-success"><Check size={24}/><ExternalLink href={explorer('txn', pending.hash)}>View transaction</ExternalLink><a className="text-link" target="_blank" rel="noreferrer" href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Collected ${nft.name} on VEYTOS.`)}&url=${encodeURIComponent(window.location.href)}`}>Share on X <ArrowUpRight size={14}/></a></div>}
     <dialog className="dialog" ref={dialog} onCancel={() => setPhase('ready')}>
       <div className="dialog-head"><span className="eyebrow">REVIEW {action.toUpperCase()}</span><button className="icon-button" aria-label="Close review" onClick={() => dialog.current?.close()}><X size={20}/></button></div>
       <h2>{action === 'list' ? 'List NFT' : action === 'cancel' ? 'Cancel listing' : 'Buy NFT'}</h2>

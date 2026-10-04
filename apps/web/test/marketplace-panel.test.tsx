@@ -11,12 +11,13 @@ const collection = `0x${'d'.repeat(64)}`;
 const moduleAddress = '0x40fcdc2583e3e15c09f20a5d777b72f7bec8a9ac9292d57c03e9fb23c091eebb';
 const mocks = vi.hoisted(() => ({
   wallet: { connected: true, account: { address: { toString: () => seller } }, network: { chainId: 2 }, signAndSubmitTransaction: vi.fn() },
-  config: vi.fn(), pauseState: vi.fn(), assetState: vi.fn(), eligibility: vi.fn(), reconcile: vi.fn(), listPayload: vi.fn(), cancelPayload: vi.fn(), buyPayload: vi.fn(),
+  config: vi.fn(), pauseState: vi.fn(), assetState: vi.fn(), eligibility: vi.fn(), reconcile: vi.fn(), listPayload: vi.fn(), cancelPayload: vi.fn(), buyPayload: vi.fn(),toastShow:vi.fn(),toastDismiss:vi.fn(),
 }));
 vi.mock('@aptos-labs/wallet-adapter-react', () => ({ useWallet: () => mocks.wallet }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 vi.mock('@/lib/chain', () => ({ marketChain: () => mocks }));
 vi.mock('@/components/wallet', () => ({ WalletButton: () => <button>Connect wallet</button> }));
+vi.mock('@/components/transaction-toasts',()=>({useTransactionToast:()=>({show:mocks.toastShow,dismiss:mocks.toastDismiss})}));
 import { MarketplacePanel } from '../src/features/marketplace-panel';
 
 const config: MarketplaceConfig = { chainId: 2, feeBps: '200', recipient: `0x${'e'.repeat(64)}`, globalPaused: false, v1Paused: false, v2Paused: false, admin: `0x${'f'.repeat(64)}`, v1StorageReimbursement: '800000', v2StorageReimbursement: '926400' };
