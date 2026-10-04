@@ -5,6 +5,7 @@ import type { TokenIdentity } from '@veytos/aptos/types';
 import { aptos, marketChain } from './chain';
 import { marketplaceAddress, network } from './config';
 import { database } from './database';
+import {errorCategory} from './observability';
 
 export type BrowseListing={listing_id:string;standard:'v1'|'v2';asset_key:string;collection_key:string;seller_address:string;price_octas:string;listed_version:string};
 export const marketplaceBrowse=cache(async(options:{standard?:string;collection?:string;minPrice?:string;maxPrice?:string;sort?:string;limit?:number}={})=>{
@@ -62,13 +63,15 @@ export const walletMarketplaceProjection = cache(async (address: string,offset=0
 });
 
 export const collectionMarketplaceProjection = cache(async (collectionAddress: string) => {
-  const empty = { configured: false, activeListings: '0', floorPrice: null as string | null, sales: '0', volume: '0', events: [] as Record<string, unknown>[] };
+  const empty = { configured: false, failed:false, activeListings: '0', floorPrice: null as string | null, sales: '0', volume: '0', events: [] as Record<string, unknown>[] };
   const pool=database();if (!pool || !marketplaceAddress) return empty;
   const key = `v2:${collectionAddress}`;
+  try{
     const [active, sales, events] = await Promise.all([
       pool.query<{ count: string; floor: string | null }>(`SELECT count(*)::text AS count,min(price_octas)::text AS floor FROM marketplace_listings WHERE network=$1 AND module_address=$2 AND collection_key=$3 AND status='ACTIVE'`, [network, marketplaceAddress, key]),
       pool.query<{ count: string; volume: string }>(`SELECT count(*)::text AS count,coalesce(sum(gross_price_octas),0)::text AS volume FROM marketplace_events WHERE network=$1 AND module_address=$2 AND collection_key=$3 AND event_type='PURCHASED'`, [network, marketplaceAddress, key]),
-      pool.query(`SELECT event_type,listing_id,standard,asset_key,seller_address,buyer_address,gross_price_octas,transaction_hash,transaction_version,event_index FROM marketplace_events WHERE network=$1 AND module_address=$2 AND collection_key=$3 ORDER BY transaction_version DESC,event_index DESC LIMIT 30`, [network, marketplaceAddress, key]),
+      pool.query(`SELECT event_type,listing_id,standard,asset_key,seller_address,buyer_address,gross_price_octas,transaction_hash,transaction_version,event_index,chain_timestamp FROM marketplace_events WHERE network=$1 AND module_address=$2 AND collection_key=$3 ORDER BY transaction_version DESC,event_index DESC LIMIT 30`, [network, marketplaceAddress, key]),
     ]);
-  return { configured: true, activeListings: active.rows[0]?.count || '0', floorPrice: active.rows[0]?.floor || null, sales: sales.rows[0]?.count || '0', volume: sales.rows[0]?.volume || '0', events: events.rows };
+    return { configured: true, failed:false, activeListings: active.rows[0]?.count || '0', floorPrice: active.rows[0]?.floor || null, sales: sales.rows[0]?.count || '0', volume: sales.rows[0]?.volume || '0', events: events.rows.map(event=>({...event,chain_timestamp:event.chain_timestamp instanceof Date?event.chain_timestamp.toISOString():event.chain_timestamp})) };
+  }catch(error){console.error(JSON.stringify({kind:'marketplace_optional_failure',network,package:marketplaceAddress,collection:collectionAddress,upstream:'database',operation:'collection_activity',category:errorCategory(error,'database collection activity'),fresh:false}));return {...empty,configured:true,failed:true};}
 });
