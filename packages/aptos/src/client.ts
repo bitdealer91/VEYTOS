@@ -43,13 +43,6 @@ export function launchpad(aptos: Aptos, packageAddress: string) {
     ]);
     return { identity: {standard:'v2', address: canonical(address)}, address: canonical(address), name: names[0], uri: token.uri, owner: canonical(object.owner), collection: canonical(token.collection.inner) };
   }
-  async function items(data: Drop, offset = 0) {
-    const count = Math.min(12, Math.max(0, Number(data.minted) - offset));
-    return Promise.all(Array.from({length:count}, async (_, i) => {
-      const [token] = await aptos.view<[string]>({ payload: { function: fn('token_address'), functionArguments: [data.address, String(offset+i+1)] } });
-      return asset(token);
-    }));
-  }
   function events(tx: UserTransactionResponse) {
     return tx.events.filter(e => e.type === `${module}::launchpad::NFTMinted`).map(e => e.data as MintEvent);
   }
@@ -71,7 +64,7 @@ export function launchpad(aptos: Aptos, packageAddress: string) {
     }));
     return {status:'success' as const, assets, receipt:tx};
   }
-  return { drop, eligibility, mintPayload, asset, items, reconcile, events };
+  return { drop, eligibility, mintPayload, asset, reconcile, events };
 }
 export function validateMintReceipt(tx: UserTransactionResponse, pending: PendingMint, module: string) {
   const payload = tx.payload as { function?: string; arguments?: unknown[] };

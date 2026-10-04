@@ -1,17 +1,29 @@
 import Link from 'next/link';
 import {notFound} from 'next/navigation';
 import {canonical} from '@veytos/aptos/domain';
-import {chain} from '@/lib/chain';
 import {network} from '@/lib/config';
-import {Artwork} from '@/components/artwork';
-import {WalletAddress,DropStatus} from '@/components/chain-ui';
-import {StatBlock,PriceDisplay,EmptyState,ErrorState} from '@/components/ui';
-import {NFTCard} from '@/components/cards';
-import {MintPanel} from '@/features/mint-panel';
+import {launchpadActivityFor,launchpadDetail} from '@/lib/data';
 import {collectionMarketplaceProjection} from '@/lib/marketplace-data';
+import {Artwork} from '@/components/artwork';
+import {CollectionLinks} from '@/components/collection-links';
+import {WalletAddress,DropStatus} from '@/components/chain-ui';
+import {ErrorState} from '@/components/ui';
+import {RetryLaunchpad} from '@/components/retry-launchpad';
+import {LaunchpadActivity} from '@/components/launchpad-activity';
+import {MintPanel} from '@/features/mint-panel';
+
 export const dynamic='force-dynamic';
-export async function generateMetadata({params}:{params:Promise<{id:string}>}){try{const {id}=await params;const d=await chain().drop(id);return {title:d.terms.name,description:d.terms.description,openGraph:{title:d.terms.name,description:`Aptos ${network} collection. ${d.terms.description}`}};}catch{return {title:'Collection'};}}
-export default async function Page({params}:{params:Promise<{id:string}>}){const {id}=await params;try{canonical(id);}catch{notFound();}const drop=await chain().drop(id);const [items,market]=await Promise.all([chain().items(drop).then(items=>({items,error:false}),()=>({items:[],error:true})),collectionMarketplaceProjection(drop.collection)]);return <>
-<div className="breadcrumb"><Link href="/explore">Explore</Link><span>/</span><span>{drop.terms.name}</span></div><div className="collection-banner"><Artwork uri={drop.terms.collection_uri} name={drop.terms.name} large/><span className="banner-tag">APTOS · DIGITAL ASSET</span></div>
-<div className="collection-heading"><div className="collection-avatar"><Artwork uri={drop.terms.collection_uri} name={drop.terms.name}/></div><div><div className="between"><span className="eyebrow">NATIVE COLLECTION · UNVERIFIED</span><DropStatus drop={drop}/></div><h1>{drop.terms.name}</h1><p className="creator-line">Created by <WalletAddress address={drop.terms.creator}/></p></div></div>
-<div className="collection-layout"><div className="collection-content"><p className="collection-description">{drop.terms.description}</p><div className="stats-row"><StatBlock label="Mint price"><PriceDisplay octas={drop.terms.unit_price}/></StatBlock><StatBlock label="Minted">{drop.minted}</StatBlock><StatBlock label="Active listings">{market.configured?market.activeListings:'—'}</StatBlock><StatBlock label="Floor">{market.floorPrice?<PriceDisplay octas={market.floorPrice}/>:market.configured?'—':'Unavailable'}</StatBlock><StatBlock label="Secondary sales">{market.configured?market.sales:'—'}</StatBlock><StatBlock label="Secondary volume">{market.configured?<PriceDisplay octas={market.volume}/>: 'Unavailable'}</StatBlock></div><nav className="content-tabs" aria-label="Collection sections"><a href="#items">Items <small>{drop.minted}</small></a><a href="#about">About</a></nav><section id="items" className="section collection-items"><div className="section-heading"><div><span className="eyebrow">COLLECTION</span><h2>Items</h2></div><span className="caption muted">{items.items.length} of {drop.minted} minted</span></div>{items.error?<ErrorState title="Items could not be loaded"/>:items.items.length?<div className="nft-grid">{items.items.map(a=><NFTCard key={a.address} asset={a}/>)}</div>:<EmptyState title="Be here for the first mint" description="Minted NFTs will appear here once confirmed on Aptos."/>}{Number(drop.minted)>12&&<p className="caption muted">Showing the first 12 minted assets.</p>}</section><details className="collection-activity"><summary>Recent marketplace activity <span>{market.events.length}</span></summary><div className="activity-disclosure">{market.events.length?<div className="table-wrap"><table><thead><tr><th>Event</th><th>NFT</th><th>Price</th></tr></thead><tbody>{market.events.map(event=><tr key={`${event.transaction_version}:${event.event_index}`}><td>{String(event.event_type)}</td><td><Link href={`/nft/${event.asset_key}`}>Listing #{String(event.listing_id)}</Link></td><td>{event.gross_price_octas?<PriceDisplay octas={String(event.gross_price_octas)}/>:'—'}</td></tr>)}</tbody></table></div>:<p className="caption muted">{market.configured?'No secondary activity has been indexed for this collection.':'Marketplace indexing is not configured in this environment.'}</p>}</div></details><section id="about" className="about-panel"><span className="eyebrow">ON-CHAIN DETAILS</span><h2>About this collection</h2><dl><div><dt>Network</dt><dd>Aptos {network}</dd></div><div><dt>Standard</dt><dd>Digital Asset / Token V2</dd></div><div><dt>Collection</dt><dd><WalletAddress kind="object" address={drop.collection}/></dd></div><div><dt>Launch authority</dt><dd><WalletAddress kind="object" address={drop.address}/></dd></div><div><dt>Royalties</dt><dd>{Number(drop.terms.royalty_bps)/100}%</dd></div><div><dt>Creator verification</dt><dd>Unverified</dd></div></dl><p className="caption muted">Verification is a review of provenance, never a guarantee of value or safety. Royalties are recorded on-chain; ordinary transfers do not automatically pay them.</p></section></div><MintPanel initial={drop}/></div><a className="mobile-mint-link button primary" href="#mint">Go to mint <PriceDisplay octas={drop.terms.unit_price}/></a></>;}
+export async function generateMetadata(){return {title:'Launchpad drop',description:`A native VEYTOS NFT drop on Aptos ${network}.`};}
+
+export default async function Page({params}:{params:Promise<{id:string}>}){
+  const raw=(await params).id;let id:string;try{id=canonical(raw);}catch{notFound();}
+  const critical=await launchpadDetail(id);
+  if(!critical.ok){const diagnostic=critical.reason==='network_mismatch'?'The configured Aptos network does not match this deployment.':critical.reason==='package_mismatch'?'The server and browser Launchpad package addresses do not match.':critical.reason==='malformed_chain_response'?'Aptos returned an unexpected Drop response.':critical.reason==='stale_chain_state'?'The connected fullnode is behind, so VEYTOS will not label its mint state as live.':'Fresh authoritative mint state could not be obtained.';return <section className="drop-unavailable"><ErrorState description={`${diagnostic} Reference ${critical.requestId}.`}/><RetryLaunchpad/></section>;}
+  const drop=critical.snapshot.drop;
+  const[mints,market]=await Promise.all([launchpadActivityFor(drop.address),collectionMarketplaceProjection(drop.collection)]);
+  return <><div className="breadcrumb"><Link href="/drops">Launchpad</Link><span>/</span><span>{drop.terms.name}</span></div><div className="drop-layout">
+    <aside className="drop-identity"><div className="drop-cover"><Artwork uri={drop.terms.collection_uri} name={drop.terms.name} large/></div><p>{drop.terms.description}</p><div className="drop-creator"><span>Created by</span><WalletAddress address={drop.terms.creator}/></div><CollectionLinks uri={drop.terms.collection_uri}/></aside>
+    <section className="drop-main"><header className="drop-header"><div className="between"><span className="native-mark"><i/>VEYTOS native</span><DropStatus drop={drop}/></div><h1>{drop.terms.name}</h1><div className="drop-tags"><span>Aptos {network}</span><span>{Number(drop.terms.royalty_bps)/100}% creator royalty</span></div></header><MintPanel initial={drop}/></section>
+    <LaunchpadActivity mints={mints.events} mintsConfigured={mints.configured} mintsFailed={mints.failed} sales={market.events} salesConfigured={market.configured} salesFailed={market.failed}/>
+  </div></>;
+}
