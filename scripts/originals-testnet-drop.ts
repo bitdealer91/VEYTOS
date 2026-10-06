@@ -7,21 +7,24 @@ import assert from 'node:assert/strict';
 import { validateManifest } from '../packages/domain/src/metadata.ts';
 
 const SUPPLY = 187;
-const COLLECTION = 'THE ORIGINALS';
-const SPECIES = 'Binturong';
-const DESCRIPTION = 'THE ORIGINALS is a collection of 187 unique Binturong NFTs on Aptos testnet.';
+const COLLECTION = process.env.VEYTOS_DROP_COLLECTION || 'THE ORIGINALS';
+const SPECIES = process.env.VEYTOS_DROP_SPECIES || 'Binturong';
+const DESCRIPTION = process.env.VEYTOS_DROP_DESCRIPTION || `${COLLECTION} is a collection of ${SUPPLY} unique ${SPECIES} NFTs on Aptos testnet.`;
 const PRICE_OCTAS = '100000000';
 const WALLET_LIMIT = '10';
 const TRANSACTION_LIMIT = '5';
 const ROYALTY_BPS = '750';
 const EXPECTED_FEE_BPS = '500';
-const DROP_ID = new TextEncoder().encode('the-originals-187-v1');
+const DROP_ID = new TextEncoder().encode(process.env.VEYTOS_DROP_ID || 'the-originals-187-v1');
 const MODULE = AccountAddress.from(process.env.NEXT_PUBLIC_LAUNCHPAD_ADDRESS || '0x5e802dc2d3105fbf967541d9cd64f5d34a18ebb473a4d40ddb26c8f727e9db28').toStringLong();
+const MARKETPLACE = AccountAddress.from(process.env.NEXT_PUBLIC_MARKETPLACE_ADDRESS || '0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91').toStringLong();
 const USER_HOME = homedir();
 const INPUT = resolve(process.env.ORIGINALS_IMAGE_DIR || resolve(USER_HOME, 'Downloads/COMMON #001–#360'));
+const COVER_IMAGE = process.env.VEYTOS_DROP_COVER_IMAGE ? resolve(process.env.VEYTOS_DROP_COVER_IMAGE) : null;
+const SOURCE_IMAGE_JOURNAL = process.env.VEYTOS_DROP_SOURCE_IMAGE_JOURNAL ? resolve(process.env.VEYTOS_DROP_SOURCE_IMAGE_JOURNAL) : null;
 const API_KEY_FILE = resolve(process.env.LIGHTHOUSE_API_KEY_FILE || resolve(USER_HOME, 'Downloads/Apikey.txt'));
 const ACCOUNTS_FILE = resolve(process.env.MINTOS_TESTNET_ACCOUNTS_FILE || resolve(USER_HOME, '.local/share/mintos/testnet/accounts.json'));
-const OUTPUT_DIR = resolve('.testnet/originals');
+const OUTPUT_DIR = resolve(process.env.VEYTOS_DROP_OUTPUT_DIR || '.testnet/originals');
 const JOURNAL_FILE = `${OUTPUT_DIR}/journal.json`;
 const MANIFEST_FILE = `${OUTPUT_DIR}/manifest.json`;
 const LIGHTHOUSE_UPLOAD = 'https://upload.lighthouse.storage/api/v0/add';
@@ -35,6 +38,7 @@ type Journal = {
   creator: string;
   images: Record<string, Upload>;
   metadata: Record<string, Upload>;
+  cover?: Upload;
   collection?: Upload;
   drop?: string;
   collectionAddress?: string;
@@ -46,6 +50,7 @@ const imagePath = (id: number) => `${INPUT}/THE ORIGINALS #${String(id).padStart
 const tokenName = (id: number) => `${COLLECTION} #${String(id).padStart(3, '0')}`;
 const canonical = (value: string) => AccountAddress.from(value).toStringLong();
 const fn = (name: string) => `${MODULE}::launchpad::${name}` as `${string}::${string}::${string}`;
+const marketplaceFn = (module: string, name: string) => `${MARKETPLACE}::${module}::${name}` as `${string}::${string}::${string}`;
 
 async function save(journal: Journal) {
   const next = `${JOURNAL_FILE}.next`;
@@ -62,7 +67,14 @@ async function loadJournal(creator: string): Promise<Journal> {
     return value;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-    return { version: 1, module: MODULE, creator, images: {}, metadata: {}, steps: {} };
+    let images: Record<string, Upload> = {};
+    if (SOURCE_IMAGE_JOURNAL) {
+      const source = JSON.parse(await readFile(SOURCE_IMAGE_JOURNAL, 'utf8')) as Pick<Journal, 'images'>;
+      assert.equal(Object.keys(source.images || {}).length, SUPPLY, `Source image journal must contain exactly ${SUPPLY} images`);
+      for (const upload of Object.values(source.images)) CID.parse(upload.cid);
+      images = structuredClone(source.images);
+    }
+    return { version: 1, module: MODULE, creator, images, metadata: {}, steps: {} };
   }
 }
 
@@ -159,7 +171,7 @@ await mapLimit(missingImages, 4, async (id) => {
 
 const metadataFor = (id: number) => ({
   name: tokenName(id),
-  description: `${tokenName(id)} — a Binturong from THE ORIGINALS collection.`,
+  description: `${tokenName(id)} — a ${SPECIES} from the ${COLLECTION} collection.`,
   image: `ipfs://${journal.images[String(id)]!.cid}`,
   attributes: [
     { trait_type: 'Species', value: SPECIES },
@@ -173,8 +185,17 @@ await mapLimit(missingMetadata, 8, async (id) => {
   console.log(`metadata ${id}/${SUPPLY}: ${journal.metadata[String(id)]!.cid}`);
 }, async () => save(journal));
 
+if (COVER_IMAGE && !journal.cover) {
+  const coverBytes = new Uint8Array(await readFile(COVER_IMAGE));
+  assert.equal((await stat(COVER_IMAGE)).isFile(), true, 'Collection cover is not a file');
+  assert(['GIF87a', 'GIF89a'].includes(Buffer.from(coverBytes.subarray(0, 6)).toString('ascii')), 'Collection cover must be a GIF');
+  journal.cover = await upload(coverBytes, basename(COVER_IMAGE), 'image/gif', apiKey);
+  await save(journal);
+  console.log(`collection cover: ${journal.cover.cid}`);
+}
+
 if (!journal.collection) {
-  const collectionMetadata = { name: COLLECTION, description: DESCRIPTION, image: `ipfs://${journal.images['1']!.cid}`, external_url: 'https://veytos.com', attributes: [{ trait_type: 'Species', value: SPECIES }] };
+  const collectionMetadata = { name: COLLECTION, description: DESCRIPTION, image: `ipfs://${journal.cover?.cid || journal.images['1']!.cid}`, external_url: 'https://veytos.com', attributes: [{ trait_type: 'Species', value: SPECIES }] };
   journal.collection = await upload(new TextEncoder().encode(JSON.stringify(collectionMetadata)), 'collection.json', 'application/json', apiKey);
   await save(journal);
   console.log(`collection metadata: ${journal.collection.cid}`);
@@ -203,4 +224,24 @@ assert.equal(state.terms.unit_price, PRICE_OCTAS);
 assert.equal(state.terms.collection_uri, `ipfs://${journal.collection.cid}`);
 journal.collectionAddress = canonical(state.collection);
 await save(journal);
+const [, , , , , configuredMarketplaceAdmin] = await aptos.view<[string, string, boolean, boolean, boolean, string]>({
+  payload: { function: marketplaceFn('marketplace_fee_policy', 'configuration'), functionArguments: [] },
+});
+const marketplaceAdminAddress = canonical(configuredMarketplaceAdmin);
+const marketplaceAdminRecord = Object.values(secrets).find((record) => canonical(record.address) === marketplaceAdminAddress);
+assert(marketplaceAdminRecord, `Marketplace admin ${marketplaceAdminAddress} is unavailable in the protected testnet account file`);
+const marketplaceAdmin = Account.fromPrivateKey({ privateKey: new Ed25519PrivateKey(marketplaceAdminRecord.privateKey) });
+const [reviewed] = await aptos.view<[boolean, number]>({
+  payload: { function: marketplaceFn('marketplace', 'v2_collection_policy'), functionArguments: [journal.collectionAddress] },
+});
+if (!reviewed) {
+  await execute(journal, 'marketplace-admission', marketplaceAdmin, {
+    function: marketplaceFn('marketplace', 'set_v2_collection_reviewed'),
+    functionArguments: [journal.collectionAddress, 1, true],
+  });
+}
+const policy = await aptos.view<[boolean, number]>({
+  payload: { function: marketplaceFn('marketplace', 'v2_collection_policy'), functionArguments: [journal.collectionAddress] },
+});
+assert.deepEqual(policy, [true, 1], 'Finalized VEYTOS collection was not admitted to the marketplace');
 console.log(JSON.stringify({ drop: journal.drop, collection: journal.collectionAddress, collectionMetadata: state.terms.collection_uri, supply: state.terms.max_supply, priceOctas: state.terms.unit_price }, null, 2));

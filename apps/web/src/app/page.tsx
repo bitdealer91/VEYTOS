@@ -1,24 +1,122 @@
 import Link from 'next/link';
-import { ArrowUpRight,ArrowRight } from 'lucide-react';
-import { brand } from '@mintos/config';
-import { discovery } from '@/lib/data';
-import { Artwork } from '@/components/artwork';
-import { DropStatus,WalletAddress,MintProgress } from '@/components/chain-ui';
-import { DropCard,CollectionsTable } from '@/components/cards';
-import { SectionHeader,EmptyState,ErrorState,PriceDisplay } from '@/components/ui';
+import { ArrowRight, BadgeCheck } from 'lucide-react';
 import { dropStatus } from '@veytos/aptos/domain';
-import { marketplaceActivity,marketplaceBrowse } from '@/lib/marketplace-data';
-import { MarketplaceListingGrid } from '@/components/marketplace-browse';
-import { explorer } from '@/lib/config';
-export const dynamic='force-dynamic';
-export default async function Home(){const [{drops,errors},market,activity]=await Promise.all([discovery(),marketplaceBrowse({limit:6}),marketplaceActivity()]);const featured=drops[0];const now=BigInt(Math.floor(Date.now()/1000));const live=drops.filter(d=>dropStatus(d,now)==='LIVE');const upcoming=drops.filter(d=>dropStatus(d,now)==='UPCOMING');return <>
-<div className="page-intro"><div><span className="eyebrow">ONE ECOSYSTEM. EVERY COLLECTION.</span><h1>{brand.tagline}</h1></div><Link href="/explore" className="text-link">Find your next collectible <ArrowUpRight size={18}/></Link></div>
-{errors>0&&<ErrorState/>}
-{featured?<section className="featured"><Link className="featured-art" href={`/collection/${featured.address}`}><Artwork uri={featured.terms.collection_uri} name={featured.terms.name} large/><span className="feature-index">01 / ON THE LAUNCHPAD</span></Link><div className="featured-copy"><div className="between"><span className="eyebrow">FEATURED DROP</span><DropStatus drop={featured}/></div><div><h2>{featured.terms.name}</h2><p className="creator-line">By <WalletAddress address={featured.terms.creator}/></p><p className="description">{featured.terms.description}</p></div><div className="featured-stats"><div><span className="caption muted">Mint price</span><strong><PriceDisplay octas={featured.terms.unit_price}/></strong></div><div><span className="caption muted">Collection size</span><strong>{featured.terms.max_supply}<small> items</small></strong></div></div><MintProgress minted={featured.minted} supply={featured.terms.max_supply}/><Link href={`/collection/${featured.address}`} className="button primary">Explore collection <ArrowUpRight size={18}/></Link></div></section>:<EmptyState title="The next chapter starts here" description="New Aptos collections will appear as they launch."><Link className="button primary" href="/explore">Explore collections <ArrowRight size={16}/></Link></EmptyState>}
-<section className="section"><SectionHeader title="On the launchpad" subtitle="Real collections. Live mint counts." href="/explore"/>{drops.length?<CollectionsTable drops={drops}/>:<EmptyState title="No collections yet" description="This space is reserved for real launches on Aptos."/>}</section>
-<section className="section"><SectionHeader title="Listed now" subtitle="Real fixed-price listings on Aptos testnet." href="/explore"/>{market.items.length?<MarketplaceListingGrid items={market.items}/>:<EmptyState title="No active listings" description={market.configured?'No NFTs are currently listed.':'Marketplace discovery is waiting for the beta indexer.'}/>}</section>
-<section className="section"><SectionHeader title="Recent marketplace activity" subtitle="Listings, sales, and cancellations verified from Aptos." href="/activity"/>{activity.events.length?<div className="table-wrap"><table><thead><tr><th>Event</th><th>NFT</th><th>Wallet</th><th>Price</th><th>Transaction</th></tr></thead><tbody>{activity.events.slice(0,6).map(event=><tr key={`${event.transaction_version}:${event.event_index}`}><td>{String(event.event_type)}</td><td><Link href={`/nft/${event.asset_key}`}>{String(event.standard).toUpperCase()} NFT</Link></td><td><WalletAddress address={String(event.buyer_address||event.seller_address)}/></td><td>{event.gross_price_octas?<PriceDisplay octas={String(event.gross_price_octas)}/>:'—'}</td><td><a className="text-link" href={explorer('txn',String(event.transaction_hash))} target="_blank" rel="noreferrer">View ↗</a></td></tr>)}</tbody></table></div>:<EmptyState title={activity.failed?'Marketplace data is temporarily unavailable':'No marketplace activity yet'} description={activity.failed?'VEYTOS could not reach the browsing projection. Trading still verifies Aptos directly.':'VEYTOS does not generate artificial listings or sales.'}/>}</section>
-<section className="og-section"><div className="og-emblem" aria-hidden="true">OG<span>APTOS</span></div><div><span className="eyebrow">THE ORIGINALS</span><h2>Legacy Aptos NFTs</h2><p>Token V1 assets are first-class VEYTOS collectibles when their exact identity and transfer safety can be verified.</p><span className="coming-note">Mainnet OG collections are never mixed into this testnet beta.</span></div><span className="og-number" aria-hidden="true">↗</span></section>
-<section className="section"><SectionHeader title="Live drops" subtitle="Discover something at the beginning." href="/drops"/>{live.length?<div className="card-grid">{live.map(d=><DropCard key={d.address} drop={d}/>)}</div>:<EmptyState title="No live drops right now" description="Good collections take time. Check upcoming launches."/>}</section>
-<section className="section"><SectionHeader title="Coming next" subtitle="A little anticipation is part of collecting."/>{upcoming.length?<div className="card-grid">{upcoming.map(d=><DropCard key={d.address} drop={d}/>)}</div>:<div className="quiet-empty"><span className="status"><i/>UPCOMING</span><p>No scheduled drops yet.</p><Link href="/drops" className="text-link">Explore the launchpad <ArrowUpRight size={16}/></Link></div>}</section>
-</>;}
+import type { Drop } from '@veytos/aptos/types';
+import { Artwork } from '@/components/artwork';
+import { Countdown, DropActionLabel, DropStatus, MintProgress } from '@/components/chain-ui';
+import { PriceDisplay } from '@/components/ui';
+import { discovery } from '@/lib/data';
+import { marketplaceCollections, type MarketplaceCollectionSummary } from '@/lib/marketplace-data';
+
+export const dynamic = 'force-dynamic';
+
+function collectionHref(collection: MarketplaceCollectionSummary) {
+  return `/explore/${encodeURIComponent(collection.key)}`;
+}
+
+function DropTiming({ drop, status }: { drop: Drop; status: ReturnType<typeof dropStatus> }) {
+  if (status === 'UPCOMING') return <Countdown target={drop.terms.start_seconds} />;
+  if (status === 'LIVE') {
+    return drop.terms.end_seconds === '0' ? <>Until sold out</> : <Countdown target={drop.terms.end_seconds} />;
+  }
+  if (status === 'SOLD OUT') return <>Sold out</>;
+  return <>Closed</>;
+}
+
+function MarketplaceTable({ items }: { items: MarketplaceCollectionSummary[] }) {
+  return <div className="home-market-table-wrap">
+    <table className="home-market-table">
+      <thead><tr>
+        <th scope="col"><span className="sr-only">Rank</span></th>
+        <th scope="col">Collection</th>
+        <th scope="col">Floor price</th>
+        <th scope="col">24h volume</th>
+        <th scope="col">Listed</th>
+        <th scope="col"><span className="sr-only">Open</span></th>
+      </tr></thead>
+      <tbody>{items.map((collection, index) => <tr key={collection.key}>
+        <td className="home-market-rank">{index + 1}</td>
+        <td><Link className="home-market-identity" href={collectionHref(collection)}>
+          <span className="home-market-avatar"><Artwork uri={collection.metadataUri} name={collection.name} /></span>
+          <span className="home-market-name"><strong>{collection.name}</strong>{collection.verified && <BadgeCheck size={14} aria-label="Verified VEYTOS collection" />}</span>
+        </Link></td>
+        <td className="numeric">{collection.floorPrice ? <PriceDisplay octas={collection.floorPrice} /> : <span className="market-dash">—</span>}</td>
+        <td className="numeric"><PriceDisplay octas={collection.volume24h} /></td>
+        <td className="numeric">{collection.activeListings}</td>
+        <td><Link className="home-row-open" href={collectionHref(collection)} aria-label={`Open ${collection.name}`}><ArrowRight size={16} /></Link></td>
+      </tr>)}</tbody>
+    </table>
+  </div>;
+}
+
+export default async function Home() {
+  const [launchpad, marketplace] = await Promise.all([
+    discovery(),
+    marketplaceCollections({ sort: 'volume', limit: 6 }),
+  ]);
+  const now = BigInt(Math.floor(Date.now() / 1000));
+  const featured = launchpad.featured
+    ?? launchpad.drops.find((drop) => dropStatus(drop, now) === 'LIVE')
+    ?? launchpad.drops.find((drop) => dropStatus(drop, now) === 'UPCOMING')
+    ?? launchpad.drops[0];
+  const status = featured ? dropStatus(featured, now) : null;
+
+  return <div className="home-dashboard">
+    <section className="home-launch" aria-labelledby="home-launch-title">
+      <header className="home-section-head">
+        <span className="eyebrow">LAUNCHPAD</span>
+        <h1 id="home-launch-title">Active Collection</h1>
+        <p>Curated drops on Aptos. Real assets, direct ownership.</p>
+      </header>
+
+      {featured && status ? <article className="home-drop">
+        <div className="home-drop-art">
+          <Artwork uri={featured.terms.collection_uri} name={featured.terms.name} large />
+          <div className="home-drop-shade" aria-hidden="true" />
+          <div className="home-drop-status"><DropStatus drop={featured} /></div>
+        </div>
+        <div className="home-drop-copy">
+          <span className="eyebrow">FEATURED ON VEYTOS</span>
+          <h2>{featured.terms.name}</h2>
+          <p>{featured.terms.description}</p>
+          <MintProgress minted={featured.minted} supply={featured.terms.max_supply} />
+          <div className="home-drop-facts">
+            <div><span>Price</span><strong><PriceDisplay octas={featured.terms.unit_price} /></strong></div>
+            <div><span>Supply</span><strong>{featured.terms.max_supply}</strong></div>
+            <div><span>Minted</span><strong>{featured.minted}</strong></div>
+            <div><span>{status === 'UPCOMING' ? 'Starts in' : 'Availability'}</span><strong><DropTiming drop={featured} status={status} /></strong></div>
+          </div>
+          <div className="home-drop-actions">
+            <Link className="button primary" href={`/collection/${featured.address}`}><DropActionLabel drop={featured} /><ArrowRight size={17} /></Link>
+            <Link className="button" href="/drops">All drops</Link>
+          </div>
+        </div>
+      </article> : <div className="home-local-empty">
+        <span className="eyebrow">NO ACTIVE DROP</span>
+        <h2>The next collection will appear here.</h2>
+        <p>VEYTOS does not fill launchpad space with fictional projects.</p>
+        <Link className="button" href="/drops">View Launchpad</Link>
+      </div>}
+      {launchpad.errors > 0 && <p className="home-data-note">Some optional launchpad data is temporarily unavailable.</p>}
+    </section>
+
+    <section className="home-market" aria-labelledby="home-market-title">
+      <header className="home-section-head home-market-head">
+        <div>
+          <span className="eyebrow">MARKETPLACE</span>
+          <h2 id="home-market-title">Top Collections</h2>
+          <p>By completed 24h trading volume on VEYTOS.</p>
+        </div>
+        <Link className="button home-explore" href="/explore">Explore Marketplace <ArrowRight size={16} /></Link>
+      </header>
+
+      {marketplace.items.length > 0 ? <MarketplaceTable items={marketplace.items} /> : <div className="home-local-empty home-market-empty">
+        <span className="eyebrow">MARKETPLACE</span>
+        <h2>No indexed collections yet.</h2>
+        <p>{marketplace.failed ? 'The marketplace projection is temporarily unavailable.' : 'Collections appear after launch or their first marketplace activity.'}</p>
+        <Link className="button" href="/explore">Open Marketplace</Link>
+      </div>}
+      {(marketplace.failed || marketplace.metadataFailed) && marketplace.items.length > 0 && <p className="home-data-note">Some optional marketplace metadata is temporarily unavailable.</p>}
+    </section>
+  </div>;
+}

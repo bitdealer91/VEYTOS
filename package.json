@@ -37,6 +37,7 @@
     "db:verify": "node --import tsx scripts/deployment-preflight.ts --database-only",
     "deploy:preflight": "node --import tsx scripts/deployment-preflight.ts --require-checkpoint",
     "testnet:originals": "node --import tsx scripts/originals-testnet-drop.ts",
+    "testnet:rongs": "node --import tsx scripts/rongs-testnet-drop.ts",
     "dev": "npm run dev --workspace @veytos/web",
     "build": "npm run build --workspace @veytos/web",
     "start": "npm run start --workspace @veytos/web",

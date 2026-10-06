@@ -61,6 +61,18 @@ Approval is performed with `marketplace::set_v2_collection_reviewed` using the
 canonical collection object and the supported provenance class. Verify the emitted
 policy event and read the registry view after commitment.
 
+For the repository's testnet launch pipeline, this admission is part of drop
+finalization rather than a separate operator task. The pipeline reads the finalized
+drop from the deployed launchpad, uses its canonical collection object, resolves the
+current marketplace admin from on-chain configuration, submits provenance class `1`
+only when the policy is still absent, and verifies `[reviewed=true, provenance=1]`
+after commitment. The signer remains in the protected external testnet account file;
+it is never exposed to the web application.
+
+Mainnet admission must use the configured marketplace multisig and retain the same
+evidence review. Do not put an admin key in a web server or browser merely to make
+approval appear automatic.
+
 ## Revocation and incident response
 
 Revoke future listing eligibility when a package upgrades, retained authority is
