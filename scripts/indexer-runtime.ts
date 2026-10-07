@@ -1,4 +1,16 @@
 export function requestHeaders(apiKey?:string){return apiKey?{Authorization:`Bearer ${apiKey}`}:{ } as Record<string,string>;}
+export async function aptosFetch(
+  input:string,
+  init:RequestInit={},
+  apiKey?:string,
+  fetcher:typeof fetch=fetch,
+){
+  const headers=new Headers(init.headers);
+  if(apiKey)headers.set('Authorization',`Bearer ${apiKey}`);
+  const response=await fetcher(input,{...init,headers});
+  if(!apiKey||![401,403,429].includes(response.status))return response;
+  return fetcher(input,{...init,headers:new Headers(init.headers)});
+}
 export function retryDelay(response:Pick<Response,'status'|'headers'>|null,attempt:number,baseMs:number){
   const header=response?.headers.get('retry-after');
   if(header){

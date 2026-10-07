@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import pg from 'pg';
 import { canonical } from '@veytos/aptos/domain';
 import { projectMarketplaceTransaction } from '@veytos/aptos/marketplace-events';
-import { boundedInterval,launchpadEvents,nextTargetedVersion,requestHeaders,retryDelay } from './indexer-runtime.ts';
+import { aptosFetch,boundedInterval,launchpadEvents,nextTargetedVersion,retryDelay } from './indexer-runtime.ts';
 
 const databaseUrl = process.env.DATABASE_URL;
 assert(databaseUrl, 'DATABASE_URL is required');
@@ -35,7 +35,7 @@ async function checkpoint(client: pg.PoolClient) {
 }
 
 async function targetedBatch(start:bigint,transactionInterval:number){
-  const response=await fetch(indexerEndpoint,{method:'POST',headers:{'content-type':'application/json',...requestHeaders(indexerApiKey)},body:JSON.stringify({query:targetedTransactionsQuery,variables:{from:start.toString(),addresses:[moduleAddress,...(launchpadAddress?[launchpadAddress]:[])],limit:pageSize}})});
+  const response=await aptosFetch(indexerEndpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({query:targetedTransactionsQuery,variables:{from:start.toString(),addresses:[moduleAddress,...(launchpadAddress?[launchpadAddress]:[])],limit:pageSize}})},indexerApiKey);
   if(!response.ok){const error=new Error(`Indexer transaction query failed: ${response.status}`) as Error&{response?:Response};error.response=response;throw error;}
   const body=await response.json() as {data?:{user_transactions?:Array<{version?:string|number}>,processor_status?:Array<{last_success_version?:string|number}>},errors?:Array<{message?:string}>};
   if(body.errors?.length)throw new Error(`Indexer transaction query failed: ${body.errors.map(error=>error.message||'GraphQL error').join('; ')}`);
@@ -47,7 +47,7 @@ async function targetedBatch(start:bigint,transactionInterval:number){
   for(let index=1;index<versions.length;index++)assert(versions[index]!>versions[index-1]!,'Indexed transaction versions are not strictly ordered');
   const transactions:unknown[]=[];
   for(const version of versions){
-    const transactionResponse=await fetch(`${endpoint}/transactions/by_version/${version}`,{headers:requestHeaders(apiKey)});
+    const transactionResponse=await aptosFetch(`${endpoint}/transactions/by_version/${version}`,{},apiKey);
     if(!transactionResponse.ok){const error=new Error(`Fullnode transaction fetch failed: ${transactionResponse.status}`) as Error&{response?:Response};error.response=transactionResponse;throw error;}
     transactions.push(await transactionResponse.json());
     if(transactionInterval&&version!==versions.at(-1))await new Promise(resolve=>setTimeout(resolve,transactionInterval));
