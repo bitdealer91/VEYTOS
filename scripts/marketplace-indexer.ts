@@ -118,25 +118,37 @@ const once=process.argv.includes('--once');
 const pollInterval=boundedInterval(process.env.INDEXER_POLL_INTERVAL_MS,3000,1000,60_000);
 const catchupInterval=boundedInterval(process.env.INDEXER_CATCHUP_INTERVAL_MS,1000,250,60_000);
 const transactionInterval=boundedInterval(process.env.INDEXER_TRANSACTION_INTERVAL_MS,500,100,60_000);
+const lockRetryInterval=boundedInterval(process.env.INDEXER_LOCK_RETRY_INTERVAL_MS,1000,250,10_000);
 const lock=await pool.connect();
+let lockAcquired=false;
 try{
-  const acquired=await lock.query<{locked:boolean}>('SELECT pg_try_advisory_lock(hashtext($1)) AS locked',[processor]);
-  assert(acquired.rows[0]?.locked,`Another ${processor} worker is active`);
-  let failures=0;
-  do{
-    try{
-      const batch=await runBatch(transactionInterval);failures=0;
-      const lag=batch.ledgerVersion===null?null:(batch.ledgerVersion>=batch.next?batch.ledgerVersion-batch.next+1n:0n).toString();
-      console.log(JSON.stringify({event:'marketplace_indexer_batch',processor,processed:batch.count,fromVersion:batch.start.toString(),nextVersion:batch.next.toString(),ledgerVersion:batch.ledgerVersion?.toString()||null,lag}));
-      if(once)break;
-      await new Promise(resolve=>setTimeout(resolve,batch.count?catchupInterval:pollInterval));
-    }catch(error){
-      if(once)throw error;
-      const response=(error as {response?:Response}).response;
-      const delayMs=retryDelay(response||null,failures++,pollInterval);
-      console.error(JSON.stringify({event:'marketplace_indexer_retry',processor,status:response?.status||null,attempt:failures,delayMs,message:error instanceof Error?error.message:'Unknown indexer error'}));
-      await new Promise(resolve=>setTimeout(resolve,delayMs));
+  while(!stopping&&!lockAcquired){
+    const acquired=await lock.query<{locked:boolean}>('SELECT pg_try_advisory_lock(hashtext($1)) AS locked',[processor]);
+    lockAcquired=acquired.rows[0]?.locked===true;
+    if(!lockAcquired){
+      console.log(JSON.stringify({event:'marketplace_indexer_lock_wait',processor,delayMs:lockRetryInterval}));
+      await new Promise(resolve=>setTimeout(resolve,lockRetryInterval));
     }
-  }while(!stopping);
-  await lock.query('SELECT pg_advisory_unlock(hashtext($1))',[processor]);
-}finally{lock.release();await pool.end();}
+  }
+  if(lockAcquired){
+    let failures=0;
+    do{
+      try{
+        const batch=await runBatch(transactionInterval);failures=0;
+        const lag=batch.ledgerVersion===null?null:(batch.ledgerVersion>=batch.next?batch.ledgerVersion-batch.next+1n:0n).toString();
+        console.log(JSON.stringify({event:'marketplace_indexer_batch',processor,processed:batch.count,fromVersion:batch.start.toString(),nextVersion:batch.next.toString(),ledgerVersion:batch.ledgerVersion?.toString()||null,lag}));
+        if(once)break;
+        await new Promise(resolve=>setTimeout(resolve,batch.count?catchupInterval:pollInterval));
+      }catch(error){
+        if(once)throw error;
+        const response=(error as {response?:Response}).response;
+        const delayMs=retryDelay(response||null,failures++,pollInterval);
+        console.error(JSON.stringify({event:'marketplace_indexer_retry',processor,status:response?.status||null,attempt:failures,delayMs,message:error instanceof Error?error.message:'Unknown indexer error'}));
+        await new Promise(resolve=>setTimeout(resolve,delayMs));
+      }
+    }while(!stopping);
+  }
+}finally{
+  if(lockAcquired)await lock.query('SELECT pg_advisory_unlock(hashtext($1))',[processor]);
+  lock.release();await pool.end();
+}
