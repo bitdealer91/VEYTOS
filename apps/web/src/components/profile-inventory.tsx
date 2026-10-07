@@ -37,9 +37,21 @@ export function ProfileInventory({ owned, listings, profileAddress, emptyTitle =
   useEffect(() => {
     const moduleAddress = marketplaceAddress;
     if (!moduleAddress) return;
-    const refresh = () => setSession(readMarketplaceSession(network, moduleAddress));
-    refresh(); window.addEventListener(MARKETPLACE_SESSION_EVENT, refresh); window.addEventListener('storage', refresh);
-    const recover = async () => {
+    let mounted = true;
+    const reconcile = async () => {
+      const verified = new Map<string, MarketplaceSessionListing>();
+      const snapshots = readMarketplaceSession(network, moduleAddress)
+        .filter((item) => item.seller.toLowerCase() === profileAddress.toLowerCase()).slice(0, 12);
+      await Promise.allSettled(snapshots.map(async (item) => {
+        const identity = decodeNFTIdentity(item.assetKey);
+        const state = await marketChain().assetState(identity, item.nft.collectionId, undefined, { retries: 0 });
+        if (state.listing?.status === 'ACTIVE' && state.listing.seller.toLowerCase() === profileAddress.toLowerCase()) {
+          verified.set(item.assetKey, { ...item, listingId: state.listing.id, price: state.listing.price, listedVersion: state.ledgerVersion });
+          return;
+        }
+        writeMarketplaceSession(network, moduleAddress, null, item.assetKey);
+      }));
+
       const prefix = `veytos:confirmed:${network}:${moduleAddress}:`;
       const routes: string[] = [];
       for (let index = 0; index < localStorage.length && routes.length < 12; index += 1) {
@@ -59,15 +71,20 @@ export function ProfileInventory({ owned, listings, profileAddress, emptyTitle =
         if (!nft) return;
         const state = await marketChain().assetState(identity, nft.collectionId, undefined, { retries: 0 });
         if (!state.listing || state.listing.status !== 'ACTIVE' || state.listing.seller.toLowerCase() !== profileAddress.toLowerCase()) return;
-        writeMarketplaceSession(network, moduleAddress, {
+        const recovered: MarketplaceSessionListing = {
           assetKey: encodeNFTIdentity(identity), collectionKey: `v2:${nft.collectionId}`, listingId: state.listing.id,
           seller: state.listing.seller, price: state.listing.price, listedVersion: state.ledgerVersion,
           nft: { standard: nft.standard, tokenId: nft.tokenId, collectionId: nft.collectionId, name: nft.name, metadataUri: nft.metadataUri, collectionName: nft.collectionName },
-        }, encodeNFTIdentity(identity));
+        };
+        verified.set(recovered.assetKey, recovered);
+        writeMarketplaceSession(network, moduleAddress, recovered, recovered.assetKey);
       }));
+      if (mounted) setSession([...verified.values()]);
     };
-    void recover();
-    return () => { window.removeEventListener(MARKETPLACE_SESSION_EVENT, refresh); window.removeEventListener('storage', refresh); };
+    const refresh = () => setSession(readMarketplaceSession(network, moduleAddress)
+      .filter((item) => item.seller.toLowerCase() === profileAddress.toLowerCase()));
+    void reconcile(); window.addEventListener(MARKETPLACE_SESSION_EVENT, refresh); window.addEventListener('storage', refresh);
+    return () => { mounted = false; window.removeEventListener(MARKETPLACE_SESSION_EVENT, refresh); window.removeEventListener('storage', refresh); };
   }, [profileAddress]);
   const items = useMemo(() => {
     const merged = new Map<string, DisplayItem>();
