@@ -319,6 +319,27 @@ test('wallet switch from seller to buyer recomputes the active listing action', 
   expect(screen.queryByRole('button', { name: 'Cancel listing' })).toBe(null);
 });
 
+test('new buyer wallet is never blocked by account cache invalidation', async () => {
+  const view = mount(nft, listing);
+  vi.spyOn(view.client, 'invalidateQueries').mockReturnValue(new Promise(() => {}));
+  mocks.wallet.account.address.toString = () => buyer;
+  view.rerenderPanel();
+  const buy = await screen.findByRole('button', { name: 'Buy now' });
+  expect(buy.hasAttribute('disabled')).toBe(false);
+  expect(screen.queryByText(/Updating wallet permissions/i)).toBe(null);
+});
+
+test('pending recovery from another wallet does not block a new buyer', async () => {
+  const pending: PendingMarketplaceTransaction = { action: 'cancel', hash: '', sender: seller, listingId: '9', identity: nft.identity, network: 'testnet', module: moduleAddress };
+  localStorage.setItem(key, JSON.stringify(pending));
+  mocks.wallet.account.address.toString = () => buyer;
+  mount(nft, listing);
+  const buy = await screen.findByRole('button', { name: 'Buy now' });
+  expect(buy.hasAttribute('disabled')).toBe(false);
+  expect(screen.queryByText(/wallet request was interrupted/i)).toBe(null);
+  expect(localStorage.getItem(key)).not.toBe(null);
+});
+
 test('a non-seller wallet never receives the cancel action', () => {
   mocks.wallet.account.address.toString = () => buyer;
   mount(nft, listing);

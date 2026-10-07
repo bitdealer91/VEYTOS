@@ -21,7 +21,7 @@ import { writeMarketplaceSession } from '@/lib/marketplace-session';
 import {useTransactionToast} from '@/components/transaction-toasts';
 
 type Action = 'list' | 'cancel' | 'buy';
-type ExplicitTransition = Action | 'wallet' | null;
+type ExplicitTransition = Action | null;
 export function MarketplacePanel({ nft, initialListing, initialConfig, initialAssetState, initialAction }: {
   nft: NormalizedNFT; initialListing: MarketplaceListing | null; initialConfig: MarketplaceConfig; initialAssetState?: MarketplaceAssetState; initialAction?: 'list';
 }) {
@@ -46,7 +46,6 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
   const walletScope = useRef<string | null>(null);
   const initialDialogOpened = useRef(false);
   const currentWalletScope = `${account || 'disconnected'}:${wallet.network?.chainId ?? 'unknown'}`;
-  const walletScopeChanging = walletScope.current !== null && walletScope.current !== currentWalletScope;
   const assetRoute = `${nft.tokenId}:${nft.identity.standard === 'v1' ? nft.identity.propertyVersion : ''}`;
   const assetKey = encodeNFTIdentity(nft.identity);
   const confirmedKey = `veytos:confirmed:${network}:${marketplaceAddress}:${assetRoute}`;
@@ -71,7 +70,7 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
     initialData: initialConfig, initialDataUpdatedAt: Date.now(), staleTime: 5 * 60_000,
     refetchOnWindowFocus: false, refetchOnReconnect: false,
   });
-  const explicitTransition = transition !== null || walletScopeChanging;
+  const explicitTransition = transition !== null;
   // TanStack staleness and background RPC failures do not invalidate the last
   // authoritative snapshot. submit() always performs a fresh chain precheck
   // before asking the wallet to sign.
@@ -139,11 +138,17 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
     if (walletScope.current === null) { walletScope.current = next; return; }
     if (walletScope.current === next) return;
     walletScope.current = next;
-    if (!isUnresolved(phase)) { setMessage(''); setPhase('ready'); }
-    setTransition('wallet');
-    void queryClient.invalidateQueries({ predicate: (query) => ['market-eligibility', 'wallet-nfts'].includes(String(query.queryKey[0])), refetchType: 'none' })
-      .finally(() => setTransition(null));
-  }, [account, wallet.network?.chainId, currentWalletScope, phase, queryClient]);
+    const pendingBelongsToWallet = !pending || !account || pending.sender.toLowerCase() === account.toLowerCase();
+    if (!pendingBelongsToWallet) {
+      setPending(null); setRecoveryHash(''); setCheckedWallet(false); setMessage(''); setPhase('ready');
+    } else if (!isUnresolved(phase)) {
+      setMessage(''); setPhase('ready');
+    }
+    // These caches only affect account-specific display state. A fresh,
+    // authoritative precheck still runs inside submit() before any signature
+    // request, so cache invalidation must never block the trading controls.
+    void queryClient.invalidateQueries({ predicate: (query) => ['market-eligibility', 'wallet-nfts'].includes(String(query.queryKey[0])), refetchType: 'none' });
+  }, [account, currentWalletScope, pending, phase, queryClient]);
 
   useEffect(() => {
     const refreshWhenVisible = () => {
@@ -162,12 +167,13 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
       if (raw) {
         const value = JSON.parse(raw) as PendingMarketplaceTransaction;
         if (value.module === marketplaceAddress && value.network === network) {
+          if (account && value.sender.toLowerCase() !== account.toLowerCase()) return;
           localStorage.setItem(key, raw); localStorage.removeItem(legacyKey); setPending(value); setPhase('unknown');
           setMessage(value.hash ? 'A marketplace transaction needs confirmation before another action.' : 'A wallet request was interrupted. Check wallet activity before continuing.');
         }
       }
     } catch { setPhase('unknown'); setMessage('Transaction recovery storage is unavailable.'); }
-  }, [key, legacyKey]);
+  }, [account, key, legacyKey]);
 
   useEffect(()=>{
     if(!message||phase==='ready'||phase==='review')return;
@@ -280,7 +286,6 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
   const transitionMessage = transition === 'list' ? 'Updating listing…'
     : transition === 'cancel' ? 'Returning NFT…'
     : transition === 'buy' ? 'Confirming purchase…'
-    : transition === 'wallet' || walletScopeChanging ? 'Updating wallet permissions…'
     : null;
   return <aside className="market-panel">
     <span className="eyebrow">SECONDARY MARKET</span>
