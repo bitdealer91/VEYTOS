@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import assert from 'node:assert/strict';
 import { readFile, realpath, stat } from 'node:fs/promises';
-import { Account, Aptos, AptosConfig, Ed25519PrivateKey, Network, type InputEntryFunctionData } from '@aptos-labs/ts-sdk';
+import { Account, AccountAddress, Aptos, AptosConfig, Ed25519PrivateKey, Network, type InputEntryFunctionData } from '@aptos-labs/ts-sdk';
 import { assertOutsideRepository, validateAcceptanceEnvironment } from './lib/acceptance-config.js';
 
 const packageAddress = process.env.MARKETPLACE_ADDRESS;
@@ -13,8 +13,9 @@ const root = await realpath(process.cwd());
 assertOutsideRepository(root, accountsPath);
 assert.equal((await stat(accountsPath)).mode & 0o077, 0);
 const secrets = JSON.parse(await readFile(accountsPath, 'utf8')) as Record<string, { address: string; privateKey: string }>;
-const record = secrets.marketplaceV1Admin;
-assert(record && record.address === packageAddress, 'Marketplace V1/V2 publisher identity unavailable');
+const canonicalPackage = AccountAddress.from(packageAddress).toStringLong();
+const record = Object.values(secrets).find((candidate) => AccountAddress.from(candidate.address).toStringLong() === canonicalPackage);
+assert(record, `Marketplace publisher ${canonicalPackage} is unavailable in the protected testnet account file`);
 const admin = Account.fromPrivateKey({ privateKey: new Ed25519PrivateKey(record.privateKey) });
 const aptos = new Aptos(new AptosConfig({ network: Network.TESTNET }));
 
