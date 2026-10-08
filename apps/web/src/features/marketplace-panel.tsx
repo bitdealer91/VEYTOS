@@ -17,7 +17,7 @@ import { WalletButton } from '@/components/wallet';
 import { WalletAddress } from '@/components/chain-ui';
 import { trackBetaEvent } from '@/components/beta-analytics';
 import { reportClientError } from '@/lib/observability';
-import { writeMarketplaceSession } from '@/lib/marketplace-session';
+import { writeMarketplaceSession, writeMarketplaceTerminal } from '@/lib/marketplace-session';
 import {useTransactionToast} from '@/components/transaction-toasts';
 
 type Action = 'list' | 'cancel' | 'buy';
@@ -48,6 +48,9 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
   const currentWalletScope = `${account || 'disconnected'}:${wallet.network?.chainId ?? 'unknown'}`;
   const assetRoute = `${nft.tokenId}:${nft.identity.standard === 'v1' ? nft.identity.propertyVersion : ''}`;
   const assetKey = encodeNFTIdentity(nft.identity);
+  const collectionKey = nft.standard === 'v2'
+    ? `v2:${nft.collectionId}`
+    : `v1:${nft.collectionCreator}:${nft.collectionName}`;
   const confirmedKey = `veytos:confirmed:${network}:${marketplaceAddress}:${assetRoute}`;
   const assetQuery = useQuery({
     queryKey: ['market-asset', network, marketplaceAddress, assetRoute],
@@ -100,9 +103,6 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
       writeMarketplaceSession(network, marketplaceAddress, null, assetKey);
       return;
     }
-    const collectionKey = nft.standard === 'v2'
-      ? `v2:${nft.collectionId}`
-      : `v1:${nft.collectionCreator}:${nft.collectionName}`;
     writeMarketplaceSession(network, marketplaceAddress, {
       assetKey, collectionKey, listingId: listing.id, seller: listing.seller, price: listing.price,
       listedVersion: assetQuery.data.ledgerVersion,
@@ -200,6 +200,10 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
         if (result.status === 'failed') { setPhase('failure'); setMessage(readableError(new Error(result.message))); clear(); setTransition(null); return; }
         if (result.status === 'success') {
           const nextOwner = value.action === 'list' ? result.listing.escrowAddress : value.action === 'cancel' ? result.listing.seller : value.sender;
+          if (marketplaceAddress && value.action !== 'list' && nextOwner) writeMarketplaceTerminal(network, marketplaceAddress, {
+            assetKey, collectionKey, transactionVersion: result.receipt.version, owner: nextOwner,
+            status: value.action === 'buy' ? 'SOLD' : 'CANCELLED',
+          });
           queryClient.setQueryData(['market-asset', network, marketplaceAddress, assetRoute], {
             listing: value.action === 'list' ? result.listing : null, owner: nextOwner, ledgerVersion: result.receipt.version,
           });

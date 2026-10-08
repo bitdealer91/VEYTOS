@@ -6,7 +6,10 @@ import { ChevronLeft, ChevronRight, ExternalLink, Grid2X2, Grid3X3, Search, Slid
 import { parseApt } from '../../../../packages/domain/src/money';
 import type { MarketplaceEvent, MarketplaceInventoryItem } from '@/lib/marketplace-data';
 import { explorer, marketplaceAddress, network } from '@/lib/config';
-import { MARKETPLACE_SESSION_EVENT, readMarketplaceSession, type MarketplaceSessionListing } from '@/lib/marketplace-session';
+import {
+  MARKETPLACE_SESSION_EVENT, readMarketplaceSession, readMarketplaceTerminals,
+  type MarketplaceSessionListing, type MarketplaceSessionTerminal,
+} from '@/lib/marketplace-session';
 import { Artwork } from '@/components/artwork';
 import { PriceDisplay } from '@/components/ui';
 
@@ -23,6 +26,64 @@ function relativeTime(value: string | null) {
   if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
   if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
   return `${Math.floor(seconds / 86400)}d ago`;
+}
+
+function useMarketplaceSessionProjection(collectionKey: string) {
+  const [projection, setProjection] = useState<{ listings: MarketplaceSessionListing[]; terminals: MarketplaceSessionTerminal[] }>({ listings: [], terminals: [] });
+  useEffect(() => {
+    const moduleAddress = marketplaceAddress;
+    if (!moduleAddress) return;
+    const refresh = () => setProjection({
+      listings: readMarketplaceSession(network, moduleAddress).filter((item) => item.collectionKey === collectionKey),
+      terminals: readMarketplaceTerminals(network, moduleAddress).filter((item) => item.collectionKey === collectionKey),
+    });
+    refresh(); window.addEventListener(MARKETPLACE_SESSION_EVENT, refresh); window.addEventListener('storage', refresh);
+    return () => { window.removeEventListener(MARKETPLACE_SESSION_EVENT, refresh); window.removeEventListener('storage', refresh); };
+  }, [collectionKey]);
+  return projection;
+}
+
+function projectedItems(items: MarketplaceInventoryItem[], listings: MarketplaceSessionListing[], terminals: MarketplaceSessionTerminal[]) {
+  const merged = new Map(items.map((item) => [item.assetKey, item]));
+  for (const listing of listings) {
+    const current = merged.get(listing.assetKey);
+    if (current?.listedVersion && BigInt(current.listedVersion) > BigInt(listing.listedVersion)) continue;
+    merged.set(listing.assetKey, {
+      assetKey: listing.assetKey, standard: listing.nft.standard, name: current?.name || listing.nft.name,
+      metadataUri: current?.metadataUri || listing.nft.metadataUri, owner: current?.owner || null,
+      listingId: listing.listingId, seller: listing.seller, price: listing.price, listedVersion: listing.listedVersion,
+    });
+  }
+  for (const terminal of terminals) {
+    const current = merged.get(terminal.assetKey);
+    if (!current || (current.listedVersion && BigInt(current.listedVersion) > BigInt(terminal.transactionVersion))) continue;
+    merged.set(terminal.assetKey, { ...current, owner: terminal.owner, listingId: null, seller: null, price: null, listedVersion: null });
+  }
+  return [...merged.values()];
+}
+
+export function MarketplaceCollectionStats({ collectionKey, items, floorPrice, activeListings, supply, totalVolume }: {
+  collectionKey: string; items: MarketplaceInventoryItem[]; floorPrice: string | null; activeListings: string; supply: string | null; totalVolume: string;
+}) {
+  const projection = useMarketplaceSessionProjection(collectionKey);
+  const effective = useMemo(() => projectedItems(items, projection.listings, projection.terminals), [items, projection]);
+  const baseListed = new Set(items.filter((item) => item.listingId).map((item) => item.assetKey));
+  const effectiveListed = effective.filter((item) => item.listingId);
+  const effectiveKeys = new Set(effectiveListed.map((item) => item.assetKey));
+  const additions = effectiveListed.filter((item) => !baseListed.has(item.assetKey)).length;
+  const removals = [...baseListed].filter((assetKey) => !effectiveKeys.has(assetKey)).length;
+  const correctedCount = BigInt(activeListings) + BigInt(additions) - BigInt(removals);
+  const listed = correctedCount > 0n ? correctedCount : 0n;
+  const completeListingWindow = BigInt(activeListings) === BigInt(baseListed.size);
+  const effectiveFloor = listed === 0n ? null : completeListingWindow
+    ? effectiveListed.reduce<string | null>((lowest, item) => !item.price || (lowest && BigInt(lowest) <= BigInt(item.price)) ? lowest : item.price, null)
+    : floorPrice;
+  return <dl className="market-hero-stats">
+    <div><dt>Floor price</dt><dd>{effectiveFloor ? <PriceDisplay octas={effectiveFloor} /> : '—'}</dd></div>
+    <div><dt>Listed</dt><dd>{listed.toString()}</dd></div>
+    {supply !== null && <div><dt>Total supply</dt><dd>{supply}</dd></div>}
+    <div><dt>Total volume</dt><dd><PriceDisplay octas={totalVolume} /></dd></div>
+  </dl>;
 }
 
 function Filters({ prefix, status, setStatus, min, setMin, max, setMax, items, account }: {
@@ -74,27 +135,9 @@ export function MarketplaceCollectionTrading({ collectionKey, items, events, inv
   const [sort, setSort] = useState<Sort>('price-asc');
   const [compact, setCompact] = useState(true);
   const [activityCollapsed, setActivityCollapsed] = useState(false);
-  const [session, setSession] = useState<MarketplaceSessionListing[]>([]);
+  const projection = useMarketplaceSessionProjection(collectionKey);
   useEffect(() => { try { setActivityCollapsed(sessionStorage.getItem('veytos:market:activity-collapsed') === 'true'); } catch {} }, []);
-  useEffect(() => {
-    const moduleAddress = marketplaceAddress;
-    if (!moduleAddress) return;
-    const refresh = () => setSession(readMarketplaceSession(network, moduleAddress).filter((item) => item.collectionKey === collectionKey));
-    refresh(); window.addEventListener(MARKETPLACE_SESSION_EVENT, refresh); window.addEventListener('storage', refresh);
-    return () => { window.removeEventListener(MARKETPLACE_SESSION_EVENT, refresh); window.removeEventListener('storage', refresh); };
-  }, [collectionKey]);
-  const effectiveItems = useMemo(() => {
-    const merged = new Map(items.map((item) => [item.assetKey, item]));
-    for (const listing of session) {
-      const current = merged.get(listing.assetKey);
-      merged.set(listing.assetKey, {
-        assetKey: listing.assetKey, standard: listing.nft.standard, name: current?.name || listing.nft.name,
-        metadataUri: current?.metadataUri || listing.nft.metadataUri, owner: current?.owner || null,
-        listingId: listing.listingId, seller: listing.seller, price: listing.price, listedVersion: listing.listedVersion,
-      });
-    }
-    return [...merged.values()];
-  }, [items, session]);
+  const effectiveItems = useMemo(() => projectedItems(items, projection.listings, projection.terminals), [items, projection]);
   function toggleActivity() {
     setActivityCollapsed((current) => { const next = !current; try { sessionStorage.setItem('veytos:market:activity-collapsed', String(next)); } catch {} return next; });
   }

@@ -1,4 +1,4 @@
-import { expect, test, vi } from 'vitest';
+import { beforeEach, expect, test, vi } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 
 const buyer = `0x${'b'.repeat(64)}`;
@@ -8,13 +8,15 @@ vi.mock('@aptos-labs/wallet-adapter-react', () => ({ useWallet: () => mocks.wall
 vi.mock('@/components/artwork', () => ({ Artwork: ({ name }: { name: string }) => <div aria-label={`${name} artwork`} /> }));
 vi.mock('@/components/ui', () => ({ PriceDisplay: ({ octas }: { octas: string }) => <span>{octas} APT</span> }));
 vi.mock('@/lib/config', () => ({ explorer: (_kind: string, value: string) => `https://explorer.test/${value}`, network: 'testnet', marketplaceAddress: '0xmarket' }));
-import { MarketplaceCollectionTrading } from '../src/features/marketplace-collection';
+import { MarketplaceCollectionStats, MarketplaceCollectionTrading } from '../src/features/marketplace-collection';
 
 const items = [
   { assetKey: 'listed', standard: 'v2' as const, name: 'Listed #1', metadataUri: '', owner: seller, listingId: '1', seller, price: '100000000', listedVersion: '20' },
   { assetKey: 'owned', standard: 'v2' as const, name: 'Owned #2', metadataUri: '', owner: buyer, listingId: null, seller: null, price: null, listedVersion: null },
 ];
 const events = [{ event_type: 'PURCHASED' as const, listing_id: '1', standard: 'v2' as const, asset_key: 'listed', collection_key: 'v2:test', seller_address: seller, buyer_address: buyer, gross_price_octas: '100000000', transaction_hash: `0x${'c'.repeat(64)}`, transaction_version: '21', event_index: 0, chain_timestamp: '2026-10-04T00:00:00.000Z' }];
+
+beforeEach(() => { localStorage.clear(); sessionStorage.clear(); });
 
 test('collection inventory defaults to listed and exposes owned items without inventing actions', () => {
   render(<MarketplaceCollectionTrading collectionKey="v2:test" items={items} events={events} inventoryFailed={false} activityFailed={false} />);
@@ -46,5 +48,20 @@ test('recent confirmed listing price remains visible while the durable projectio
   fireEvent.click(screen.getAllByRole('radio', { name: /All/ })[0]);
   expect(await screen.findByText('125000000 APT')).toBeTruthy();
   expect(screen.getByRole('link', { name: 'Manage' })).toBeTruthy();
-  localStorage.clear();
+});
+
+test('confirmed purchase hides a stale indexed Buy card and corrects collection stats', async () => {
+  localStorage.setItem('veytos:marketplace-terminals:testnet:0xmarket', JSON.stringify([{
+    assetKey: 'listed', collectionKey: 'v2:test', transactionVersion: '21', owner: buyer, status: 'SOLD',
+  }]));
+  render(<><MarketplaceCollectionStats collectionKey="v2:test" items={items} floorPrice="100000000" activeListings="1" supply="2" totalVolume="100000000" />
+    <MarketplaceCollectionTrading collectionKey="v2:test" items={items} events={events} inventoryFailed={false} activityFailed={false} /></>);
+  fireEvent.click(screen.getAllByRole('radio', { name: /All/ })[0]);
+  expect((await screen.findAllByText('Not listed')).length).toBe(2);
+  expect(screen.queryByRole('link', { name: 'Buy' })).toBeNull();
+  expect(screen.getAllByRole('link', { name: 'List' }).length).toBe(2);
+  const stats = screen.getByText('Floor price').closest('dl');
+  expect(stats && within(stats).getByText('—')).toBeTruthy();
+  expect(stats && within(stats).getByText('0')).toBeTruthy();
+  expect(screen.getAllByRole('radio', { name: /Listed/ })[0].closest('label')?.textContent).toContain('0');
 });

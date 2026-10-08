@@ -4,8 +4,7 @@ import { BadgeCheck } from 'lucide-react';
 import { Artwork } from '@/components/artwork';
 import { CollectionLinks } from '@/components/collection-links';
 import { WalletAddress } from '@/components/chain-ui';
-import { PriceDisplay } from '@/components/ui';
-import { MarketplaceCollectionTrading } from '@/features/marketplace-collection';
+import { MarketplaceCollectionStats, MarketplaceCollectionTrading } from '@/features/marketplace-collection';
 import { marketplaceCollection, parseMarketplaceCollectionKey } from '@/lib/marketplace-data';
 import { gatewayUrl } from '@/lib/metadata';
 import { network } from '@/lib/config';
@@ -34,12 +33,8 @@ export default async function Page({ params }: { params: Promise<{ collection: s
           <CollectionLinks uri={collection.metadataUri} links={collection.links} />
         </div>
       </div>
-      <dl className="market-hero-stats">
-        <div><dt>Floor price</dt><dd>{collection.floorPrice ? <PriceDisplay octas={collection.floorPrice} /> : '—'}</dd></div>
-        <div><dt>Listed</dt><dd>{collection.activeListings}</dd></div>
-        {collection.supply !== null && <div><dt>Total supply</dt><dd>{collection.supply}</dd></div>}
-        <div><dt>Total volume</dt><dd><PriceDisplay octas={collection.totalVolume} /></dd></div>
-      </dl>
+      <MarketplaceCollectionStats collectionKey={collection.key} items={result.items} floorPrice={collection.floorPrice}
+        activeListings={collection.activeListings} supply={collection.supply} totalVolume={collection.totalVolume} />
     </header>
     {result.metadataFailed && <p className="market-local-notice">Some optional collection media or profile details are unavailable. Indexed listings are unaffected.</p>}
     {result.failed && <p className="market-local-notice error">Marketplace inventory is temporarily unavailable. No stale listing state is shown.</p>}
