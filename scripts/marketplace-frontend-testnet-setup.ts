@@ -17,7 +17,10 @@ const canonicalPackage = AccountAddress.from(packageAddress).toStringLong();
 const record = Object.values(secrets).find((candidate) => AccountAddress.from(candidate.address).toStringLong() === canonicalPackage);
 assert(record, `Marketplace publisher ${canonicalPackage} is unavailable in the protected testnet account file`);
 const admin = Account.fromPrivateKey({ privateKey: new Ed25519PrivateKey(record.privateKey) });
-const aptos = new Aptos(new AptosConfig({ network: Network.TESTNET }));
+const fullnode = (process.env.APTOS_FULLNODE_URL || 'https://api.testnet.aptoslabs.com/v1').replace(/\/$/, '');
+assert(['https://api.testnet.aptoslabs.com/v1', 'https://fullnode.testnet.aptoslabs.com/v1'].includes(fullnode), 'Use an official Aptos testnet fullnode');
+const apiKey = process.env.APTOS_API_KEY;
+const aptos = new Aptos(new AptosConfig({ network: Network.TESTNET, fullnode, ...(apiKey ? { fullnodeConfig: { HEADERS: { Authorization: `Bearer ${apiKey}` } } } : {}) }));
 
 async function submit(name: string, data: InputEntryFunctionData) {
   const transaction = await aptos.transaction.build.simple({ sender: admin.accountAddress, data, options: { maxGasAmount: 100_000 } });

@@ -173,7 +173,7 @@ async function optionalLaunchpadCollections() {
     return {
       rows: result.drops.map((drop): LaunchpadCollection => ({
         collection: canonical(drop.collection), creator: canonical(drop.terms.creator), name: drop.terms.name,
-        description: drop.terms.description, metadataUri: drop.terms.collection_uri, supply: drop.minted,
+        description: drop.terms.description, metadataUri: drop.terms.collection_uri, supply: drop.terms.max_supply,
       })),
       configured: result.configured,
       failed: result.errors > 0,

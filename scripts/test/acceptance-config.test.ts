@@ -13,6 +13,7 @@ test("acceptance requires explicit key path and rejects endpoint drift", () => {
   assert.throws(() => validateAcceptanceEnvironment({ MINTOS_TESTNET_ACCOUNTS_FILE: ".testnet/accounts.json" }));
   assert.throws(() => validateAcceptanceEnvironment({ MINTOS_TESTNET_ACCOUNTS_FILE: "/outside/key", APTOS_FULLNODE_URL: "https://api.mainnet.aptoslabs.com/v1" }));
   assert.equal(validateAcceptanceEnvironment({ MINTOS_TESTNET_ACCOUNTS_FILE: "/outside/key", APTOS_FULLNODE_URL: TESTNET_FULLNODE }), "/outside/key");
+  assert.equal(validateAcceptanceEnvironment({ MINTOS_TESTNET_ACCOUNTS_FILE: "/outside/key", APTOS_FULLNODE_URL: "https://fullnode.testnet.aptoslabs.com/v1/" }), "/outside/key");
 });
 test("keys cannot be kept inside the repository even in ignored directories", () => {
   assert.throws(() => assertOutsideRepository("/repo", "/repo/.testnet/accounts.json"));

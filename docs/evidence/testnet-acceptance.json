@@ -1,7 +1,7 @@
 {
   "network": "testnet",
   "chainId": 2,
-  "verifiedAt": "2026-09-23T16:21:45.592Z",
+  "verifiedAt": "2026-10-09T17:13:15.988Z",
   "sourceDigest": "e6b00c5a4f6103bce688c85bd1231ca6e1774a4914580996361265d6c82faf7a",
   "frameworkRevision": "1b116b414ccc1d860fa72160d9b9a770e8d8e88f",
   "sdk": "7.3.0",
@@ -12,7 +12,7 @@
     "buyer": "0xc2c1bf1b5e5413aa466c7edd7fb196be10e052d949eb8056a61e2badd91d54d5",
     "treasury": "0x5e802dc2d3105fbf967541d9cd64f5d34a18ebb473a4d40ddb26c8f727e9db28"
   },
-  "deploymentVersion": "11370375847",
+  "deploymentVersion": "2336956",
   "deployedModules": [
     {
       "name": "fee_policy",
@@ -43,7 +43,7 @@
     "max_supply": "100",
     "name": "Gate A acceptance",
     "royalty_bps": "750",
-    "start_seconds": "1790180342",
+    "start_seconds": "1791565987",
     "transaction_limit": "5",
     "unit_price": "10000000",
     "wallet_limit": "10"
@@ -88,13 +88,13 @@
   "buyerGasOctas": "2184300",
   "before": [
     "100000000",
-    "146857700",
-    "590685900"
+    "166857700",
+    "4590685900"
   ],
   "after": [
     "77815700",
-    "165857700",
-    "591685900"
+    "185857700",
+    "4591685900"
   ],
   "minted": [
     {
@@ -126,7 +126,7 @@
         "drop": "0xa9ff8a00fda26cbb50c1b32ac198fe8f1c8128587f7ec822a9202cd2c8600e3",
         "fee": "500000",
         "serial": "1",
-        "timestamp": "1790180432",
+        "timestamp": "1791565992",
         "token": "0x9d7c6696d0aada3a845f38b91c1faa8d5c24568cefa79dee82a71d717155026e",
         "treasury": "0x5e802dc2d3105fbf967541d9cd64f5d34a18ebb473a4d40ddb26c8f727e9db28",
         "unit_price": "10000000"
@@ -147,7 +147,7 @@
         "drop": "0xa9ff8a00fda26cbb50c1b32ac198fe8f1c8128587f7ec822a9202cd2c8600e3",
         "fee": "500000",
         "serial": "2",
-        "timestamp": "1790180432",
+        "timestamp": "1791565992",
         "token": "0x1a7f1b695ac25dd538135b526729fbf504ed7187215fbb0ebfd5d53c2b862a9",
         "treasury": "0x5e802dc2d3105fbf967541d9cd64f5d34a18ebb473a4d40ddb26c8f727e9db28",
         "unit_price": "10000000"
@@ -156,118 +156,113 @@
   ],
   "transactions": {
     "publish": {
-      "hash": "0x8a2cb1e2f211d9519f88fad8a5e2566694e6d558026d4a5695968fe35e217506",
-      "version": "11370375847",
+      "hash": "0x3cca2b425ec9b9de6cf7c238bfb650d6ee121f44c7215e2890cac0552bf1307f",
+      "version": "2336956",
       "success": true,
       "gasUsed": "77584",
       "gasUnitPrice": "100",
       "vmStatus": "Executed successfully"
     },
     "initialize": {
-      "hash": "0xdf3af891ebb851543ea41bb815c0ad455f419cc5da86d2173c000efb631defef",
-      "version": "11370376241",
+      "hash": "0x7b5ba98f942ce5255ccd399772a6bba17661bbd983c9753746ba71384489213a",
+      "version": "2336975",
       "success": true,
       "gasUsed": "4667",
       "gasUnitPrice": "100",
       "vmStatus": "Executed successfully"
     },
     "fund-creator": {
-      "hash": "0xfb895d2dd2d57f3a12f46812745c9b6f432d532701784d5cb9140e94879933af",
-      "version": "11370376442",
+      "hash": "0xda62677cc0a8a4b73bf853ef8f6f61b752308a88f3c29fca7e50bb02e4753b25",
+      "version": "2336994",
       "success": true,
       "gasUsed": "5414",
       "gasUnitPrice": "100",
       "vmStatus": "Executed successfully"
     },
     "fund-buyer": {
-      "hash": "0x9ae19a71fd8e3b5cfb3d18fb76657960e31f6b5a87f7a24ef298b51f73ac7f4d",
-      "version": "11370376659",
+      "hash": "0x6347e25e43f0a9c6198464af8c2e07d0c0297e9fc7425944ca152de7c61e36c0",
+      "version": "2337011",
       "success": true,
       "gasUsed": "5414",
       "gasUnitPrice": "100",
       "vmStatus": "Executed successfully"
     },
-    "prepare": {
-      "hash": "0xd2028357799b917ed7ab480c3c32f1d238a11af347d4893f35bfb53788d1b986",
-      "version": "11370376974",
-      "success": true,
-      "gasUsed": "15940",
-      "gasUnitPrice": "100",
-      "vmStatus": "Executed successfully"
-    },
-    "metadata-0-aborted-out-of-gas": {
-      "hash": "0x96c3b8f1213ef72e77c802dcc0ffc509c8364248128a009b9e44f83968817c20",
-      "version": "11370377242",
-      "success": false
-    },
     "fund-creator-storage": {
-      "hash": "0xbf3a6cde342a1bcaa19d5e2b033b3edff9c317575306fb9c2958824141cbb94d",
-      "version": "11370401581",
+      "hash": "0xb48234b19651ef69f4af97dea4de3c757cf5f712479a4e76168fb81965dd12b6",
+      "version": "2337030",
       "success": true,
       "gasUsed": "62",
       "gasUnitPrice": "100",
       "vmStatus": "Executed successfully"
     },
+    "prepare": {
+      "hash": "0xed94316ffbb944e72988c97bc75a32ca938accaf92919d0565fed7220ff8034c",
+      "version": "2337047",
+      "success": true,
+      "gasUsed": "15940",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
     "metadata-0": {
-      "hash": "0xf86bae59c650f572cc51434a514276e59b5ae8b1acb1068ed98b4333baee2390",
-      "version": "11370401941",
+      "hash": "0x68450c59a030187d8d4fe434417e6df206e3af7be9da7e38097e589a60683412",
+      "version": "2337062",
       "success": true,
       "gasUsed": "327122",
       "gasUnitPrice": "100",
       "vmStatus": "Executed successfully"
     },
     "metadata-25": {
-      "hash": "0xe3ae0483273bb34cec521082aba11a6137fd4fae10a8936c2d3df975c871bdd5",
-      "version": "11370402143",
+      "hash": "0x0a01cfe117715e4b54911f0d67e4dd51f900a93ef7c9f90700986186a44d6e90",
+      "version": "2337079",
       "success": true,
       "gasUsed": "327193",
       "gasUnitPrice": "100",
       "vmStatus": "Executed successfully"
     },
     "metadata-50": {
-      "hash": "0x235573840b8d22a0e9fe9f4cc33da15ecd73bdb57cdf78381389baeed36f05f6",
-      "version": "11370402631",
+      "hash": "0x26e6003d4d69d2d714779aa57c342f103c61bd068db05710af50aef42507a688",
+      "version": "2337096",
       "success": true,
       "gasUsed": "327194",
       "gasUnitPrice": "100",
       "vmStatus": "Executed successfully"
     },
     "metadata-75": {
-      "hash": "0x1f09c7f3e8c589138856cbafd4f1ded2e7bbcf5a68ce5b6363fd4c01aa689155",
-      "version": "11370402920",
+      "hash": "0xe34222a7aef716b9754b75dad92304c1c8ff385b3268afbc4d77f2033564963b",
+      "version": "2337125",
       "success": true,
       "gasUsed": "327202",
       "gasUnitPrice": "100",
       "vmStatus": "Executed successfully"
     },
     "finalize": {
-      "hash": "0x73a69de7bcf500af5754e0c8e3987d8de29bd24cd636504f97a3767c6a05ab8d",
-      "version": "11370403196",
+      "hash": "0x0657b519cb4e88a67d44650b05c1292f207264d6377f31a8d2c4dfff871a3e6b",
+      "version": "2337138",
       "success": true,
       "gasUsed": "6772",
       "gasUnitPrice": "100",
       "vmStatus": "Executed successfully"
     },
     "mint-two": {
-      "hash": "0xba83fc58615f823a51deb52717a0c1426a85ac79ba6a528f8b018e5099016d7d",
-      "version": "11370403456",
+      "hash": "0x80724ec7e6a242d616f0ee636a392abacb3e85fd2e638799ddb105c778eb43e7",
+      "version": "2337557",
       "success": true,
       "gasUsed": "21843",
       "gasUnitPrice": "100",
       "vmStatus": "Executed successfully"
     },
     "reject-max-total": {
-      "hash": "0x38bf4627d1612ea35bfb992095aed0151b7718ef032a25f669bba1120ab5c9a9",
-      "version": "11370404040",
+      "hash": "0x556c1d0792d3aaa193d7bca3ef56d2ca9c86452e6d97150a6a05977376bbfc19",
+      "version": "2337594",
       "success": false,
       "gasUsed": "73",
       "gasUnitPrice": "100",
       "vmStatus": "Move abort in 0x5e802dc2d3105fbf967541d9cd64f5d34a18ebb473a4d40ddb26c8f727e9db28::launchpad: EMAX_TOTAL(0xf): "
     }
   },
-  "finalizeHash": "0x73a69de7bcf500af5754e0c8e3987d8de29bd24cd636504f97a3767c6a05ab8d",
-  "mintHash": "0xba83fc58615f823a51deb52717a0c1426a85ac79ba6a528f8b018e5099016d7d",
-  "rejectedHash": "0x38bf4627d1612ea35bfb992095aed0151b7718ef032a25f669bba1120ab5c9a9",
+  "finalizeHash": "0x0657b519cb4e88a67d44650b05c1292f207264d6377f31a8d2c4dfff871a3e6b",
+  "mintHash": "0x80724ec7e6a242d616f0ee636a392abacb3e85fd2e638799ddb105c778eb43e7",
+  "rejectedHash": "0x556c1d0792d3aaa193d7bca3ef56d2ca9c86452e6d97150a6a05977376bbfc19",
   "metadataAvailability": "Content-addressed fixtures saved locally in .testnet/metadata; no public IPFS pinning claimed",
   "limitations": [
     "No wallet UI",

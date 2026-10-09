@@ -20,7 +20,9 @@ const accountStat = await stat(accountsPath);
 assert.equal(accountStat.mode & 0o077, 0, "Testnet account file must have owner-only permissions");
 assert(accountStat.isFile(), "Testnet account path must be a file");
 const fullnode = TESTNET_FULLNODE;
-const aptos = new Aptos(new AptosConfig({ network: Network.TESTNET }));
+const apiKey = process.env.APTOS_API_KEY;
+const authHeaders = apiKey ? { Authorization: `Bearer ${apiKey}` } : {};
+const aptos = new Aptos(new AptosConfig({ network: Network.TESTNET, fullnode: TESTNET_FULLNODE, ...(apiKey ? { fullnodeConfig: { HEADERS: authHeaders } } : {}) }));
 const secret = JSON.parse(await readFile(accountsPath, "utf8")) as Record<string, { address: string; privateKey: string }>;
 const load = (role: string) => {
   const record = secret[role];
@@ -54,8 +56,9 @@ for (const file of sourceFiles) sourceHash.update(file).update(await readFile(fi
 const sourceDigest = sourceHash.digest("hex");
 type Step = { hash: string; signedBytes: string; version?: string; success?: boolean; gasUsed?: string; gasUnitPrice?: string; vmStatus?: string };
 type Journal = { sourceDigest: string; moduleAddress: string; roles: typeof roles; chainId: 2; steps: Record<string, Step> };
+const journalPath = process.env.VEYTOS_TESTNET_JOURNAL || ".testnet/journal.json";
 let journal: Journal;
-try { journal = JSON.parse(await readFile(".testnet/journal.json", "utf8")) as Journal; }
+try { journal = JSON.parse(await readFile(journalPath, "utf8")) as Journal; }
 catch (error) {
   if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
   journal = { sourceDigest, moduleAddress, roles, chainId: 2, steps: {} };
@@ -65,8 +68,8 @@ assert.equal(journal.moduleAddress, moduleAddress);
 assert.equal(journal.chainId, 2);
 assert.deepEqual(journal.roles, roles, "Acceptance account roles changed; do not reuse this journal");
 async function saveJournal() {
-  await writeFile(".testnet/journal.next.json", JSON.stringify(journal, null, 2), { mode: 0o600 });
-  await rename(".testnet/journal.next.json", ".testnet/journal.json");
+  await writeFile(`${journalPath}.next`, JSON.stringify(journal, null, 2), { mode: 0o600 });
+  await rename(`${journalPath}.next`, journalPath);
 }
 
 if (process.argv.includes("--preflight")) {
@@ -107,10 +110,10 @@ async function execute(name: string, signer: Account, build: () => Promise<Simpl
     // are reconciled by hash; a rerun never creates a second mint transaction.
     await saveJournal();
   }
-  const lookup = await fetch(`${fullnode}/transactions/by_hash/${step.hash}`);
+  const lookup = await fetch(`${fullnode}/transactions/by_hash/${step.hash}`, { headers: authHeaders });
   if (shouldResubmit(lookup.status)) {
     const response = await fetch(`${fullnode}/transactions`, {
-      method: "POST", headers: { "content-type": "application/x.aptos.signed_transaction+bcs" },
+      method: "POST", headers: { "content-type": "application/x.aptos.signed_transaction+bcs", ...authHeaders },
       body: Buffer.from(step.signedBytes, "hex"),
     });
     if (!response.ok) throw new Error(`${name}: submission HTTP ${response.status}: ${await response.text()}. Saved hash ${step.hash}; reconcile before retrying.`);

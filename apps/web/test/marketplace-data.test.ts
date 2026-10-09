@@ -50,6 +50,6 @@ test('finalized launchpad collections appear before their first marketplace list
   const result = await marketplaceCollections({ sort: 'volume' });
   expect(result.items).toContainEqual(expect.objectContaining({
     key: `v2:${mocks.nativeCollectionAddress}`,
-    name: 'THE ORIGINALS', native: true, floorPrice: null, activeListings: '0', volume24h: '0', supply: '8',
+    name: 'THE ORIGINALS', native: true, floorPrice: null, activeListings: '0', volume24h: '0', supply: '187',
   }));
 });

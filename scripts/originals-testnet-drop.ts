@@ -22,13 +22,17 @@ const USER_HOME = homedir();
 const INPUT = resolve(process.env.ORIGINALS_IMAGE_DIR || resolve(USER_HOME, 'Downloads/COMMON #001–#360'));
 const COVER_IMAGE = process.env.VEYTOS_DROP_COVER_IMAGE ? resolve(process.env.VEYTOS_DROP_COVER_IMAGE) : null;
 const SOURCE_IMAGE_JOURNAL = process.env.VEYTOS_DROP_SOURCE_IMAGE_JOURNAL ? resolve(process.env.VEYTOS_DROP_SOURCE_IMAGE_JOURNAL) : null;
+const SOURCE_ASSET_JOURNAL = process.env.VEYTOS_DROP_SOURCE_ASSET_JOURNAL ? resolve(process.env.VEYTOS_DROP_SOURCE_ASSET_JOURNAL) : null;
 const API_KEY_FILE = resolve(process.env.LIGHTHOUSE_API_KEY_FILE || resolve(USER_HOME, 'Downloads/Apikey.txt'));
 const ACCOUNTS_FILE = resolve(process.env.MINTOS_TESTNET_ACCOUNTS_FILE || resolve(USER_HOME, '.local/share/mintos/testnet/accounts.json'));
 const OUTPUT_DIR = resolve(process.env.VEYTOS_DROP_OUTPUT_DIR || '.testnet/originals');
 const JOURNAL_FILE = `${OUTPUT_DIR}/journal.json`;
 const MANIFEST_FILE = `${OUTPUT_DIR}/manifest.json`;
 const LIGHTHOUSE_UPLOAD = 'https://upload.lighthouse.storage/api/v0/add';
-const FULLNODE = 'https://api.testnet.aptoslabs.com/v1';
+const FULLNODE = (process.env.APTOS_FULLNODE_URL || 'https://api.testnet.aptoslabs.com/v1').replace(/\/$/, '');
+assert(['https://api.testnet.aptoslabs.com/v1', 'https://fullnode.testnet.aptoslabs.com/v1'].includes(FULLNODE), 'Use an official Aptos testnet fullnode');
+const aptosApiKey = process.env.APTOS_API_KEY;
+const aptosAuthHeaders = aptosApiKey ? { Authorization: `Bearer ${aptosApiKey}` } : {};
 
 type Upload = { cid: string; size: number };
 type Step = { hash: string; signedBytes: string; version?: string; success?: boolean; vmStatus?: string };
@@ -45,7 +49,7 @@ type Journal = {
   steps: Record<string, Step>;
 };
 
-const aptos = new Aptos(new AptosConfig({ network: Network.TESTNET }));
+const aptos = new Aptos(new AptosConfig({ network: Network.TESTNET, fullnode: FULLNODE, ...(aptosApiKey ? { fullnodeConfig: { HEADERS: aptosAuthHeaders } } : {}) }));
 const imagePath = (id: number) => `${INPUT}/THE ORIGINALS #${String(id).padStart(3, '0')}.png`;
 const tokenName = (id: number) => `${COLLECTION} #${String(id).padStart(3, '0')}`;
 const canonical = (value: string) => AccountAddress.from(value).toStringLong();
@@ -67,6 +71,25 @@ async function loadJournal(creator: string): Promise<Journal> {
     return value;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+    if (SOURCE_ASSET_JOURNAL) {
+      const source = JSON.parse(await readFile(SOURCE_ASSET_JOURNAL, 'utf8')) as Journal;
+      assert.equal(Object.keys(source.images || {}).length, SUPPLY, `Source asset journal must contain exactly ${SUPPLY} images`);
+      assert.equal(Object.keys(source.metadata || {}).length, SUPPLY, `Source asset journal must contain exactly ${SUPPLY} metadata objects`);
+      for (const upload of [...Object.values(source.images), ...Object.values(source.metadata)]) CID.parse(upload.cid);
+      if (source.cover) CID.parse(source.cover.cid);
+      if (source.collection) CID.parse(source.collection.cid);
+      assert(source.collection, 'Source asset journal must contain collection metadata');
+      return {
+        version: 1,
+        module: MODULE,
+        creator,
+        images: structuredClone(source.images),
+        metadata: structuredClone(source.metadata),
+        ...(source.cover ? { cover: structuredClone(source.cover) } : {}),
+        collection: structuredClone(source.collection),
+        steps: {},
+      };
+    }
     let images: Record<string, Upload> = {};
     if (SOURCE_IMAGE_JOURNAL) {
       const source = JSON.parse(await readFile(SOURCE_IMAGE_JOURNAL, 'utf8')) as Pick<Journal, 'images'>;
@@ -125,9 +148,9 @@ async function execute(journal: Journal, name: string, signer: Account, data: In
     journal.steps[name] = step;
     await save(journal);
   }
-  const lookup = await fetch(`${FULLNODE}/transactions/by_hash/${step.hash}`);
+  const lookup = await fetch(`${FULLNODE}/transactions/by_hash/${step.hash}`, { headers: aptosAuthHeaders });
   if (lookup.status === 404) {
-    const response = await fetch(`${FULLNODE}/transactions`, { method: 'POST', headers: { 'content-type': 'application/x.aptos.signed_transaction+bcs' }, body: Buffer.from(step.signedBytes, 'hex') });
+    const response = await fetch(`${FULLNODE}/transactions`, { method: 'POST', headers: { 'content-type': 'application/x.aptos.signed_transaction+bcs', ...aptosAuthHeaders }, body: Buffer.from(step.signedBytes, 'hex') });
     if (!response.ok) throw new Error(`${name} submission failed: HTTP ${response.status} ${await response.text()}; saved hash ${step.hash}`);
   } else if (!lookup.ok) throw new Error(`${name} lookup failed: HTTP ${lookup.status}; reconcile before retrying`);
   const result = await aptos.waitForTransaction({ transactionHash: step.hash, options: { checkSuccess: false, timeoutSecs: 60 } }) as UserTransactionResponse;

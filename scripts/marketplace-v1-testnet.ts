@@ -77,7 +77,9 @@ const roles = {
 assert.equal(new Set(Object.values(roles)).size, 5, "Gate D-V1 roles must be independent");
 
 const moduleAddress = roles.admin;
-const aptos = new Aptos(new AptosConfig({ network: Network.TESTNET }));
+const apiKey = process.env.APTOS_API_KEY;
+const authHeaders = apiKey ? { Authorization: `Bearer ${apiKey}` } : {};
+const aptos = new Aptos(new AptosConfig({ network: Network.TESTNET, fullnode: TESTNET_FULLNODE, ...(apiKey ? { fullnodeConfig: { HEADERS: authHeaders } } : {}) }));
 const ledger = await aptos.getLedgerInfo();
 assert.equal(ledger.chain_id, 2, "Wrong network");
 
@@ -125,7 +127,7 @@ type Journal = {
   chainId: 2;
   steps: Record<string, Step>;
 };
-const journalPath = ".testnet/marketplace-v1-creator-burn-journal.json";
+const journalPath = process.env.VEYTOS_MARKETPLACE_V1_JOURNAL || ".testnet/marketplace-v1-creator-burn-journal.json";
 let journal: Journal;
 try {
   journal = JSON.parse(await readFile(journalPath, "utf8")) as Journal;
@@ -155,11 +157,11 @@ async function execute(name: string, signer: Account, build: () => Promise<Simpl
     journal.steps[name] = step;
     await saveJournal();
   }
-  const lookup = await fetch(`${TESTNET_FULLNODE}/transactions/by_hash/${step.hash}`);
+  const lookup = await fetch(`${TESTNET_FULLNODE}/transactions/by_hash/${step.hash}`, { headers: authHeaders });
   if (shouldResubmit(lookup.status)) {
     const response = await fetch(`${TESTNET_FULLNODE}/transactions`, {
       method: "POST",
-      headers: { "content-type": "application/x.aptos.signed_transaction+bcs" },
+      headers: { "content-type": "application/x.aptos.signed_transaction+bcs", ...authHeaders },
       body: Buffer.from(step.signedBytes, "hex"),
     });
     if (!response.ok) {

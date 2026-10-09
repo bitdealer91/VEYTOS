@@ -1,13 +1,18 @@
 import { isAbsolute, relative, sep } from "node:path";
 
-export const TESTNET_FULLNODE = "https://api.testnet.aptoslabs.com/v1";
+const TESTNET_FULLNODES = new Set([
+  "https://api.testnet.aptoslabs.com/v1",
+  "https://fullnode.testnet.aptoslabs.com/v1",
+]);
+export const TESTNET_FULLNODE = (process.env.APTOS_FULLNODE_URL || "https://api.testnet.aptoslabs.com/v1").replace(/\/$/, "");
 
 export function validateAcceptanceEnvironment(env: NodeJS.ProcessEnv) {
   for (const key of ["APTOS_NETWORK", "NEXT_PUBLIC_APTOS_NETWORK"]) {
     if (env[key] && env[key] !== "testnet") throw new Error(`${key} must be testnet for Gate A`);
   }
-  if (env.APTOS_FULLNODE_URL && env.APTOS_FULLNODE_URL.replace(/\/$/, "") !== TESTNET_FULLNODE) {
-    throw new Error("Gate A uses the official testnet fullnode; remove conflicting APTOS_FULLNODE_URL");
+  const requestedFullnode = (env.APTOS_FULLNODE_URL || "https://api.testnet.aptoslabs.com/v1").replace(/\/$/, "");
+  if (!TESTNET_FULLNODES.has(requestedFullnode)) {
+    throw new Error("Gate A uses an official Aptos testnet fullnode; remove conflicting APTOS_FULLNODE_URL");
   }
   const path = env.MINTOS_TESTNET_ACCOUNTS_FILE;
   if (!path || !isAbsolute(path)) throw new Error("Set MINTOS_TESTNET_ACCOUNTS_FILE to an absolute path outside the repository");

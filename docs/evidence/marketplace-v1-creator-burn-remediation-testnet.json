@@ -1,7 +1,7 @@
 {
   "network": "testnet",
   "chainId": 2,
-  "verifiedAt": "2026-09-28T12:15:25.322Z",
+  "verifiedAt": "2026-10-09T17:20:23.044Z",
   "frameworkRevision": "831c39cff4c5a8ead98ddffe0edfc4ba51623e91",
   "sdk": "7.3.0",
   "sourceDigest": "e2001140d28318af966dff53791cd6288f351dae36e3fe35c31dac86a72b449e",
@@ -27,22 +27,22 @@
       "tokenName": "Creator Burnable Legacy NFT #2",
       "propertyVersion": "0",
       "submitted": true,
-      "transactionHash": "0xbb7b4ccf686f2e9f2d51a7c8d0683264fca7a3b4a9c346a1386eac39098bc12d",
-      "transactionVersion": "11463703192",
+      "transactionHash": "0xef1dfa7216ab98cbffb880179b982de6ab954edb389e3f45b69b8325135d94b1",
+      "transactionVersion": "2343511",
       "success": false,
       "vmStatus": "Move abort in 0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91::settlement_v1: ECREATOR_BURNABLE(0x9): ",
       "gasUsed": "86",
       "gasUnitPrice": "100",
       "sellerBalanceBefore": "1",
       "sellerBalanceAfter": "1",
-      "nextListingIdBefore": "3",
-      "nextListingIdAfter": "3",
-      "buyerBalanceBefore": "31220000",
-      "buyerBalanceAfter": "31220000",
-      "treasuryBalanceBefore": "4402000",
-      "treasuryBalanceAfter": "4402000",
-      "royaltyBalanceBefore": "86359000",
-      "royaltyBalanceAfter": "86359000"
+      "nextListingIdBefore": "1",
+      "nextListingIdAfter": "1",
+      "buyerBalanceBefore": "119993800",
+      "buyerBalanceAfter": "119993800",
+      "treasuryBalanceBefore": "50000000",
+      "treasuryBalanceAfter": "50000000",
+      "royaltyBalanceBefore": "500000000",
+      "royaltyBalanceAfter": "500000000"
     },
     "nonzeroPropertyVersion": {
       "creator": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
@@ -50,22 +50,22 @@
       "tokenName": "Nonzero Property Version Legacy NFT #1",
       "propertyVersion": "1",
       "submitted": true,
-      "transactionHash": "0x9027a3ee6bd295fd02a9ff9d3cf6d3ff28247f39fda922456d6e19ed4978de7f",
-      "transactionVersion": "11463704255",
+      "transactionHash": "0x454a63f08db2c9ced597a7e2ad410fbe31f5bc924e30d7fb2275766240229192",
+      "transactionVersion": "2343538",
       "success": false,
       "vmStatus": "Move abort in 0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91::settlement_v1: EUNSUPPORTED_PROPERTY_VERSION(0xa): ",
       "gasUsed": "81",
       "gasUnitPrice": "100",
       "sellerBalanceBefore": "1",
       "sellerBalanceAfter": "1",
-      "nextListingIdBefore": "3",
-      "nextListingIdAfter": "3",
-      "buyerBalanceBefore": "31220000",
-      "buyerBalanceAfter": "31220000",
-      "treasuryBalanceBefore": "4402000",
-      "treasuryBalanceAfter": "4402000",
-      "royaltyBalanceBefore": "86359000",
-      "royaltyBalanceAfter": "86359000"
+      "nextListingIdBefore": "1",
+      "nextListingIdAfter": "1",
+      "buyerBalanceBefore": "119993800",
+      "buyerBalanceAfter": "119993800",
+      "treasuryBalanceBefore": "50000000",
+      "treasuryBalanceAfter": "50000000",
+      "royaltyBalanceBefore": "500000000",
+      "royaltyBalanceAfter": "500000000"
     }
   },
   "ownership": {
@@ -95,9 +95,9 @@
     "royaltyOctas": "750000",
     "sellerProceedsOctas": "9050000",
     "storageReimbursementOctas": "933600",
-    "buyerGrossGasChargeOctas": "506600",
+    "buyerGrossGasChargeOctas": "1030800",
     "buyerStorageRefundOctas": "933600",
-    "buyerNetGasChargeOctas": "-427000",
+    "buyerNetGasChargeOctas": "97200",
     "conserved": true
   },
   "storageEconomics": {
@@ -123,11 +123,11 @@
       "total_charge_gas_units": "14738"
     },
     "buy": {
-      "execution_gas_units": "88",
-      "io_gas_units": "103",
-      "storage_fee_octas": "487600",
+      "execution_gas_units": "92",
+      "io_gas_units": "108",
+      "storage_fee_octas": "1010800",
       "storage_fee_refund_octas": "933600",
-      "total_charge_gas_units": "5066"
+      "total_charge_gas_units": "10308"
     }
   },
   "package": {
@@ -162,155 +162,147 @@
   },
   "transactions": {
     "fund-v1-admin": {
-      "hash": "0x2f29cbcf9c51a84f43f987a0b8873393fb559fded5bbbd7dc4c615165aa6e833",
-      "version": "11462158309",
+      "hash": "0xeedc2fcefc75d6eeebe473fd09d1abebb10e3e02e182a9a8f2befcef4a443c59",
+      "version": "2339024",
       "success": true,
-      "gasUsed": "5414",
+      "gasUsed": "62",
       "gasUnitPrice": "100",
       "vmStatus": "Executed successfully"
     },
     "publish": {
-      "hash": "0xdcb57b89840c559626cbb247e834e48393b992a224b1556a23f5a639b4dfe047",
-      "version": "11462161854",
+      "hash": "0xde27382dd72de7a395e374feb773ae6972aba4a867cc6eb0a88effb8f7f33a10",
+      "version": "2339398",
       "success": true,
       "gasUsed": "127943",
       "gasUnitPrice": "100",
       "vmStatus": "Executed successfully"
     },
     "initialize-fee-policy": {
-      "hash": "0x8358a714395054f46ebb8d9a3e6703575458ffeb8ee2c25e4ddfaa709c206d70",
-      "version": "11462162254",
+      "hash": "0x4634381803ba0ae877f67f4325b014710dc6dd615fafb8e510644a9c4da986f1",
+      "version": "2343363",
       "success": true,
       "gasUsed": "4788",
       "gasUnitPrice": "100",
       "vmStatus": "Executed successfully"
     },
     "initialize-marketplace": {
-      "hash": "0xe62e39497f65d5dd382137b5e9013d6c92e69da3d5dc4fd675d108e448d4c842",
-      "version": "11462162565",
+      "hash": "0xd9c5bd6b3ac4f47b3b6148bbc56e7b8c50592785fa6475a5c09d60a846fc8d9a",
+      "version": "2343380",
       "success": true,
       "gasUsed": "4789",
       "gasUnitPrice": "100",
       "vmStatus": "Executed successfully"
     },
     "initialize-v1": {
-      "hash": "0x3bcd6925d0da34dc3f41a52f1b39fea9dcd42f740304c2083e99503741cc6b6d",
-      "version": "11462162823",
+      "hash": "0x5b78f4e68dbe144dc2af6aa62598f06f388192e0b1984caebb3d5a8ad50f912a",
+      "version": "2343399",
       "success": true,
       "gasUsed": "4515",
       "gasUnitPrice": "100",
       "vmStatus": "Executed successfully"
     },
     "create-v1-collection": {
-      "hash": "0xaa731241e18017926280f312c06cffe0c974e0e3d2a87991ac08e64b59cb85b2",
-      "version": "11462163058",
+      "hash": "0xd52647066441e6923f3fbf9ae0f2d4983dbde32e90cf59d2aeb60469e3285954",
+      "version": "2343418",
       "success": true,
-      "gasUsed": "4784",
+      "gasUsed": "14881",
       "gasUnitPrice": "100",
       "vmStatus": "Executed successfully"
     },
     "create-safe-v1-token": {
-      "hash": "0xc0db99dc5e435f9e88f05d5759ab8b8c311312d2b8d037bd201fead83b98c10e",
-      "version": "11462163355",
+      "hash": "0xfd1cc7ad14ba92638d897a6d90edff58ecb895f354910821341b8541fc0aaa55",
+      "version": "2343435",
       "success": true,
-      "gasUsed": "10084",
+      "gasUsed": "15335",
       "gasUnitPrice": "100",
       "vmStatus": "Executed successfully"
     },
-    "create-creator-burnable-v1-token": {
-      "hash": "0xc3a3249c138dfaad4579a6f388064803a2f5ef86e718d0d64e6ebbc7c8f8873b",
-      "version": "11462163737",
+    "create-creator-burnable-v1-token-bcs-bool": {
+      "hash": "0xfaf036e7c64e9fdda6ebc0240581bdccdc889d36a20a0568b1b17988d7eabd84",
+      "version": "2343454",
       "success": true,
-      "gasUsed": "10457",
+      "gasUsed": "10445",
       "gasUnitPrice": "100",
       "vmStatus": "Executed successfully"
     },
     "create-nonzero-version-v1-token": {
-      "hash": "0x0acea4ceb6fe0c3b10abfeb5213faf625f78b67a52569cadabd4a1412174448f",
-      "version": "11462164125",
+      "hash": "0x513eaa4b21ad033becd29e4049dc391102fedc45898ea58b93370366285c805e",
+      "version": "2343471",
       "success": true,
       "gasUsed": "10448",
       "gasUnitPrice": "100",
       "vmStatus": "Executed successfully"
     },
     "mutate-nonzero-fixture-to-property-version-one": {
-      "hash": "0x4e442ac5db22c8f28ac116b17a4d0353756786a4edabfb117efdb5c8839cbb8f",
-      "version": "11462164397",
+      "hash": "0xd02bce0452045728032fe771aa2bf88ef92318b40981df004b68be06f229cf25",
+      "version": "2343488",
       "success": true,
       "gasUsed": "5119",
       "gasUnitPrice": "100",
       "vmStatus": "Executed successfully"
     },
-    "create-creator-burnable-v1-token-bcs-bool": {
-      "hash": "0x00a3e3df3a9cf31d219f4b7e5875645096546dd7fde21f8aa37d68e7769eced7",
-      "version": "11462177370",
-      "success": true,
-      "gasUsed": "10445",
-      "gasUnitPrice": "100",
-      "vmStatus": "Executed successfully"
-    },
-    "list-first": {
-      "hash": "0x36b7e84b533ff1fc16e7454f2ea0f7ff1b8feb6dd6d63d353dfde871a13b5db6",
-      "version": "11462178235",
-      "success": true,
-      "gasUsed": "14738",
-      "gasUnitPrice": "100",
-      "vmStatus": "Executed successfully"
-    },
-    "cancel-first": {
-      "hash": "0x8af7b47f3ec263665149f9208c7eb30fbb6f8c1ca1d086eff78a545265191ce8",
-      "version": "11462178505",
-      "success": true,
-      "gasUsed": "4990",
-      "gasUnitPrice": "100",
-      "vmStatus": "Executed successfully"
-    },
-    "configure-v1-storage-reimbursement": {
-      "hash": "0xd15de5f330a0f6cf9a3683f293d623bc456319798767d274b1bb7bdbf27ba5b9",
-      "version": "11462178968",
-      "success": true,
-      "gasUsed": "42",
-      "gasUnitPrice": "100",
-      "vmStatus": "Executed successfully"
-    },
-    "list-second": {
-      "hash": "0x56a29aee7ad803ebf56ca24eeb3f6d28e4d0d5e26a044a21a5803c6319dd5a9d",
-      "version": "11462179244",
-      "success": true,
-      "gasUsed": "14738",
-      "gasUnitPrice": "100",
-      "vmStatus": "Executed successfully"
-    },
-    "buy-second": {
-      "hash": "0x2e93e93396484077cd48f9c6ef0c9616f6f43ded1f23e4d34ad76a27b5da34a8",
-      "version": "11462179527",
-      "success": true,
-      "gasUsed": "5066",
-      "gasUnitPrice": "100",
-      "vmStatus": "Executed successfully"
-    },
     "reject-creator-burnable-version-zero": {
-      "hash": "0xbb7b4ccf686f2e9f2d51a7c8d0683264fca7a3b4a9c346a1386eac39098bc12d",
-      "version": "11463703192",
+      "hash": "0xef1dfa7216ab98cbffb880179b982de6ab954edb389e3f45b69b8325135d94b1",
+      "version": "2343511",
       "success": false,
       "gasUsed": "86",
       "gasUnitPrice": "100",
       "vmStatus": "Move abort in 0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91::settlement_v1: ECREATOR_BURNABLE(0x9): "
     },
     "reject-nonzero-property-version": {
-      "hash": "0x9027a3ee6bd295fd02a9ff9d3cf6d3ff28247f39fda922456d6e19ed4978de7f",
-      "version": "11463704255",
+      "hash": "0x454a63f08db2c9ced597a7e2ad410fbe31f5bc924e30d7fb2275766240229192",
+      "version": "2343538",
       "success": false,
       "gasUsed": "81",
       "gasUnitPrice": "100",
       "vmStatus": "Move abort in 0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91::settlement_v1: EUNSUPPORTED_PROPERTY_VERSION(0xa): "
+    },
+    "list-first": {
+      "hash": "0xc123ca2cee186fea19a6728926460257bb1c8977ffe2af007810328619f2a8e4",
+      "version": "2343559",
+      "success": true,
+      "gasUsed": "14738",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "cancel-first": {
+      "hash": "0x989b8967113660fd2a44e3a86271e974f1171909ea7a0116f6ca0247ab1c44a5",
+      "version": "2343580",
+      "success": true,
+      "gasUsed": "4990",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "configure-v1-storage-reimbursement": {
+      "hash": "0x234a45c58a7450df1db0ed74edb86540bbb292e78f5b36e3e6a877536cf72b7c",
+      "version": "2343597",
+      "success": true,
+      "gasUsed": "42",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "list-second": {
+      "hash": "0x3a30943260c9b36de7486c2dd74418ff3ab5cd28314de5732feaf35add38d21c",
+      "version": "2343614",
+      "success": true,
+      "gasUsed": "14738",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
+    },
+    "buy-second": {
+      "hash": "0xbe327f06686c2d82483bf0d0b3e727177d3c389d154768fde9bacca2bc5f6a7e",
+      "version": "2343633",
+      "success": true,
+      "gasUsed": "10308",
+      "gasUnitPrice": "100",
+      "vmStatus": "Executed successfully"
     }
   },
-  "deploymentTransaction": "0xdcb57b89840c559626cbb247e834e48393b992a224b1556a23f5a639b4dfe047",
-  "listTransaction": "0x36b7e84b533ff1fc16e7454f2ea0f7ff1b8feb6dd6d63d353dfde871a13b5db6",
-  "cancelTransaction": "0x8af7b47f3ec263665149f9208c7eb30fbb6f8c1ca1d086eff78a545265191ce8",
-  "relistTransaction": "0x56a29aee7ad803ebf56ca24eeb3f6d28e4d0d5e26a044a21a5803c6319dd5a9d",
-  "buyTransaction": "0x2e93e93396484077cd48f9c6ef0c9616f6f43ded1f23e4d34ad76a27b5da34a8",
+  "deploymentTransaction": "0xde27382dd72de7a395e374feb773ae6972aba4a867cc6eb0a88effb8f7f33a10",
+  "listTransaction": "0xc123ca2cee186fea19a6728926460257bb1c8977ffe2af007810328619f2a8e4",
+  "cancelTransaction": "0x989b8967113660fd2a44e3a86271e974f1171909ea7a0116f6ca0247ab1c44a5",
+  "relistTransaction": "0x3a30943260c9b36de7486c2dd74418ff3ab5cd28314de5732feaf35add38d21c",
+  "buyTransaction": "0xbe327f06686c2d82483bf0d0b3e727177d3c389d154768fde9bacca2bc5f6a7e",
   "eventEvidence": {
     "listed": [
       {
@@ -338,7 +330,7 @@
           "royalty_payee": "0xdf06f553f91c6f861b1569da5b89d0c436fe3885310da962053386e678d972d9",
           "seller": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
           "storage_reimbursement": "0",
-          "timestamp": "1790590913"
+          "timestamp": "1791566417"
         }
       },
       {
@@ -366,7 +358,7 @@
           "royalty_payee": "0xdf06f553f91c6f861b1569da5b89d0c436fe3885310da962053386e678d972d9",
           "seller": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
           "storage_reimbursement": "933600",
-          "timestamp": "1790590917"
+          "timestamp": "1791566420"
         }
       }
     ],
@@ -389,7 +381,7 @@
         },
         "listing_id": "1",
         "seller": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
-        "timestamp": "1790590915"
+        "timestamp": "1791566418"
       }
     },
     "purchased": {
@@ -419,7 +411,7 @@
         "seller": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
         "seller_proceeds": "9050000",
         "storage_reimbursement": "933600",
-        "timestamp": "1790590918"
+        "timestamp": "1791566421"
       }
     }
   },
