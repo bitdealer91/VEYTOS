@@ -206,7 +206,7 @@ function enrichCollection(aggregate: CollectionAggregateRow, metadata: Map<strin
     volume24h: aggregate.volume_24h,
     sales24h: aggregate.sales_24h,
     totalVolume: aggregate.total_volume,
-    supply: indexed?.currentSupply || launchpadRecord?.supply || null,
+    supply: launchpadRecord?.supply || indexed?.currentSupply || null,
     lastActivity: iso(aggregate.last_activity),
     links: nativeRecord?.links || {},
   };

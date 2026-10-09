@@ -47,6 +47,11 @@ test('collection discovery derives only real fixed-price projection metrics', as
 
 test('finalized launchpad collections appear before their first marketplace listing', async () => {
   mocks.query.mockResolvedValue({ rows: [] });
+  mocks.collections.mockResolvedValue([{
+    key: `v2:${mocks.nativeCollectionAddress}`, standard: 'v2', collectionId: mocks.nativeCollectionAddress,
+    creator: `0x${'9'.repeat(64)}`, name: 'THE ORIGINALS', description: 'Native collection',
+    metadataUri: 'ipfs://native', currentSupply: '0', maximumSupply: null,
+  }]);
   const result = await marketplaceCollections({ sort: 'volume' });
   expect(result.items).toContainEqual(expect.objectContaining({
     key: `v2:${mocks.nativeCollectionAddress}`,
