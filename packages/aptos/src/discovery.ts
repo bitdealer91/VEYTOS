@@ -247,6 +247,43 @@ export async function discoverOwnedNFTPage(
   }
 }
 
+const ownedNftPageQuery = `query ownedNftPage($owner: String!, $offset: Int!, $limit: Int!) {
+  current_token_ownerships_v2(
+    where:{owner_address:{_eq:$owner},amount:{_gt:0}},
+    order_by:[{last_transaction_version:desc},{token_data_id:asc},{property_version_v1:asc}],
+    offset:$offset,
+    limit:$limit
+  ) {
+    token_standard token_data_id property_version_v1 owner_address last_transaction_version amount is_soulbound_v2
+    current_token_data { collection_id description token_data_id token_name token_standard token_uri maximum token_properties
+      current_royalty_v1 { payee_address royalty_points_numerator royalty_points_denominator }
+      current_collection { collection_id collection_name creator_address token_standard uri } }
+  }
+}`;
+
+/**
+ * Read one authoritative wallet page directly from the Indexer GraphQL API.
+ * This keeps profile ownership independent from fullnode endpoint configuration.
+ */
+export async function discoverOwnedNFTPageByIndexer(
+  indexerUrl: string,
+  owner: string,
+  options: { offset?: number; pageSize?: number } = {},
+): Promise<NFTDiscoveryPage> {
+  const accountAddress = canonical(owner);
+  const offset = options.offset ?? 0;
+  const pageSize = options.pageSize ?? 24;
+  if (!Number.isSafeInteger(offset) || offset < 0) throw new RangeError('offset must be nonnegative');
+  if (!Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 100) throw new RangeError('pageSize must be 1..100');
+  const data = await queryIndexer<{ current_token_ownerships_v2?: unknown[] }>(indexerUrl, ownedNftPageQuery, {
+    owner: accountAddress, offset, limit: pageSize + 1,
+  });
+  if (!data.current_token_ownerships_v2) throw new NFTDiscoveryError('indexer-unavailable', 'Indexer wallet inventory is unavailable');
+  const rows = data.current_token_ownerships_v2;
+  const normalized = normalizeOwnershipRows(rows.slice(0, pageSize), accountAddress);
+  return { ...normalized, pages: 1, offset, hasMore: rows.length > pageSize };
+}
+
 const ownershipQuery = `query nft($where: current_token_ownerships_v2_bool_exp!) {
   current_token_ownerships_v2(where:$where,order_by:[{last_transaction_version:desc}],limit:20) {
     token_standard token_data_id property_version_v1 owner_address last_transaction_version amount

@@ -1,7 +1,7 @@
 import { afterEach, mock, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeAptos } from '../src/client.ts';
-import { discoverNFTsByIdentity, discoverOwnedNFTs, NFTDiscoveryError, normalizeCollectionRows, normalizeOwnershipRows } from '../src/discovery.ts';
+import { discoverNFTsByIdentity, discoverOwnedNFTPageByIndexer, discoverOwnedNFTs, NFTDiscoveryError, normalizeCollectionRows, normalizeOwnershipRows } from '../src/discovery.ts';
 
 const a = (digit: string) => `0x${digit.repeat(64)}`;
 const owner = a('1');
@@ -97,6 +97,22 @@ test('resolves a bounded group of listed NFT identities in one Indexer request',
   ]);
   assert.equal(requests, 1);
   assert.equal(result.length, 2);
+});
+
+test('profile GraphQL pagination returns a complete page without SDK endpoint state', async () => {
+  mock.method(globalThis, 'fetch', async (_url: string | URL | Request, init?: RequestInit) => {
+    const body = JSON.parse(String(init?.body)) as { variables: { owner: string; offset: number; limit: number } };
+    assert.deepEqual(body.variables, { owner, offset: 24, limit: 3 });
+    return new Response(JSON.stringify({ data: { current_token_ownerships_v2: [
+      row('v2', { token_data_id: `0x${'6'.repeat(63)}1` }),
+      row('v2', { token_data_id: `0x${'6'.repeat(63)}2` }),
+      row('v2', { token_data_id: `0x${'6'.repeat(63)}3` }),
+    ] } }), { status: 200 });
+  });
+  const result = await discoverOwnedNFTPageByIndexer('https://indexer.test/graphql', owner, { offset: 24, pageSize: 2 });
+  assert.equal(result.items.length, 2);
+  assert.equal(result.offset, 24);
+  assert.equal(result.hasMore, true);
 });
 
 test('normalizes canonical V1 and V2 collection identities with trustworthy supply', () => {

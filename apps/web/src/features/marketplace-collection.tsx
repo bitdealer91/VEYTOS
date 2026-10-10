@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
+import { canonical } from '@veytos/aptos/domain';
 import { ChevronLeft, ChevronRight, ExternalLink, Grid2X2, Grid3X3, Search, SlidersHorizontal } from 'lucide-react';
 import { parseApt } from '../../../../packages/domain/src/money';
 import type { MarketplaceEvent, MarketplaceInventoryItem } from '@/lib/marketplace-data';
@@ -127,7 +128,7 @@ export function MarketplaceCollectionTrading({ collectionKey, items, events, inv
   collectionKey: string; items: MarketplaceInventoryItem[]; events: MarketplaceEvent[]; inventoryFailed: boolean; inventoryLimited?: boolean; activityFailed: boolean;
 }) {
   const wallet = useWallet();
-  const account = wallet.account?.address.toString();
+  const account = wallet.account ? canonical(wallet.account.address.toString()) : undefined;
   const [status, setStatus] = useState<Status>(items.some((item) => item.listingId) ? 'listed' : 'all');
   const [query, setQuery] = useState('');
   const [min, setMin] = useState('');

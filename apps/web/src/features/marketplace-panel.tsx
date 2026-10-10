@@ -7,7 +7,7 @@ import type { NormalizedNFT } from '@veytos/aptos/discovery';
 import { encodeNFTIdentity, marketplaceErrorDiagnostic, marketplaceErrorMessage, quoteMarketplaceSale, marketplacePaused, type MarketplacePreparationStage } from '@veytos/aptos/marketplace';
 import type { MarketplaceAssetState, MarketplaceConfig, MarketplaceEconomics, MarketplaceListing, PendingMarketplaceTransaction, TransactionPhase } from '@veytos/aptos/types';
 import { definitiveRejection, transactionTransition } from '@veytos/aptos/recovery';
-import { isUnresolved, networkMatches, readableError } from '@veytos/aptos/domain';
+import { canonical, isUnresolved, networkMatches, readableError } from '@veytos/aptos/domain';
 import { parseApt } from '../../../../packages/domain/src/money';
 import { marketChain } from '@/lib/chain';
 import { explorer, marketplaceAddress, network } from '@/lib/config';
@@ -28,7 +28,7 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
   const wallet = useWallet();
   const toast = useTransactionToast();
   const queryClient = useQueryClient();
-  const account = wallet.account?.address.toString();
+  const account = wallet.account ? canonical(wallet.account.address.toString()) : undefined;
   const dialog = useRef<HTMLDialogElement>(null);
   const signing = useRef(false);
   const [priceInput, setPriceInput] = useState('');

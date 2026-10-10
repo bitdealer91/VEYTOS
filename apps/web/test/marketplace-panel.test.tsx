@@ -42,6 +42,16 @@ test('profile listing deep link opens the focused listing window for the owner',
   expect(screen.getByLabelText('Listing price in APT')).toBeTruthy();
 });
 
+test('short wallet address with a leading zero matches the canonical on-chain owner', async () => {
+  const canonicalOwner = `0x0${'a'.repeat(63)}`;
+  const shortOwner = `0x${'a'.repeat(63)}`;
+  const asset = { ...nft, owner: canonicalOwner, collectionCreator: canonicalOwner };
+  mocks.wallet.account.address.toString = () => shortOwner;
+  mount(asset, null, config, { listing: null, owner: canonicalOwner, ledgerVersion: '2' });
+  expect(await screen.findByRole('button', { name: 'Review listing' })).toBeTruthy();
+  expect(screen.queryByText('Only the current owner can list this NFT.')).toBe(null);
+});
+
 beforeEach(() => {
   onlineManager.setOnline(true);
   vi.clearAllMocks(); localStorage.clear(); mocks.wallet.connected = true; mocks.wallet.account.address.toString = () => seller; mocks.wallet.network.chainId = 2;

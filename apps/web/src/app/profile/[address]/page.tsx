@@ -1,17 +1,17 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { canonical } from '@veytos/aptos/domain';
-import { discoverOwnedNFTPage } from '@veytos/aptos/discovery';
+import { discoverOwnedNFTPageByIndexer } from '@veytos/aptos/discovery';
 import Link from 'next/link';
 import { WalletAddress } from '@/components/chain-ui';
 import { ProfileInventory } from '@/components/profile-inventory';
 import { EmptyState, ErrorState, PriceDisplay } from '@/components/ui';
-import { aptos } from '@/lib/chain';
 import { explorer, network } from '@/lib/config';
 import { walletMarketplaceProjection } from '@/lib/marketplace-data';
 
 export const dynamic = 'force-dynamic';
 const PAGE_SIZE = 24;
+const indexerUrl = `https://api.${network}.aptoslabs.com/v1/graphql`;
 
 export async function generateMetadata({ params }: { params: Promise<{ address: string }> }): Promise<Metadata> {
   const { address } = await params;
@@ -29,9 +29,9 @@ export default async function ProfilePage({ params, searchParams }: { params: Pr
   const offset = /^\d+$/.test(rawOffset) ? Number(rawOffset) : 0;
   const marketOffset=/^\d+$/.test(query.marketOffset||'')?Number(query.marketOffset):0;
   if (!Number.isSafeInteger(offset) || offset < 0) notFound();
-  let result: Awaited<ReturnType<typeof discoverOwnedNFTPage>>={items:[],rejectedRows:0,pages:0,offset,hasMore:false};
+  let result: Awaited<ReturnType<typeof discoverOwnedNFTPageByIndexer>>={items:[],rejectedRows:0,pages:0,offset,hasMore:false};
   try {
-    if(tab==='owned')result = await discoverOwnedNFTPage(aptos, address, { offset, pageSize: PAGE_SIZE });
+    if(tab==='owned')result = await discoverOwnedNFTPageByIndexer(indexerUrl, address, { offset, pageSize: PAGE_SIZE });
   } catch {
     return <section className="profile-page">
       <div className="page-title"><span className="eyebrow">APTOS {network.toUpperCase()} WALLET</span><h1>NFT profile</h1><WalletAddress address={address} /></div>
