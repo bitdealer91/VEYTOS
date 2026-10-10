@@ -52,6 +52,18 @@ test('short wallet address with a leading zero matches the canonical on-chain ow
   expect(screen.queryByText('Only the current owner can list this NFT.')).toBe(null);
 });
 
+test('fresh server owner snapshot overrides stale marketplace navigation cache', async () => {
+  const staleOwner = buyer;
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  client.setQueryData(['market-asset', 'testnet', moduleAddress, `${token}:`], {
+    listing: null, owner: staleOwner, ledgerVersion: '1',
+  }, { updatedAt: Date.now() });
+  render(<QueryClientProvider client={client}><MarketplacePanel nft={nft} initialListing={null} initialConfig={config}
+    initialAssetState={{ listing: null, owner: seller, ledgerVersion: '2' }} /></QueryClientProvider>);
+  expect(await screen.findByRole('button', { name: 'Review listing' })).toBeTruthy();
+  expect(screen.queryByText('Only the current owner can list this NFT.')).toBe(null);
+});
+
 beforeEach(() => {
   onlineManager.setOnline(true);
   vi.clearAllMocks(); localStorage.clear(); mocks.wallet.connected = true; mocks.wallet.account.address.toString = () => seller; mocks.wallet.network.chainId = 2;

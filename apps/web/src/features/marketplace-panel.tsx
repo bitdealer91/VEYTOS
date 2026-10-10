@@ -52,16 +52,22 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
     ? `v2:${nft.collectionId}`
     : `v1:${nft.collectionCreator}:${nft.collectionName}`;
   const confirmedKey = `veytos:confirmed:${network}:${marketplaceAddress}:${assetRoute}`;
+  const serverAssetState = initialAssetState || {
+    listing: initialListing,
+    owner: nft.standard === 'v2' ? initialListing?.escrowAddress || nft.owner : null,
+    ledgerVersion: nft.lastTransactionVersion,
+  };
   const assetQuery = useQuery({
     queryKey: ['market-asset', network, marketplaceAddress, assetRoute],
     queryFn: () => marketChain().assetState(nft.identity, nft.collectionId, confirmedVersionRef.current, { retries: 0 }),
-    initialData: initialAssetState || { listing: initialListing, owner: nft.standard === 'v2' ? initialListing?.escrowAddress || nft.owner : null, ledgerVersion: nft.lastTransactionVersion },
+    initialData: serverAssetState,
     initialDataUpdatedAt: Date.now(),
     staleTime: 30000, refetchOnWindowFocus: false, refetchOnReconnect: 'always',
   });
-  const listing = assetQuery.data.listing;
-  const snapshotIsNewer = !!confirmedVersion && BigInt(confirmedVersion) > BigInt(assetQuery.data.ledgerVersion);
-  const currentOwner = listing ? assetQuery.data.owner : snapshotIsNewer ? confirmedOwner : assetQuery.data.owner || confirmedOwner || nft.owner;
+  const assetState = BigInt(serverAssetState.ledgerVersion) >= BigInt(assetQuery.data.ledgerVersion) ? serverAssetState : assetQuery.data;
+  const listing = assetState.listing;
+  const snapshotIsNewer = !!confirmedVersion && BigInt(confirmedVersion) > BigInt(assetState.ledgerVersion);
+  const currentOwner = listing ? assetState.owner : snapshotIsNewer ? confirmedOwner : assetState.owner || confirmedOwner || nft.owner;
   const owner = !listing && !!currentOwner && currentOwner.toLowerCase() === account?.toLowerCase();
   const seller = !!listing && listing.seller.toLowerCase() === account?.toLowerCase();
   const active = listing?.status === 'ACTIVE';
@@ -77,7 +83,7 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
   // TanStack staleness and background RPC failures do not invalidate the last
   // authoritative snapshot. submit() always performs a fresh chain precheck
   // before asking the wallet to sign.
-  const authoritativeStateUnavailable = !assetQuery.data?.ledgerVersion;
+  const authoritativeStateUnavailable = !assetState.ledgerVersion;
   const eligibility = useQuery({
     queryKey: ['market-eligibility', network, nft.tokenId, account],
     queryFn: () => marketChain().eligibility(nft, account!, currentOwner, { retries: 0 }), enabled: !!account && owner && !active && !explicitTransition && !authoritativeStateUnavailable,
@@ -98,17 +104,17 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
   } catch { economics = null; }
 
   useEffect(() => {
-    if (!marketplaceAddress || !assetQuery.data.ledgerVersion) return;
+    if (!marketplaceAddress || !assetState.ledgerVersion) return;
     if (!active || !listing) {
       writeMarketplaceSession(network, marketplaceAddress, null, assetKey);
       return;
     }
     writeMarketplaceSession(network, marketplaceAddress, {
       assetKey, collectionKey, listingId: listing.id, seller: listing.seller, price: listing.price,
-      listedVersion: assetQuery.data.ledgerVersion,
+      listedVersion: assetState.ledgerVersion,
       nft: { standard: nft.standard, tokenId: nft.tokenId, collectionId: nft.collectionId, name: nft.name, metadataUri: nft.metadataUri, collectionName: nft.collectionName },
     }, assetKey);
-  }, [active, assetKey, assetQuery.data.ledgerVersion, listing, nft.collectionCreator, nft.collectionId, nft.collectionName, nft.metadataUri, nft.name, nft.standard, nft.tokenId]);
+  }, [active, assetKey, assetState.ledgerVersion, listing, nft.collectionCreator, nft.collectionId, nft.collectionName, nft.metadataUri, nft.name, nft.standard, nft.tokenId]);
 
   useEffect(() => {
     if (initialAction !== 'list' || initialDialogOpened.current || !owner || active) return;
@@ -238,7 +244,7 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
       if (!networkMatches(config.chainId, wallet.network?.chainId)) throw new Error('Wrong network');
       if (action !== 'cancel' && (freshPause.globalPaused || (nft.standard === 'v1' ? freshPause.v1Paused : freshPause.v2Paused))) throw new Error('EPAUSED');
       stage = 'asset-state';
-      const floor = [confirmedVersionRef.current, assetQuery.data.ledgerVersion].filter((version): version is string => !!version)
+      const floor = [confirmedVersionRef.current, assetState.ledgerVersion].filter((version): version is string => !!version)
         .reduce((latest, version) => BigInt(version) > BigInt(latest) ? version : latest, '0');
       const freshAsset = await marketChain().assetState(nft.identity, nft.collectionId, floor, { onRateLimit: retrying });
       if (action === 'list') {
