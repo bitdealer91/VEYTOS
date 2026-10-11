@@ -52,6 +52,16 @@ test('short wallet address with a leading zero matches the canonical on-chain ow
   expect(screen.queryByText('Only the current owner can list this NFT.')).toBe(null);
 });
 
+test('canonical wallet address matches a shortened on-chain owner', async () => {
+  const canonicalOwner = `0x0${'a'.repeat(63)}`;
+  const shortOwner = `0x${'a'.repeat(63)}`;
+  const asset = { ...nft, owner: shortOwner, collectionCreator: canonicalOwner };
+  mocks.wallet.account.address.toString = () => canonicalOwner;
+  mount(asset, null, config, { listing: null, owner: shortOwner, ledgerVersion: '2' });
+  expect(await screen.findByRole('button', { name: 'Review listing' })).toBeTruthy();
+  expect(screen.queryByText('Only the current owner can list this NFT.')).toBe(null);
+});
+
 test('fresh server owner snapshot overrides stale marketplace navigation cache', async () => {
   const staleOwner = buyer;
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });

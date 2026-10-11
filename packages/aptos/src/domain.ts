@@ -2,6 +2,10 @@ import { AccountAddress } from '@aptos-labs/ts-sdk';
 import { quoteMint } from '../../domain/src/money.ts';
 import type { Drop, TransactionPhase } from './types.ts';
 export const canonical = (address: string) => AccountAddress.from(address).toStringLong();
+export function sameAddress(left: string | null | undefined, right: string | null | undefined) {
+  if (!left || !right) return false;
+  try { return canonical(left) === canonical(right); } catch { return false; }
+}
 export function dropStatus(drop: Drop, now: bigint) {
   if (BigInt(drop.minted) >= BigInt(drop.terms.max_supply)) return 'SOLD OUT';
   if (BigInt(drop.terms.end_seconds) > 0n && now >= BigInt(drop.terms.end_seconds)) return 'ENDED';

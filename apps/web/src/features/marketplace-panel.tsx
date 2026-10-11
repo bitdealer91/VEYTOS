@@ -7,7 +7,7 @@ import type { NormalizedNFT } from '@veytos/aptos/discovery';
 import { encodeNFTIdentity, marketplaceErrorDiagnostic, marketplaceErrorMessage, quoteMarketplaceSale, marketplacePaused, type MarketplacePreparationStage } from '@veytos/aptos/marketplace';
 import type { MarketplaceAssetState, MarketplaceConfig, MarketplaceEconomics, MarketplaceListing, PendingMarketplaceTransaction, TransactionPhase } from '@veytos/aptos/types';
 import { definitiveRejection, transactionTransition } from '@veytos/aptos/recovery';
-import { canonical, isUnresolved, networkMatches, readableError } from '@veytos/aptos/domain';
+import { canonical, isUnresolved, networkMatches, readableError, sameAddress } from '@veytos/aptos/domain';
 import { parseApt } from '../../../../packages/domain/src/money';
 import { marketChain } from '@/lib/chain';
 import { explorer, marketplaceAddress, network } from '@/lib/config';
@@ -68,8 +68,8 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
   const listing = assetState.listing;
   const snapshotIsNewer = !!confirmedVersion && BigInt(confirmedVersion) > BigInt(assetState.ledgerVersion);
   const currentOwner = listing ? assetState.owner : snapshotIsNewer ? confirmedOwner : assetState.owner || confirmedOwner || nft.owner;
-  const owner = !listing && !!currentOwner && currentOwner.toLowerCase() === account?.toLowerCase();
-  const seller = !!listing && listing.seller.toLowerCase() === account?.toLowerCase();
+  const owner = !listing && sameAddress(currentOwner, account);
+  const seller = !!listing && sameAddress(listing.seller, account);
   const active = listing?.status === 'ACTIVE';
   const selected: Action = active ? seller ? 'cancel' : 'buy' : 'list';
   const key = `veytos:market:${network}:${marketplaceAddress}:${assetRoute}`;
@@ -144,7 +144,7 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
     if (walletScope.current === null) { walletScope.current = next; return; }
     if (walletScope.current === next) return;
     walletScope.current = next;
-    const pendingBelongsToWallet = !pending || !account || pending.sender.toLowerCase() === account.toLowerCase();
+    const pendingBelongsToWallet = !pending || !account || sameAddress(pending.sender, account);
     if (!pendingBelongsToWallet) {
       setPending(null); setRecoveryHash(''); setCheckedWallet(false); setMessage(''); setPhase('ready');
     } else if (!isUnresolved(phase)) {
@@ -173,7 +173,7 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
       if (raw) {
         const value = JSON.parse(raw) as PendingMarketplaceTransaction;
         if (value.module === marketplaceAddress && value.network === network) {
-          if (account && value.sender.toLowerCase() !== account.toLowerCase()) return;
+          if (account && !sameAddress(value.sender, account)) return;
           localStorage.setItem(key, raw); localStorage.removeItem(legacyKey); setPending(value); setPhase('unknown');
           setMessage(value.hash ? 'A marketplace transaction needs confirmation before another action.' : 'A wallet request was interrupted. Check wallet activity before continuing.');
         }
@@ -260,8 +260,8 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
           encodeNFTIdentity(reviewedListing.identity) !== encodeNFTIdentity(listing.identity) || reviewedListing.storageReimbursement !== listing.storageReimbursement)) throw new Error('ELISTING_STALE');
       if (reviewedListing && reviewedListing.price !== listing?.price) throw new Error('EPRICE_CHANGED');
       if (reviewedListing?.standard === 'v2' && (!reviewedListing.escrowAddress || freshAsset.owner !== reviewedListing.escrowAddress)) throw new Error('ESTATE_UPDATING');
-      if (action === 'cancel' && reviewedListing?.seller.toLowerCase() !== account.toLowerCase()) throw new Error('Only the seller can cancel this listing.');
-      if (action === 'buy' && reviewedListing?.seller.toLowerCase() === account.toLowerCase()) throw new Error('The seller cannot buy their own listing.');
+      if (action === 'cancel' && !sameAddress(reviewedListing?.seller, account)) throw new Error('Only the seller can cancel this listing.');
+      if (action === 'buy' && sameAddress(reviewedListing?.seller, account)) throw new Error('The seller cannot buy their own listing.');
       value = {
         action, hash: '', sender: account, listingId: reviewedListing?.id, identity: nft.identity,
         expectedPrice: action === 'list' ? economics?.price.toString() : reviewedListing?.price,

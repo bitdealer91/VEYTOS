@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Tag } from 'lucide-react';
 import { discoverNFTByIdentity, type NormalizedNFT } from '@veytos/aptos/discovery';
 import { decodeNFTIdentity, encodeNFTIdentity } from '@veytos/aptos/marketplace';
+import { sameAddress } from '@veytos/aptos/domain';
 import type { ProfileMarketplaceListing } from '@/lib/marketplace-data';
 import { config, marketplaceAddress, network } from '@/lib/config';
 import { marketChain } from '@/lib/chain';
@@ -41,11 +42,11 @@ export function ProfileInventory({ owned, listings, profileAddress, emptyTitle =
     const reconcile = async () => {
       const verified = new Map<string, MarketplaceSessionListing>();
       const snapshots = readMarketplaceSession(network, moduleAddress)
-        .filter((item) => item.seller.toLowerCase() === profileAddress.toLowerCase()).slice(0, 12);
+        .filter((item) => sameAddress(item.seller, profileAddress)).slice(0, 12);
       await Promise.allSettled(snapshots.map(async (item) => {
         const identity = decodeNFTIdentity(item.assetKey);
         const state = await marketChain().assetState(identity, item.nft.collectionId, undefined, { retries: 0 });
-        if (state.listing?.status === 'ACTIVE' && state.listing.seller.toLowerCase() === profileAddress.toLowerCase()) {
+        if (state.listing?.status === 'ACTIVE' && sameAddress(state.listing.seller, profileAddress)) {
           verified.set(item.assetKey, { ...item, listingId: state.listing.id, price: state.listing.price, listedVersion: state.ledgerVersion });
           return;
         }
@@ -70,7 +71,7 @@ export function ProfileInventory({ owned, listings, profileAddress, emptyTitle =
         const nft = await discoverNFTByIdentity(indexerUrl, identity);
         if (!nft) return;
         const state = await marketChain().assetState(identity, nft.collectionId, undefined, { retries: 0 });
-        if (!state.listing || state.listing.status !== 'ACTIVE' || state.listing.seller.toLowerCase() !== profileAddress.toLowerCase()) return;
+        if (!state.listing || state.listing.status !== 'ACTIVE' || !sameAddress(state.listing.seller, profileAddress)) return;
         const recovered: MarketplaceSessionListing = {
           assetKey: encodeNFTIdentity(identity), collectionKey: `v2:${nft.collectionId}`, listingId: state.listing.id,
           seller: state.listing.seller, price: state.listing.price, listedVersion: state.ledgerVersion,
@@ -82,7 +83,7 @@ export function ProfileInventory({ owned, listings, profileAddress, emptyTitle =
       if (mounted) setSession([...verified.values()]);
     };
     const refresh = () => setSession(readMarketplaceSession(network, moduleAddress)
-      .filter((item) => item.seller.toLowerCase() === profileAddress.toLowerCase()));
+      .filter((item) => sameAddress(item.seller, profileAddress)));
     void reconcile(); window.addEventListener(MARKETPLACE_SESSION_EVENT, refresh); window.addEventListener('storage', refresh);
     return () => { mounted = false; window.removeEventListener(MARKETPLACE_SESSION_EVENT, refresh); window.removeEventListener('storage', refresh); };
   }, [profileAddress]);
@@ -93,7 +94,7 @@ export function ProfileInventory({ owned, listings, profileAddress, emptyTitle =
       collectionName: nft.collectionName || 'Unknown collection', metadataUri: nft.metadataUri, listing: null,
     });
     for (const listing of listings) merged.set(listing.asset_key, listedDisplay(listing));
-    for (const listing of session) if (listing.seller.toLowerCase() === profileAddress.toLowerCase() && !merged.get(listing.assetKey)?.listing?.indexed) {
+    for (const listing of session) if (sameAddress(listing.seller, profileAddress) && !merged.get(listing.assetKey)?.listing?.indexed) {
       merged.set(listing.assetKey, sessionDisplay(listing));
     }
     return [...merged.values()].sort((a, b) => Number(!!b.listing) - Number(!!a.listing));

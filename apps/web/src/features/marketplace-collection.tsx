@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
-import { canonical } from '@veytos/aptos/domain';
+import { canonical, sameAddress } from '@veytos/aptos/domain';
 import { ChevronLeft, ChevronRight, ExternalLink, Grid2X2, Grid3X3, Search, SlidersHorizontal } from 'lucide-react';
 import { parseApt } from '../../../../packages/domain/src/money';
 import type { MarketplaceEvent, MarketplaceInventoryItem } from '@/lib/marketplace-data';
@@ -92,7 +92,7 @@ function Filters({ prefix, status, setStatus, min, setMin, max, setMax, items, a
   max: string; setMax: (value: string) => void; items: MarketplaceInventoryItem[]; account?: string;
 }) {
   const listed = items.filter((item) => item.listingId).length;
-  const owned = account ? items.filter((item) => (item.seller || item.owner)?.toLowerCase() === account.toLowerCase()).length : 0;
+  const owned = account ? items.filter((item) => sameAddress(item.seller || item.owner, account)).length : 0;
   return <div className="market-filter-groups">
     <fieldset><legend>Status</legend>{([
       ['all', 'All', items.length], ['listed', 'Listed', listed], ['owned', 'Owned by you', owned],
@@ -147,7 +147,7 @@ export function MarketplaceCollectionTrading({ collectionKey, items, events, inv
     const minimum = price(min);
     const maximum = price(max);
     return effectiveItems.filter((item) => {
-      const mine = !!account && (item.seller || item.owner)?.toLowerCase() === account.toLowerCase();
+      const mine = sameAddress(item.seller || item.owner, account);
       if (status === 'listed' && !item.listingId) return false;
       if (status === 'owned' && !mine) return false;
       if (needle && !item.name.toLowerCase().includes(needle) && !item.assetKey.toLowerCase().includes(needle)) return false;
@@ -175,7 +175,7 @@ export function MarketplaceCollectionTrading({ collectionKey, items, events, inv
       {inventoryFailed && <p className="market-local-notice">Collection metadata is temporarily unavailable. Active listings remain visible from the VEYTOS projection.</p>}
       {!inventoryFailed && inventoryLimited && <p className="market-local-notice">Showing the first 100 currently indexed items. Active listings outside this window remain included.</p>}
       {visible.length ? <div className={`market-nft-grid ${compact ? 'compact' : ''}`}>{visible.map((item) => {
-        const mine = !!account && (item.seller || item.owner)?.toLowerCase() === account.toLowerCase();
+        const mine = sameAddress(item.seller || item.owner, account);
         return <article className="market-nft-card" key={item.assetKey}><Link href={`/nft/${item.assetKey}`} className="market-nft-art"><Artwork uri={item.metadataUri} name={item.name} /><span>{item.standard === 'v1' ? 'V1' : 'V2'}</span></Link>
           <div className="market-nft-copy"><h3><Link href={`/nft/${item.assetKey}`}>{item.name}</Link></h3>
             <div>{item.price ? <PriceDisplay octas={item.price} /> : <span className="market-unlisted">Not listed</span>}<Link className={item.listingId ? 'market-buy-link' : 'market-view-link'} href={`/nft/${item.assetKey}`}>{item.listingId ? mine ? 'Manage' : 'Buy' : mine ? 'List' : 'View'}</Link></div>
