@@ -397,13 +397,13 @@ test('browser reconnect refetches authoritative marketplace state', async () => 
   await waitFor(() => expect(mocks.assetState.mock.calls.length).toBeGreaterThan(before));
 });
 
-test('newer confirmed ownership cannot be overwritten by stale indexed owner data', async () => {
+test('persisted V2 ownership from an earlier testnet ledger cannot override ObjectCore', async () => {
   const confirmedKey = `veytos:confirmed:testnet:${moduleAddress}:${token}:`;
-  localStorage.setItem(confirmedKey, JSON.stringify({ version: '99', owner: buyer, action: 'buy' }));
-  mocks.wallet.account.address.toString = () => buyer;
+  localStorage.setItem(confirmedKey, JSON.stringify({ version: '999999999', owner: buyer, action: 'buy' }));
   mount(nft, null, config, { listing: null, owner: seller, ledgerVersion: '10' });
-  await waitFor(() => expect(screen.getByText(`${buyer.slice(0, 6)}…${buyer.slice(-4)}`)).toBeTruthy());
-  expect(screen.queryByText(`${seller.slice(0, 6)}…${seller.slice(-4)}`)).toBe(null);
+  expect(await screen.findByRole('button', { name: 'Review listing' })).toBeTruthy();
+  expect(screen.queryByText('Only the current owner can list this NFT.')).toBe(null);
+  await waitFor(() => expect(localStorage.getItem(confirmedKey)).toBe(null));
 });
 
 test('duplicate LIST remains disabled while wallet submission is unresolved', async () => {

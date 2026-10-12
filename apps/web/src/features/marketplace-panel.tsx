@@ -67,7 +67,14 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
   const assetState = BigInt(serverAssetState.ledgerVersion) >= BigInt(assetQuery.data.ledgerVersion) ? serverAssetState : assetQuery.data;
   const listing = assetState.listing;
   const snapshotIsNewer = !!confirmedVersion && BigInt(confirmedVersion) > BigInt(assetState.ledgerVersion);
-  const currentOwner = listing ? assetState.owner : snapshotIsNewer ? confirmedOwner : assetState.owner || confirmedOwner || nft.owner;
+  // V2 ObjectCore is authoritative. A persisted confirmation may belong to an
+  // earlier incarnation of testnet whose ledger version was numerically higher,
+  // so it must never override the current on-chain object owner. V1 has no
+  // ObjectCore owner and retains the confirmed-owner bridge until its exact
+  // token balance is checked again by eligibility().
+  const currentOwner = listing ? assetState.owner
+    : nft.standard === 'v2' ? assetState.owner || nft.owner
+      : snapshotIsNewer ? confirmedOwner : assetState.owner || confirmedOwner || nft.owner;
   const owner = !listing && sameAddress(currentOwner, account);
   const seller = !!listing && sameAddress(listing.seller, account);
   const active = listing?.status === 'ACTIVE';
@@ -128,6 +135,13 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
 
   useEffect(() => {
     try {
+      if (nft.standard === 'v2') {
+        // Object addresses and browser storage keys can be reused after an
+        // Aptos testnet reset. Discard the old browser hint and rely on the
+        // fresh ObjectCore snapshot supplied by the fullnode.
+        localStorage.removeItem(confirmedKey);
+        return;
+      }
       const raw = localStorage.getItem(confirmedKey);
       if (!raw) return;
       const value = JSON.parse(raw) as { version?: string; owner?: string; action?: Action; listingStatus?: 'SOLD' };
@@ -137,7 +151,7 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
       }
       else localStorage.removeItem(confirmedKey);
     } catch { /* A corrupt display snapshot never authorizes an action. */ }
-  }, [confirmedKey, nft.lastTransactionVersion]);
+  }, [confirmedKey, nft.lastTransactionVersion, nft.standard]);
 
   useEffect(() => {
     const next = currentWalletScope;
