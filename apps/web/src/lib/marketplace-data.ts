@@ -19,6 +19,13 @@ import { database } from './database';
 import { errorCategory } from './observability';
 
 const indexerUrl = `https://api.${network}.aptoslabs.com/v1/graphql`;
+const hiddenMarketplaceCollectionKeys = new Set([
+  'v1:0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2:veytos v1 creator burn safety',
+]);
+
+function isHiddenMarketplaceCollection(key: string) {
+  return hiddenMarketplaceCollectionKeys.has(key.toLowerCase());
+}
 
 export type BrowseListing = {
   listing_id: string;
@@ -312,7 +319,7 @@ export const marketplaceCollections = cache(async (options: { sort?: string; lim
       const identity: CollectionIdentity = { standard: 'v2', collectionId: row.collection };
       if (!aggregateByKey.has(identityKey(identity))) aggregateByKey.set(identityKey(identity), emptyAggregate(identity));
     }
-    const aggregates = [...aggregateByKey.values()];
+    const aggregates = [...aggregateByKey.values()].filter((row) => !isHiddenMarketplaceCollection(row.collection_key));
     const identities = aggregates.map((row) => parseMarketplaceCollectionKey(row.collection_key)).filter((value): value is CollectionIdentity => !!value);
     const addresses = identities.flatMap((identity) => identity.standard === 'v2' ? [identity.collectionId] : []);
     const [metadataResult, nativeResult] = await Promise.all([optionalCollectionMetadata(identities), optionalNativeCollections(addresses)]);
@@ -336,6 +343,7 @@ export const marketplaceCollections = cache(async (options: { sort?: string; lim
 });
 
 export const marketplaceCollection = cache(async (key: string) => {
+  if (isHiddenMarketplaceCollection(key)) return null;
   const identity = parseMarketplaceCollectionKey(key);
   if (!identity) return null;
   const pool = database();
