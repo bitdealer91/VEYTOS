@@ -12,6 +12,7 @@ import { parseApt } from '../../../../packages/domain/src/money';
 import { marketChain } from '@/lib/chain';
 import { explorer, marketplaceAddress, network } from '@/lib/config';
 import { PriceDisplay } from '@/components/ui';
+import { AptosCurrency } from '@/components/aptos-symbol';
 import { Artwork } from '@/components/artwork';
 import { WalletButton } from '@/components/wallet';
 import { WalletAddress } from '@/components/chain-ui';
@@ -324,7 +325,7 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
     </dl>
     {paused && <p className="notice warning">Marketplace trading is temporarily paused. Sellers can still cancel and recover listed NFTs.</p>}
     {transitionMessage && <p className="notice" aria-live="polite">{transitionMessage}</p>}
-    {!active && owner && <label className="price-input">Price in APT<input value={priceInput} inputMode="decimal" placeholder="1.00" onChange={(event) => setPriceInput(event.target.value)} /></label>}
+    {!active && owner && <label className="price-input"><span>Price in <AptosCurrency /></span><input value={priceInput} inputMode="decimal" placeholder="1.00" onChange={(event) => setPriceInput(event.target.value)} /></label>}
     {active && <dl><div><dt>Storage reimbursement</dt><dd><PriceDisplay octas={listing.storageReimbursement} /></dd></div></dl>}
     {!wallet.connected ? <WalletButton label="Connect wallet" />
       : !rightNetwork ? <p className="notice warning" role="alert">Switch your wallet to Aptos {network} to trade.</p>
@@ -343,7 +344,7 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
         <div className="market-review-media"><Artwork uri={nft.metadataUri} name={nft.name || 'Unnamed NFT'} large /><div><span>{nft.collectionName || 'Unknown collection'}</span><strong>{nft.name || 'Unnamed NFT'}</strong></div></div>
         <div className="market-review-content">
           <div><span className="eyebrow">{action === 'list' ? 'CREATE LISTING' : action === 'cancel' ? 'RETURN TO WALLET' : 'PURCHASE REVIEW'}</span><h2>{action === 'list' ? 'List your NFT' : action === 'cancel' ? 'Cancel listing' : 'Buy NFT'}</h2><p>{nft.standard === 'v1' ? `Token V1 · property version ${nft.identity.standard === 'v1' ? nft.identity.propertyVersion : ''}` : 'Aptos Digital Asset V2'}</p></div>
-          {action === 'list' && <label className="market-dialog-price">Listing price<span><input value={priceInput} inputMode="decimal" placeholder="0.00" aria-label="Listing price in APT" onChange={(event) => setPriceInput(event.target.value)} /><strong>APT</strong></span><small>Enter the exact fixed price buyers will see.</small></label>}
+          {action === 'list' && <label className="market-dialog-price">Listing price<span><input value={priceInput} inputMode="decimal" placeholder="0.00" aria-label="Listing price in APT" onChange={(event) => setPriceInput(event.target.value)} /><strong><AptosCurrency /></strong></span><small>Enter the exact fixed price buyers will see.</small></label>}
           {economics && <div className="market-review-economics"><h3>Settlement details</h3><div className="review-summary">
             <div><span>{action === 'buy' ? 'Purchase price' : 'Sale price'}</span><PriceDisplay octas={economics.price.toString()} /></div>
             <div><span>VEYTOS fee · {Number(listing?.feeBps || config.feeBps) / 100}%</span><PriceDisplay octas={economics.fee.toString()} /></div>

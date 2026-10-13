@@ -13,6 +13,7 @@ import {
 } from '@/lib/marketplace-session';
 import { Artwork } from '@/components/artwork';
 import { PriceDisplay } from '@/components/ui';
+import { AptosCurrency } from '@/components/aptos-symbol';
 import { floorChange, listedShare } from '@/lib/marketplace-metrics';
 
 type Status = 'all' | 'listed' | 'owned';
@@ -105,9 +106,9 @@ function Filters({ prefix, status, setStatus, min, setMin, max, setMax, items, a
       <span>{label}</span><small>{count}</small>
     </label>)}</fieldset>
     <fieldset><legend className="sr-only">Price in APT</legend><p className="market-filter-section-title">Price</p><div className="market-price-range">
-      <label htmlFor={`${prefix}-min`}>Min APT<input id={`${prefix}-min`} inputMode="decimal" value={min} onChange={(event) => setMin(event.target.value)} placeholder="0" /></label>
+      <label htmlFor={`${prefix}-min`}><span>Min <AptosCurrency /></span><input id={`${prefix}-min`} inputMode="decimal" value={min} onChange={(event) => setMin(event.target.value)} placeholder="0" /></label>
       <span>–</span>
-      <label htmlFor={`${prefix}-max`}>Max APT<input id={`${prefix}-max`} inputMode="decimal" value={max} onChange={(event) => setMax(event.target.value)} placeholder="Any" /></label>
+      <label htmlFor={`${prefix}-max`}><span>Max <AptosCurrency /></span><input id={`${prefix}-max`} inputMode="decimal" value={max} onChange={(event) => setMax(event.target.value)} placeholder="Any" /></label>
     </div></fieldset>
   </div>;
 }

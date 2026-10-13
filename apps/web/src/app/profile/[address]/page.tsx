@@ -4,6 +4,7 @@ import { canonical } from '@veytos/aptos/domain';
 import { discoverOwnedNFTPageByIndexer } from '@veytos/aptos/discovery';
 import Link from 'next/link';
 import { WalletAddress } from '@/components/chain-ui';
+import { AptosCurrency } from '@/components/aptos-symbol';
 import { ProfileInventory } from '@/components/profile-inventory';
 import { EmptyState, ErrorState, PriceDisplay } from '@/components/ui';
 import { explorer, network } from '@/lib/config';
@@ -43,12 +44,12 @@ export default async function ProfilePage({ params, searchParams }: { params: Pr
   return <section className="profile-page">
     <div className="profile-hero">
       <div className="profile-avatar" aria-hidden="true">{address.slice(2,4).toUpperCase()}</div>
-      <div className="profile-hero-copy"><span className="eyebrow">APTOS {network.toUpperCase()} · NFT INVENTORY</span><h1>Profile</h1><div className="profile-address"><WalletAddress address={address} /></div><p>Select an owned NFT to create a fixed-price APT listing. Every transaction is reviewed before your wallet signs.</p></div>
+      <div className="profile-hero-copy"><span className="eyebrow">APTOS {network.toUpperCase()} · NFT INVENTORY</span><h1>Profile</h1><div className="profile-address"><WalletAddress address={address} /></div><p>Select an owned NFT to create a fixed-price <AptosCurrency /> listing. Every transaction is reviewed before your wallet signs.</p></div>
       {tab==='owned'&&<div className="profile-count"><strong>{offset + result.items.length}{result.hasMore ? '+' : ''}</strong><span>indexed holdings</span></div>}
     </div>
     <nav className="content-tabs" aria-label="Wallet sections"><Link aria-current={tab === 'owned' ? 'page' : undefined} href={`/profile/${address}`}>Owned</Link><Link aria-current={tab === 'listed' ? 'page' : undefined} href={`/profile/${address}?tab=listed`}>Listed</Link><Link aria-current={tab === 'activity' ? 'page' : undefined} href={`/profile/${address}?tab=activity`}>Activity</Link></nav>
     {tab === 'owned' && <section id="owned" className="section">
-      <div className="section-heading profile-section-heading"><div><span className="eyebrow">READY TO MANAGE</span><h2>Owned NFTs</h2><p className="muted">Choose an asset to review eligibility and create a fixed-price APT listing.</p></div></div>
+      <div className="section-heading profile-section-heading"><div><span className="eyebrow">READY TO MANAGE</span><h2>Owned NFTs</h2><p className="muted">Choose an asset to review eligibility and create a fixed-price <AptosCurrency /> listing.</p></div></div>
       <ProfileInventory owned={displayed} listings={projection.listings} profileAddress={address}
         emptyDescription={`This wallet has no wallet-held or actively listed NFTs indexed on Aptos ${network}.`} />
       {displayed.length > 0 && <>

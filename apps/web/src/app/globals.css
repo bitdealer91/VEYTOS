@@ -23,6 +23,10 @@
 @media(max-width:580px){.container,.header-inner{box-sizing:border-box!important;width:100vw!important;max-width:100vw!important}}
 .mobile-wallet{display:none}@media(max-width:580px){.header-actions{display:none}.mobile-wallet{display:block;grid-column:1/-1;grid-row:4}.mobile-wallet .wallet-button{width:100%}}
 
+/* Global marketplace search */
+.global-search{position:relative;z-index:2}.global-search>input{min-width:0}.global-search>kbd{margin-left:auto;color:var(--color-text-muted);background:var(--color-background)}.global-search-clear{display:grid;flex:0 0 26px;width:26px;height:26px;place-items:center;border-radius:5px;color:var(--color-text-muted)}.global-search-clear:hover{background:var(--color-surface-hover);color:var(--color-text-primary)}.global-search-panel{position:absolute;top:calc(100% + 10px);left:0;width:min(580px,calc(100vw - 32px));overflow:hidden;border:1px solid var(--color-border-hover);border-radius:12px;background:#151619;box-shadow:var(--shadow-dialog)}.global-search-status{padding:10px 13px;border-bottom:1px solid var(--color-border);color:var(--color-text-muted);font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}.global-search-result{display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:11px;padding:10px 12px;border-bottom:1px solid var(--color-border);color:var(--color-text-primary)}.global-search-result:hover,.global-search-result[aria-selected=true],.global-search-all:hover,.global-search-all[aria-selected=true]{background:var(--color-surface-hover)}.global-search-art{width:42px;height:42px;overflow:hidden;border:1px solid var(--color-border);border-radius:7px}.global-search-art .artwork{width:100%;height:100%;aspect-ratio:1}.global-search-art .artwork-note{display:none}.global-search-copy{display:grid;gap:4px;min-width:0}.global-search-copy>strong{display:flex;align-items:center;gap:5px;min-width:0;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.global-search-copy>strong svg{flex:none;color:var(--color-accent)}.global-search-copy>small,.global-search-metrics small{color:var(--color-text-muted);font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.global-search-metrics{display:grid;gap:3px;justify-items:end;text-align:right}.global-search-metrics>strong,.global-search-metrics .price{font-size:11px;font-weight:600}.global-search-all{display:flex;width:100%;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;color:var(--color-text-secondary);font-size:11px;text-align:left}.global-search-all svg{color:var(--color-accent)}.global-search-note{padding:9px 13px;border-top:1px solid var(--color-border);color:var(--color-warning);font-size:9px;line-height:1.45}
+@media(max-width:580px){.global-search-panel{position:fixed;top:auto;right:10px;left:10px;width:auto;margin-top:10px}.global-search-metrics{display:none}.global-search-result{grid-template-columns:42px minmax(0,1fr)}}
+
 /* Keep long transaction hashes inside the fixed-width mint sidebar. */
 .mint-panel,.mint-success,.mint-success>*{min-width:0}.success-asset{width:100%;min-width:0}.success-asset span{min-width:0}.transaction-hash{display:block;width:100%;overflow-wrap:anywhere;word-break:break-all}
 
@@ -300,10 +304,10 @@
   border-radius: 8px;
   background: var(--color-surface);
 }
-.launch-stats span,
-.mint-event-facts span,
-.mint-event-action > div > span,
-.event-total > span {
+.launch-stats > div > span,
+.mint-event-facts > div > span,
+.mint-event-action > div > span:first-child,
+.event-total > span:first-child {
   display: block;
   color: var(--color-text-muted);
   font-size: 10px;
@@ -396,9 +400,7 @@
 .event-total {
   min-width: 92px;
 }
-.event-total > .price {
-  font-size: 14px;
-}
+.event-total > .price {font-size:18px}
 .mint-trust {
   display: flex;
   align-items: center;
@@ -674,7 +676,7 @@
 
 /* Home dashboard */
 .home-dashboard{display:grid;grid-template-columns:minmax(0,1.14fr) minmax(470px,.86fr);min-height:min(760px,calc(100dvh - 210px));margin-inline:calc(var(--gutter)*-1)}
-main:has(>.home-dashboard)+.footer{margin-top:0}
+main:has(>.home-dashboard)+.site-footer{margin-top:0}
 .home-launch,.home-market{min-width:0;padding:clamp(34px,3.6vw,58px) clamp(24px,3.2vw,52px) 44px}
 .home-launch{border-right:1px solid var(--color-border);background:radial-gradient(circle at 70% 24%,#ff745e0a,transparent 38%)}
 .home-market{background:#0f1012}
@@ -741,3 +743,62 @@ main:has(>.home-dashboard)+.footer{margin-top:0}
 
 /* Preserve the one-pixel screen-reader box inside marketplace filter rails. */
 .market-filter-groups legend.sr-only{width:1px;margin:-1px}
+
+/* Unified Launchpad and Marketplace search */
+.global-search-copy>small,.global-search-place small{color:var(--color-text-muted);font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.global-search-group{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;border-bottom:1px solid var(--color-border);background:#111214;color:var(--color-text-muted);font-size:9px;font-weight:700;letter-spacing:.09em;text-transform:uppercase}
+.global-search-group span{font-variant-numeric:tabular-nums}
+.global-search-place{display:grid;gap:4px;justify-items:end;text-align:right}
+.global-search-place b{padding:3px 6px;border:1px solid var(--color-border-hover);border-radius:4px;color:var(--color-text-secondary);font-size:8px;letter-spacing:.06em;text-transform:uppercase}
+.global-search-place.launchpad b{border-color:#ff745e55;color:var(--color-accent)}
+.global-results-page{padding-bottom:56px}
+.global-results-form{display:flex;gap:10px;margin:28px 0}
+.global-results-form label{display:flex;align-items:center;gap:10px;flex:1;padding:0 14px;border:1px solid var(--color-border);border-radius:7px;background:var(--color-surface);color:var(--color-text-muted)}
+.global-results-form input{width:100%;height:46px;border:0;outline:0;background:transparent}
+.global-results-summary{margin-bottom:28px;color:var(--color-text-secondary);font-size:12px}
+.global-results-section{margin:32px 0 48px}
+.global-results-section>.section-heading>span{color:var(--color-text-muted);font-size:12px;font-variant-numeric:tabular-nums}
+@media(max-width:580px){.global-search-place{display:none}.global-results-form{align-items:stretch;flex-direction:column}.global-results-form .button{width:100%}}
+
+/* Minimal utility footer */
+.site-footer{margin-top:64px;border-top:1px solid var(--color-border);background:#0d0e10}
+.site-footer-inner{min-height:76px;display:grid;grid-template-columns:minmax(260px,1fr) auto minmax(260px,1fr);align-items:center;gap:32px;color:var(--color-text-muted);font-size:10px}
+.site-footer-copyright{font-size:10px;line-height:1.45}
+.site-footer-copyright a{color:var(--color-text-secondary)}
+.site-footer-copyright a:hover,.site-footer-legal a:hover,.site-footer-price:hover{color:var(--color-text-primary)}
+.site-footer-legal{display:flex;align-items:center;justify-content:center;gap:22px;color:var(--color-text-secondary);white-space:nowrap}
+.site-footer-meta{display:flex;align-items:center;justify-content:flex-end;gap:14px;white-space:nowrap}
+.site-footer-price{display:inline-flex;align-items:center;gap:7px;color:var(--color-text-muted);font-variant-numeric:tabular-nums}
+.site-footer-price>span{font-size:9px;font-weight:650;letter-spacing:.08em}
+.site-footer-price>strong{color:var(--color-text-secondary);font-size:10px;font-weight:550}
+.site-footer-divider{width:1px;height:13px;background:var(--color-border-hover)}
+.site-footer-social{display:inline-flex;align-items:center;gap:5px;color:var(--color-text-secondary)}
+.site-footer-social small{padding:2px 4px;border:1px solid var(--color-border);border-radius:3px;color:var(--color-text-muted);font-size:7px;font-weight:650;letter-spacing:.06em;text-transform:uppercase}
+.legal-page .legal-updated{margin:-19px 0 34px;color:var(--color-text-muted);font-size:11px}
+.legal-page>p:not(.legal-updated){max-width:700px}
+@media(max-width:900px){.site-footer-inner{grid-template-columns:1fr auto;gap:16px 28px;padding-block:20px}.site-footer-legal{grid-column:1;grid-row:1;justify-content:flex-start}.site-footer-meta{grid-column:2;grid-row:1/3}.site-footer-copyright{grid-column:1;grid-row:2}}
+@media(max-width:620px){.site-footer-inner{display:flex;align-items:flex-start;flex-direction:column;gap:14px;padding-block:22px}.site-footer-meta{width:100%;justify-content:flex-start;flex-wrap:wrap;row-gap:9px}.site-footer-copyright{order:3}.site-footer-legal{order:1}.site-footer-meta{order:2}}
+
+/* Aptos currency mark, traced from the supplied Aptos Symbol - Light Dark.svg. */
+.price{display:inline-flex;align-items:baseline;gap:.42em;max-width:100%;font-variant-numeric:tabular-nums;font-weight:600;line-height:1.15;white-space:nowrap}
+.aptos-currency{display:inline-flex;align-items:center;gap:.32em;line-height:1;white-space:nowrap}
+.aptos-symbol{width:1em;height:1em;flex:0 0 auto;color:currentColor}
+.currency{display:inline-flex;margin-left:0;color:var(--color-text-secondary);font-size:.74em;font-weight:600;vertical-align:baseline}
+.market-price-range label>span,.price-input>span{display:flex;align-items:center;gap:.34em}
+.market-dialog-price strong .aptos-currency{gap:.42em}
+p .aptos-currency{margin-inline:.12em;vertical-align:-.08em}
+
+/* Price typography: prominent commerce values stay readable; activity metadata remains compact. */
+.launch-stats .price{font-size:18px;color:var(--color-text-primary)}
+.mint-event-facts .price{font-size:18px;color:var(--color-text-primary)}
+.event-total>.price{font-size:18px;color:var(--color-text-primary)}
+.market-panel h2 .price{font-size:30px;color:var(--color-text-primary)}
+.market-hero-stats .price{font-size:18px;color:var(--color-text-primary)}
+.market-collection-table .price,.market-nft-copy .price{font-size:14px;color:var(--color-text-primary)}
+.market-event-value .price{font-size:11px}
+.market-review-economics .review-summary .price{font-size:13px}
+.market-review-economics .market-review-total .price{font-size:15px}
+.profile-listing-price .price{font-size:15px}
+.home-market-metric .price{font-size:13px}
+.home-market-list .currency{margin-left:0;font-size:.7em}
+@media(max-width:580px){td>.price{font-size:14px}.market-nft-copy .currency{display:inline-flex}}
