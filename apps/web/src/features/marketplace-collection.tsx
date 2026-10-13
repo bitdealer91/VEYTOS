@@ -94,18 +94,17 @@ function Filters({ prefix, status, setStatus, min, setMin, max, setMax, items, a
   const listed = items.filter((item) => item.listingId).length;
   const owned = account ? items.filter((item) => sameAddress(item.seller || item.owner, account)).length : 0;
   return <div className="market-filter-groups">
-    <fieldset><legend>Status</legend>{([
+    <fieldset><legend className="sr-only">Status</legend><p className="market-filter-section-title">Status</p>{([
       ['all', 'All', items.length], ['listed', 'Listed', listed], ['owned', 'Owned by you', owned],
     ] as const).map(([value, label, count]) => <label key={value} htmlFor={`${prefix}-${value}`}>
       <input id={`${prefix}-${value}`} type="radio" name={`${prefix}-status`} checked={status === value} onChange={() => setStatus(value)} />
       <span>{label}</span><small>{count}</small>
     </label>)}</fieldset>
-    <fieldset><legend>Price</legend><div className="market-price-range">
+    <fieldset><legend className="sr-only">Price in APT</legend><p className="market-filter-section-title">Price</p><div className="market-price-range">
       <label htmlFor={`${prefix}-min`}>Min APT<input id={`${prefix}-min`} inputMode="decimal" value={min} onChange={(event) => setMin(event.target.value)} placeholder="0" /></label>
       <span>–</span>
       <label htmlFor={`${prefix}-max`}>Max APT<input id={`${prefix}-max`} inputMode="decimal" value={max} onChange={(event) => setMax(event.target.value)} placeholder="Any" /></label>
     </div></fieldset>
-    <fieldset><legend>Token standard</legend><p className="market-standard-note">{items.some((item) => item.standard === 'v1') ? 'Token V1 · Legacy' : 'Digital Asset · V2'}</p></fieldset>
   </div>;
 }
 
@@ -164,7 +163,7 @@ export function MarketplaceCollectionTrading({ collectionKey, items, events, inv
   }, [account, effectiveItems, max, min, query, sort, status]);
   const names = useMemo(() => new Map(effectiveItems.map((item) => [item.assetKey, item.name])), [effectiveItems]);
   return <section className={`market-trading-shell ${activityCollapsed ? 'activity-collapsed' : ''}`}>
-    <aside className="market-filter-panel"><div className="market-panel-title"><SlidersHorizontal size={14} />Filters</div><Filters prefix="desktop" {...{ status, setStatus, min, setMin, max, setMax, items: effectiveItems, account }} /></aside>
+    <aside className="market-filter-panel"><div className="market-panel-title"><span className="eyebrow">REFINE INVENTORY</span><h2><SlidersHorizontal size={15} />Filters</h2></div><Filters prefix="desktop" {...{ status, setStatus, min, setMin, max, setMax, items: effectiveItems, account }} /></aside>
     <div className="market-items-panel">
       <div className="market-items-heading"><div><span className="eyebrow">TRADING INVENTORY</span><h2>Items</h2></div><span>{visible.length} shown</span></div>
       <details className="market-mobile-filters"><summary><SlidersHorizontal size={15} />Filters</summary><Filters prefix="mobile" {...{ status, setStatus, min, setMin, max, setMax, items: effectiveItems, account }} /></details>
