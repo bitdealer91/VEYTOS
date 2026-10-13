@@ -21,16 +21,16 @@ test('primary navigation stays focused on Launchpad and Marketplace', () => {
 
 test('search shows Launchpad and Marketplace locations and opens a selected drop', async () => {
   vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({
-    launchpad: [{ area: 'launchpad', href: '/collection/0xdrop', address: '0xdrop', collection: '0xcollection', name: 'Mintera Originals', creator: '0x123', metadataUri: '', status: 'LIVE', minted: '4', supply: '100', price: '100000000' }],
-    marketplace: [{ area: 'marketplace', href: '/explore/v2%3A0x123', key: 'v2:0x123', standard: 'v2', name: 'Mintera Originals', creator: '0x123', creatorName: 'Mintera', metadataUri: '', verified: true, native: true, floorPrice: '100000000', activeListings: '4' }],
+    launchpad: [{ area: 'launchpad', href: '/collection/0xdrop', address: '0xdrop', collection: '0xcollection', name: 'VEYTOS Originals', creator: '0x123', metadataUri: '', status: 'LIVE', minted: '4', supply: '100', price: '100000000' }],
+    marketplace: [{ area: 'marketplace', href: '/explore/v2%3A0x123', key: 'v2:0x123', standard: 'v2', name: 'VEYTOS Originals', creator: '0x123', creatorName: 'VEYTOS', metadataUri: '', verified: true, native: true, floorPrice: '100000000', activeListings: '4' }],
   }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
   render(<AppHeader />);
   const search = screen.getByRole('combobox', { name: 'Search collections' });
-  fireEvent.change(search, { target: { value: 'Mintera' } });
-  expect(await screen.findAllByRole('option', { name: /Mintera Originals/ })).toHaveLength(2);
+  fireEvent.change(search, { target: { value: 'VEYTOS' } });
+  expect(await screen.findAllByRole('option', { name: /VEYTOS Originals/ })).toHaveLength(2);
   expect([...screen.getByRole('listbox').querySelectorAll('.global-search-group')].map((group) => group.textContent)).toEqual(['Launchpad 1', 'Marketplace 1']);
   fireEvent.keyDown(search, { key: 'ArrowDown' });
-  await waitFor(() => expect(screen.getAllByRole('option', { name: /Mintera Originals/ })[0].getAttribute('aria-selected')).toBe('true'));
+  await waitFor(() => expect(screen.getAllByRole('option', { name: /VEYTOS Originals/ })[0].getAttribute('aria-selected')).toBe('true'));
   fireEvent.submit(search.closest('form')!);
   await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/collection/0xdrop'));
 });

@@ -1,4 +1,4 @@
-import { readPublicConfig } from '@mintos/config';
+import { readPublicConfig } from '@veytos/config';
 export const config = readPublicConfig({
   NEXT_PUBLIC_APTOS_NETWORK: process.env.NEXT_PUBLIC_APTOS_NETWORK,
   NEXT_PUBLIC_LAUNCHPAD_ADDRESS: process.env.NEXT_PUBLIC_LAUNCHPAD_ADDRESS,

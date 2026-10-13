@@ -1,215 +1,173 @@
 # VEYTOS
 
-The NFT home of Aptos.
+**The NFT home of Aptos.**
 
-An Aptos-native NFT launchpad and fixed-price marketplace for current Digital Assets
-and historical Token V1 collections.
+[![CI](https://github.com/bitdealer91/VEYTOS/actions/workflows/ci.yml/badge.svg)](https://github.com/bitdealer91/VEYTOS/actions/workflows/ci.yml)
+[![Aptos](https://img.shields.io/badge/network-Aptos%20testnet-2dd8a3.svg)](https://explorer.aptoslabs.com/?network=testnet)
+
+VEYTOS is an Aptos-native NFT launchpad and fixed-price marketplace with publicly
+available source code.
+It gives creators a single path to launch current Digital Asset collections and
+gives collectors one interface for both modern Token V2 assets and historical
+Token V1 collections.
+
+[Live testnet application](https://veytos-web.vercel.app) ·
+[Architecture](ARCHITECTURE.md) ·
+[Security status](SECURITY.md) ·
+[Contributing](CONTRIBUTING.md)
+
+> VEYTOS is in public testnet beta. The contracts are upgradeable, have not
+> completed an independent external audit, and are not mainnet-ready.
+
+## Why VEYTOS
+
+Aptos has two generations of NFT standards. New launchpads can focus on the
+Digital Asset standard, but collectors and creators still need safe discovery and
+trading for historical Token V1 assets. VEYTOS treats both as first-class Aptos
+assets while keeping settlement authorization on-chain.
+
+- **Aptos-native launchpad:** staged metadata, immutable launch terms, supply and
+  wallet limits, royalties, pauses, and atomic APT settlement.
+- **V1 and V2 marketplace:** fixed-price list, cancel, and buy flows with adapters
+  that validate each asset standard before custody.
+- **On-chain authority:** ownership, price, fees, royalties, and settlement are
+  verified by Move. The database and UI are discovery layers, not sources of truth.
+- **Transparent security model:** privileged roles, invariants, known limitations,
+  test coverage, deployment assumptions, and audit handoff are public.
+- **Reproducible evidence:** real Aptos testnet deployments, transactions, bytecode
+  comparisons, and browser acceptance records are linked from the repository.
 
 ## Current status
 
-**Phase 1A, Phase 1B, and Phase 2C passed their Aptos testnet gates.** The launchpad,
-Token V1/V2 discovery, fixed-price marketplace contracts, and browser List/Cancel/Buy
-flows are verified on testnet. Phase 3A prepares the public testnet beta; mainnet
-security gates and an external audit remain incomplete.
+Completed:
 
-Implemented:
+- Aptos Move launchpad and fee policy.
+- Token V1 and V2 discovery with strict normalization and complete pagination.
+- Fixed-price V1/V2 marketplace settlement.
+- Browser wallet flows for mint, list, cancel, and buy.
+- PostgreSQL projection schema and resumable marketplace indexer.
+- 202 Move security and behavior tests, plus 87 Node/TypeScript and 96 frontend tests.
+- Real testnet acceptance for launchpad and marketplace flows.
+- Auditor handoff package, threat model, invariant inventory, and release gates.
 
-- Architecture, authority model, research references and implementation milestones.
-- npm TypeScript workspaces with strict type checking and a reproducible lockfile.
-- PostgreSQL/Drizzle schema and generated SQL migration for 13 entities.
-- Exact APT/octas conversion, checked primary-sale quotes and metadata validation.
-- Provider-neutral storage interface (real IPFS adapter is still pending).
-- Move fee administration: initial 5%, maximum 10%, configurable treasury,
-  two-step admin rotation, pause state, events and checked arithmetic.
-- Native Digital Asset collection creation, staged metadata, immutable launch terms,
-  lifetime supply/wallet limits, pause controls, royalties and atomic APT settlement.
-- 182 passing Move tests plus current TypeScript/Node and frontend regression suites;
-  normal type checking includes the testnet operator and indexer scripts.
-- Real testnet publication and two-NFT mint, verified owner/counters/events and
-  exact 5% payment split. See [TESTNET_ACCEPTANCE.md](TESTNET_ACCEPTANCE.md).
-- Official Indexer discovery for Token V1 and V2, with strict normalization,
-  complete pagination, deduplication and a read-only wallet profile.
-- Browser wallet mint and committed-version ownership reconciliation. See
-  [frontend evidence](docs/evidence/frontend-browser-mint.json).
+Before mainnet:
 
-Not implemented yet: creator storage uploads, creator dashboard, admin UI, offers,
-auctions, or mainnet deployment. Marketplace browsing requires the durable PostgreSQL
-projection worker documented in [public beta operations](docs/PUBLIC_BETA_OPERATIONS.md).
-Acceptance uses three disposable SDK-controlled testnet wallets. Database migrations
-have been generated, but not applied to a PostgreSQL instance here.
+- production creator storage and upload workflow;
+- creator and administration interfaces;
+- public beta operations and observability;
+- independent contract security review and remediation;
+- multisig, immutable package publication, and mainnet acceptance ceremony.
 
-## Architecture and stack
+## Verified testnet deployments
 
-Read [ARCHITECTURE.md](ARCHITECTURE.md) for the full design, standards decisions,
-data model, repository layout, security boundaries and open validation gates.
+| Component | Aptos testnet address | Evidence |
+| --- | --- | --- |
+| Launchpad | `0x5e802dc2d3105fbf967541d9cd64f5d34a18ebb473a4d40ddb26c8f727e9db28` | [Gate A acceptance](TESTNET_ACCEPTANCE.md) |
+| Hardened V2 marketplace | `0x0cf2b5af2e168b4ba7f002f705e7f1c1954284756286167800e2b6b11ae6ab64` | [V2 acceptance](docs/MARKETPLACE_TESTNET_ACCEPTANCE.md) |
+| V1 marketplace | `0x40fcdc2583e3e15c09f20a5d777b72f7bec8a9ac9292d57c03e9fb23c091eebb` | [V1 acceptance](docs/MARKETPLACE_V1_TESTNET_ACCEPTANCE.md) |
 
-Stack: Next.js/React/TypeScript, Tailwind, TanStack Query, Aptos Move, official
-Aptos SDK and Wallet Adapter, PostgreSQL/Drizzle, and replaceable IPFS storage.
-Branding lives in `packages/config/src/index.ts`; UI code must import it rather
-than embedding the working name.
+These are disposable, upgradeable development packages. Addresses and transaction
+hashes are public blockchain data; no private keys are stored in this repository.
+The first launchpad acceptance deployment retains an earlier immutable package
+identifier in its historical on-chain record. All active project naming is VEYTOS.
 
-## Local setup
+## Architecture
 
-Use Node.js 22 or newer and npm. Node 24 was used for this milestone.
+```text
+Wallet + Next.js application
+          │
+          ├── authoritative reads ── Aptos fullnode / Indexer API
+          ├── discovery reads ────── PostgreSQL projection
+          └── signed transactions ─ Move launchpad and marketplace
+                                      │
+                                      ├── fee policy
+                                      ├── Token V1 escrow adapter
+                                      └── Digital Asset V2 escrow adapter
+```
+
+Stack: Next.js, React, TypeScript, TanStack Query, Aptos Move, the official Aptos
+TypeScript SDK and Wallet Adapter, PostgreSQL/Drizzle, and replaceable IPFS storage.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for trust boundaries, standards decisions,
+data models, and repository layout.
+
+## Local development
+
+Requirements:
+
+- Node.js 22;
+- npm;
+- the [official Aptos CLI](https://aptos.dev/build/cli) for Move commands;
+- PostgreSQL only when exercising migrations or the durable indexer.
 
 ```sh
 npm ci
 cp .env.example .env
 npm run dev
-npm run check
 ```
 
-Copy `apps/web/.env.example` to `apps/web/.env.local` for the browser application.
-`npm run dev` starts Next.js and `npm run build` performs the production webpack build.
+The browser application uses `apps/web/.env.local`. Start from
+`apps/web/.env.example` and never place private provider keys in a
+`NEXT_PUBLIC_*` variable.
 
-### Move setup
-
-Install the [official Aptos CLI](https://aptos.dev/build/cli/install-cli/install-cli-mac).
-CLI 9.6.0 was used for local verification. If it is not on PATH, export its path:
+## Validation
 
 ```sh
-export APTOS_CLI=/absolute/path/to/aptos
-npm run move:compile
-npm run move:test
+npm run check          # TypeScript, Node tests, frontend tests
+npm run build          # Production Next.js build
+npm run move:test      # Launchpad and marketplace Move tests
+npm run move:compile   # Production Move packages
 ```
 
-These scripts use `--dev` and the package's development address `0xcafe`. That
-address is test-only, not a deployed contract. The package pins official framework
-dependencies to commit `1b116b414ccc1d860fa72160d9b9a770e8d8e88f`. First compilation
-downloads dependencies into the CLI's Move cache and requires network access.
-Never use development address substitution for an actual deployment.
+GitHub Actions runs the same application and Move gates for every pull request and
+push to `main`. Move validation is pinned to Aptos CLI 9.6.0.
 
-Fee policy stores configuration and quotes; launchpad enforces pauses and the
-protected drop fee snapshot. Minting transfers APT directly to creator/treasury
-and creates native NFTs atomically. No custody or withdrawal facility is retained.
+## Environment boundaries
 
-### Database
+The checked-in `.env.example` files contain names and safe defaults only.
 
-Provide a local or managed PostgreSQL URL in `.env`, then:
+- `APTOS_NETWORK` and `NEXT_PUBLIC_APTOS_NETWORK` must agree.
+- `NEXT_PUBLIC_LAUNCHPAD_ADDRESS` and `NEXT_PUBLIC_MARKETPLACE_ADDRESS` are public
+  on-chain addresses.
+- `DATABASE_URL`, `APTOS_API_KEY`, `APTOS_INDEXER_API_KEY`, and `IPFS_API_TOKEN`
+  are server-only.
+- `VEYTOS_TESTNET_ACCOUNTS_FILE` points to an owner-only file outside the
+  repository. Key material never belongs in `.env`.
+- `.aptos/`, `.testnet/`, `.vercel/`, populated `.env*`, build output, and local
+  dependencies are ignored by Git.
 
-```sh
-npm run db:generate
-npm run db:migrate
-```
+See the environment examples for the complete configuration contract.
 
-Inspect generated SQL before applying it to a shared environment. Migration scripts
-use the server-only `DATABASE_URL`; no credentials are supplied in source. All chain
-amounts/versions use decimal integer strings and SQL numeric(20,0), not JavaScript
-numbers or signed PostgreSQL bigint. Monetary bounds, conservation, address format,
-network relationships and event uniqueness have database constraints.
+## Security
 
-## Environment variables
+The current code is unaudited and must not be presented as mainnet-ready. Important
+residual risks include upgrade authority, retained creator capabilities in some V2
+collections, unusual Token V1 configurations, storage economics, and adversarial gas
+bounds.
 
-`.env.example` documents current operator inputs and application inputs. Public beta
-browser, indexer, storage, and worker variables are also listed in
-`apps/web/.env.example`; private provider credentials remain server-only.
+Read:
 
-- `APTOS_NETWORK`: server network, one of testnet/devnet/mainnet. Must match browser.
-- `NEXT_PUBLIC_APTOS_NETWORK`: public network; defaults to testnet.
-- `NEXT_PUBLIC_LAUNCHPAD_ADDRESS`: real published module address; no development
-  fallback. Mainnet configuration fails without a nonzero address.
-- `BETA_INDEXER_START_VERSION`: first version for complete launchpad and marketplace backfill.
-- `APTOS_FULLNODE_URL`, `APTOS_INDEXER_URL`: optional server endpoint overrides.
-- `APTOS_API_KEY`, `APTOS_INDEXER_API_KEY`: optional server-only provider credentials.
-- `NEXT_PUBLIC_APTOS_FULLNODE_URL`: optional browser-safe RPC endpoint override.
-  It must not contain a secret credential; private managed-provider keys stay in
-  `APTOS_API_KEY` and are used only by server-side Aptos reads.
-- `NEXT_PUBLIC_APP_URL`: public origin for auth and sharing. Mainnet requires HTTPS.
-- `DATABASE_URL`: server-only PostgreSQL DSN for migrations and product storage.
-- `IPFS_API_URL`, `IPFS_API_TOKEN`: server-only upload endpoint and credential.
-- `NEXT_PUBLIC_IPFS_GATEWAY`: public retrieval gateway; content URIs stay `ipfs://`.
-- `VEYTOS_FEATURED_DROPS` / `VEYTOS_HIDDEN_DROPS`: optional ordered public
-  launchpad curation; every configured address is still resolved and verified
-  through the Aptos launchpad view before rendering.
-- `NEXT_PUBLIC_APTOS_CONNECT_DAPP_ID`: optional public Aptos Connect identifier.
-- `APTOS_CLI`: executable path for local Move scripts; defaults to `aptos`.
-- `MINTOS_TESTNET_ACCOUNTS_FILE`: operator-only absolute path to disposable
-  account JSON outside this repository; owner-only permissions are required.
-  This variable contains a path, never key material.
+- [Security status and reporting](SECURITY.md)
+- [Auditor handoff](docs/audit/AUDIT_HANDOFF.md)
+- [Security invariants](docs/audit/SECURITY_INVARIANTS.md)
+- [Known limitations](docs/audit/KNOWN_LIMITATIONS.md)
+- [Mainnet release gate](docs/MAINNET_RELEASE_GATE.md)
 
-Next.js replaces public variables at build time; network/address changes require a
-new frontend build. Never expose private RPC/storage keys with a NEXT_PUBLIC prefix.
-There is no environment private key or application backend wallet signing feature.
-The testnet-only operator tool loads disposable keys from the external file.
+Do not disclose an exploitable vulnerability in a public issue.
 
-## Testing and evidence
+## Roadmap
 
-```sh
-npm run check
-npm run move:test
-npm run move:compile
-npm run db:generate
-npm audit
-```
+1. Operate the public testnet beta with durable indexing, storage, monitoring, and
+   creator workflows.
+2. Complete an independent Move contract audit and remediate all release blockers.
+3. Establish multisig operations and publish reviewed immutable mainnet packages.
+4. Expand creator tooling and marketplace functionality after the core settlement
+   path is proven safe.
 
-[docs/MILESTONE_1.md](docs/MILESTONE_1.md) is the historical foundation checkpoint.
-[TESTNET_ACCEPTANCE.md](TESTNET_ACCEPTANCE.md) and its linked machine-readable
-evidence record the current contract acceptance. Move tests live in
-`move/launchpad/tests` and module-local test functions.
+## Source availability
 
-Drizzle's legacy development loader brings an old esbuild dependency. A targeted
-override pins that loader to esbuild 0.25.12; migration generation was verified after
-the override. Do not remove it without rechecking the advisory and tooling. This
-override does not change the separate tsx esbuild dependency.
+The source code is publicly available for evaluation and security review. No
+open-source software license is currently granted; all rights are reserved unless
+a file explicitly states otherwise. The licensing scope may be updated as VEYTOS
+and its ecosystem commitments mature.
 
-## Testnet deployment and acceptance
-
-```sh
-export APTOS_NETWORK=testnet
-export NEXT_PUBLIC_APTOS_NETWORK=testnet
-export MINTOS_TESTNET_ACCOUNTS_FILE="$HOME/.local/share/mintos/testnet/accounts.json"
-export APTOS_CLI=/absolute/path/to/aptos
-npm run testnet:accounts
-# Fund the printed admin address with at least 5 TESTNET APT via the official faucet.
-npm run testnet:preflight
-npm run testnet:acceptance
-npm run mainnet:nft-smoke
-```
-
-The tool enforces testnet chain ID 2 and the official fullnode. It validates
-distinct admin/creator/buyer identities, binds the package address to the publisher,
-uses the admin as this test's treasury, and rejects conflicting environment values.
-It runs TypeScript checks and Move tests, compiles production sources with the real
-publisher address, publishes, checks bytecode, initializes fees, funds the creator
-with 3 APT and buyer with 1 APT, creates 100 metadata entries and mints two NFTs.
-The creator funds pay real storage costs. Future application treasury configuration
-is not coupled to this disposable testnet choice.
-
-`.testnet/journal.json` stores transaction hashes and signed bytes before submission,
-never private keys. A resume reconciles those hashes; only HTTP 404 permits sending
-the identical signed bytes again. Other errors fail closed. Failed or expired
-transactions are not automatically re-signed. See the recovery instructions and
-recorded out-of-gas deviation in [TESTNET_ACCEPTANCE.md](TESTNET_ACCEPTANCE.md).
-Do not delete the journal to retry a mint. A run lock prevents concurrent operators.
-
-The creator website creates a collection under the existing package; creators do
-not publish Move packages or run CLI commands. Deployment tooling is for operators.
-Set the real module address in the environment only after on-chain verification.
-Use testnet for persistent integration; devnet is disposable development state.
-
-Gate A verifies committed transactions and native state using the SDK. Its local,
-content-addressed metadata fixtures are not publicly pinned. Browser wallet
-acceptance is recorded; public storage acceptance remains future work.
-
-## Frontend and worker deployment
-
-Build `apps/web` on Vercel or another Node-compatible HTTPS host with the public
-network/address/origin and server-only database configuration. Run migrations as an
-explicit release step. Deploy `Dockerfile.indexer` as a continuously supervised worker.
-It resumes from a durable PostgreSQL checkpoint, verifies successful transactions,
-and writes duplicate-safe marketplace and launchpad projections. Long-running indexing
-stays outside request handlers and never authorizes a trade. See
-[PUBLIC_BETA_OPERATIONS.md](docs/PUBLIC_BETA_OPERATIONS.md).
-
-## Security and mainnet
-
-Read [SECURITY.md](SECURITY.md) and [MAINNET_CHECKLIST.md](MAINNET_CHECKLIST.md).
-The current package has compatible upgrades for testnet development. Mainnet
-requires reviewed immutable publication, secured multisig configuration and all
-acceptance gates. No mainnet deployment has been performed or is implied.
-
-## Next milestone
-
-Deploy the Phase 3A web service, durable worker, and PostgreSQL projection to a public
-HTTPS testnet environment. Run the clean-browser public beta smoke gate before inviting
-external testers. Mainnet remains blocked on an external contract security review.
+Before proposing a change, read [CONTRIBUTING.md](CONTRIBUTING.md).

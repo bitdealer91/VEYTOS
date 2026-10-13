@@ -10,7 +10,7 @@ Read [AUDIT_SCOPE](AUDIT_SCOPE.md) for all six modules, entries, resources, capa
 
 ## Repository and reproducibility
 
-- `move/launchpad/{sources,tests}`, package MintosLaunchpad: fee_policy and launchpad. AptosFramework/AptosTokenObjects pin `1b116b414ccc1d860fa72160d9b9a770e8d8e88f`.
+- `move/launchpad/{sources,tests}`, package VeytosLaunchpad: fee_policy and launchpad. AptosFramework/AptosTokenObjects pin `1b116b414ccc1d860fa72160d9b9a770e8d8e88f`.
 - `move/marketplace/{sources,tests}`, package VeytosMarketplace: marketplace_fee_policy, marketplace, settlement_v1, settlement_v2. AptosFramework/AptosTokenObjects/AptosToken pin `831c39cff4c5a8ead98ddffe0edfc4ba51623e91`.
 - `packages/aptos`: payloads, reads, transaction reconciliation and NFT discovery; `packages/domain`: money/validation/state rules; `packages/database`: projections/schema; `packages/storage` and `packages/config`: storage interface and shared configuration.
 - `apps/web`: Next.js wallet UI and tests; `scripts`: read-only research, acceptance and indexing tools; `docs/evidence`: historical public transaction/research records.

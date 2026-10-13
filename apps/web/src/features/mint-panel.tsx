@@ -4,7 +4,7 @@ import {useRouter} from 'next/navigation';
 import {useQuery,useQueryClient} from '@tanstack/react-query';
 import {useWallet} from '@aptos-labs/wallet-adapter-react';
 import {ArrowUpRight,ShieldCheck,X,Minus,Plus} from 'lucide-react';
-import {brand} from '@mintos/config';
+import {brand} from '@veytos/config';
 import {dropStatus,isUnresolved,networkMatches,readableError,validateQuantity,previewMint} from '@veytos/aptos/domain';
 import type {Drop,PendingMint,TransactionPhase} from '@veytos/aptos/types';
 import {pendingMintSchema,transactionTransition,definitiveRejection} from '@veytos/aptos/recovery';

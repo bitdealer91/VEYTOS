@@ -1,1 +1,1 @@
-{"name":"@mintos/database","private":true,"version":"0.0.1","type":"module","exports":"./src/schema.ts"}
+{"name":"@veytos/database","private":true,"version":"0.0.1","type":"module","exports":"./src/schema.ts"}

@@ -1,5 +1,5 @@
 [package]
-name = "MintosLaunchpad"
+name = "VeytosLaunchpad"
 version = "0.0.1"
 upgrade_policy = "compatible"
 

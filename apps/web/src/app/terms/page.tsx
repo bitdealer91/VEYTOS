@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { brand } from '@mintos/config';
+import { brand } from '@veytos/config';
 import { network } from '@/lib/config';
 import { AptosCurrency } from '@/components/aptos-symbol';
 

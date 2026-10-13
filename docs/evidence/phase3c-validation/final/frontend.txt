@@ -7,7 +7,7 @@
 > vitest run
 
 
- RUN  v5.0.1 /Users/maksim/projects/Mintera/apps/web
+ RUN  v5.0.1 <repository>/apps/web
 
 
  Test Files  8 passed (8)

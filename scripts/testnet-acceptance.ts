@@ -141,7 +141,11 @@ const entry = (name: string, signer: Account, data: InputGenerateTransactionPayl
   }, success);
 
 if (!journal.steps.publish) assert(await balance(admin) >= 500_000_000n, "Fund the deployer with at least 5 testnet APT for this acceptance run");
-const buildRoot = ".testnet/package/build/MintosLaunchpad";
+const CURRENT_PACKAGE_NAME = "VeytosLaunchpad";
+// The first public Gate A deployment predates the VEYTOS name. Keep its immutable
+// on-chain package identifier readable when resuming that historical journal.
+const LEGACY_TESTNET_PACKAGE_NAME = "MintosLaunchpad";
+const buildRoot = `.testnet/package/build/${CURRENT_PACKAGE_NAME}`;
 const modules = (await readdir(`${buildRoot}/bytecode_modules`)).filter((p) => p.endsWith(".mv")).sort();
 assert.deepEqual(modules, ["fee_policy.mv", "launchpad.mv"], "Publish production modules only");
 const publish = await execute("publish", admin, async () => aptos.publishPackageTransaction({
@@ -159,7 +163,8 @@ for (const file of modules) {
   deployedModules.push({ name, sha256: createHash("sha256").update(local).digest("hex"), matchesPublished: true });
 }
 const registry = await aptos.getAccountResource<{ packages: { name: string; upgrade_policy: { policy: number }; upgrade_number: string; source_digest: string }[] }>({ accountAddress: moduleAddress, resourceType: "0x1::code::PackageRegistry", options: { ledgerVersion: BigInt(publish.version) } });
-const packageRecord = registry.packages.find((p) => p.name === "MintosLaunchpad");
+const packageRecord = registry.packages.find((p) => p.name === CURRENT_PACKAGE_NAME)
+  ?? registry.packages.find((p) => p.name === LEGACY_TESTNET_PACKAGE_NAME);
 assert(packageRecord);
 assert.equal(packageRecord.upgrade_policy.policy, 1, "Gate A package uses compatible upgrades");
 const publishedPackage = { name: packageRecord.name, upgrade_policy: packageRecord.upgrade_policy, upgrade_number: packageRecord.upgrade_number, source_digest: packageRecord.source_digest };

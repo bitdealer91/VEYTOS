@@ -13,11 +13,11 @@ function collection(overrides: Partial<MarketplaceCollectionSummary>): Marketpla
 
 test('search ranks exact names ahead of prefix and substring matches', () => {
   const results = searchMarketplaceCollections([
-    collection({ key: 'v2:0x1', name: 'Rare Mintera Club' }),
-    collection({ key: 'v2:0x2', name: 'Mintera Originals' }),
-    collection({ key: 'v2:0x3', name: 'Mintera' }),
-  ], '  MINTERA ');
-  expect(results.map((result) => result.name)).toEqual(['Mintera', 'Mintera Originals', 'Rare Mintera Club']);
+    collection({ key: 'v2:0x1', name: 'Rare VEYTOS Club' }),
+    collection({ key: 'v2:0x2', name: 'VEYTOS Originals' }),
+    collection({ key: 'v2:0x3', name: 'VEYTOS' }),
+  ], '  VEYTOS ');
+  expect(results.map((result) => result.name)).toEqual(['VEYTOS', 'VEYTOS Originals', 'Rare VEYTOS Club']);
 });
 
 test('search matches creator display names, addresses, and collection keys', () => {
@@ -36,9 +36,9 @@ test('search ignores one-character input and respects the result limit', () => {
 test('Launchpad search matches drop names, drop addresses, collection addresses, and creators', () => {
   const drop: Drop = {
     address: '0xdrop123', collection: '0xcollection456', finalized: true, creator_paused: false, admin_paused: false,
-    uploaded: '10', minted: '4', terms: { creator: '0xcreator789', name: 'Mintera Drop', description: '', collection_uri: '', max_supply: '10', unit_price: '100000000', wallet_limit: '2', transaction_limit: '2', start_seconds: '1', end_seconds: '0', royalty_bps: '0', fee_bps: '0' },
+    uploaded: '10', minted: '4', terms: { creator: '0xcreator789', name: 'VEYTOS Drop', description: '', collection_uri: '', max_supply: '10', unit_price: '100000000', wallet_limit: '2', transaction_limit: '2', start_seconds: '1', end_seconds: '0', royalty_bps: '0', fee_bps: '0' },
   };
-  for (const query of ['mintera', '0xdrop123', '0xcollection456', '0xcreator789']) {
-    expect(searchLaunchpadDrops([drop], query, 2n)[0]).toMatchObject({ area: 'launchpad', href: '/collection/0xdrop123', name: 'Mintera Drop' });
+  for (const query of ['veytos', '0xdrop123', '0xcollection456', '0xcreator789']) {
+    expect(searchLaunchpadDrops([drop], query, 2n)[0]).toMatchObject({ area: 'launchpad', href: '/collection/0xdrop123', name: 'VEYTOS Drop' });
   }
 });

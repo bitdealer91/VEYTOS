@@ -6,7 +6,7 @@ import { Wallet, X, ArrowUpRight, LogOut, Copy, UserRound, Check, ChevronDown } 
 import { explorer } from '@/lib/config';
 import { useWalletError } from './providers';
 import { readableError } from '@veytos/aptos/domain';
-import { brand } from '@mintos/config';
+import { brand } from '@veytos/config';
 import { trackBetaEvent } from './beta-analytics';
 import { reportClientError } from '@/lib/observability';
 export function WalletButton({label='Connect wallet'}:{label?:string}) {

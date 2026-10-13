@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  application:
+    name: Application checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck and test
+        run: npm run check
+
+      - name: Build production application
+        run: npm run build
+
+  move:
+    name: Move contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install Aptos CLI 9.6.0
+        uses: aptos-labs/actions/install-aptos-cli@5639f3320d3798017169203ea8ebe6b12ca8c0c1
+        with:
+          CLI_VERSION: 9.6.0
+
+      - name: Run Move tests
+        run: npm run move:test
+
+      - name: Compile production Move packages
+        run: npm run move:compile

@@ -6,7 +6,7 @@ Status: internal preparation only; no independent external audit has been comple
 
 Review all six production modules below as one custody/economics boundary. Package-visible helpers are security-critical even though users cannot call them directly. Review test-only helpers separately for exclusion from published bytecode. No production Move source, manifest, custody behavior, or deployment is changed by Phase 3C.
 
-Launchpad: `move/launchpad`, package `MintosLaunchpad`, named address `launchpad`, development address `0xcafe`; framework pin `1b116b414ccc1d860fa72160d9b9a770e8d8e88f`.
+Launchpad: `move/launchpad`, package `VeytosLaunchpad`, named address `launchpad`, development address `0xcafe`; framework pin `1b116b414ccc1d860fa72160d9b9a770e8d8e88f`.
 Marketplace: `move/marketplace`, package `VeytosMarketplace`, named address `marketplace`, development address `0xbeef`; framework pin `831c39cff4c5a8ead98ddffe0edfc4ba51623e91`.
 Both manifests currently specify `compatible`. Pins differ intentionally in this baseline; do not silently harmonize them. Framework/VM semantics are dependencies, not independently verified by this package's tests.
 

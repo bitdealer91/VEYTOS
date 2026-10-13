@@ -14,8 +14,8 @@ export function validateAcceptanceEnvironment(env: NodeJS.ProcessEnv) {
   if (!TESTNET_FULLNODES.has(requestedFullnode)) {
     throw new Error("Gate A uses an official Aptos testnet fullnode; remove conflicting APTOS_FULLNODE_URL");
   }
-  const path = env.MINTOS_TESTNET_ACCOUNTS_FILE;
-  if (!path || !isAbsolute(path)) throw new Error("Set MINTOS_TESTNET_ACCOUNTS_FILE to an absolute path outside the repository");
+  const path = env.VEYTOS_TESTNET_ACCOUNTS_FILE;
+  if (!path || !isAbsolute(path)) throw new Error("Set VEYTOS_TESTNET_ACCOUNTS_FILE to an absolute path outside the repository");
   return path;
 }
 

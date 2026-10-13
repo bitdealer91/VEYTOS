@@ -5,7 +5,7 @@ import '@fontsource/geist/500.css';
 import '@fontsource/geist/600.css';
 import '@fontsource/geist/700.css';
 import './globals.css';
-import { brand } from '@mintos/config';
+import { brand } from '@veytos/config';
 import { Providers } from '@/components/providers';
 import { AppHeader } from '@/components/header';
 import { network } from '@/lib/config';

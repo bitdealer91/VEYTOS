@@ -10,7 +10,7 @@ It is not browser-wallet acceptance, an external audit or mainnet approval.
   https://api.testnet.aptoslabs.com/v1 (the tool rejects endpoint/network drift).
 - Package address: `0x5e802dc2d3105fbf967541d9cd64f5d34a18ebb473a4d40ddb26c8f727e9db28`.
 - Publication: [`0x8a2cb1e2f211d9519f88fad8a5e2566694e6d558026d4a5695968fe35e217506`](https://explorer.aptoslabs.com/txn/0x8a2cb1e2f211d9519f88fad8a5e2566694e6d558026d4a5695968fe35e217506/overview?network=testnet); ledger version **11370375847**.
-- Package: MintosLaunchpad 0.0.1; published upgrade policy **compatible (1)**,
+- Historical package identifier: `MintosLaunchpad` 0.0.1 (published before the VEYTOS rename); published upgrade policy **compatible (1)**,
   upgrade number **0**. The publisher retains upgrade authority on this testnet package.
 - CLI: **9.6.0**, TypeScript SDK: **7.3.0**, Node: **24.9.0**.
 - Framework/AptosTokenObjects pin: `1b116b414ccc1d860fa72160d9b9a770e8d8e88f`.

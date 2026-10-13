@@ -1,4 +1,4 @@
-# Mintos — Phase 1 architecture
+# VEYTOS — architecture
 
 Historical Phase 1 design: later marketplace/indexer work supersedes several status
 statements below. For the current Phase 3C security boundary, framework pins,

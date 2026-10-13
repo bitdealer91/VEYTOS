@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { brand } from '@mintos/config';
+import { brand } from '@veytos/config';
 import { WalletButton } from './wallet';
 import { GlobalSearch } from './global-search';
 import {network} from '@/lib/config';

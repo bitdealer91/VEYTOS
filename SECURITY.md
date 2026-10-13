@@ -6,12 +6,35 @@ Phase 3C current review package: [auditor handoff](docs/audit/AUDIT_HANDOFF.md),
 has been completed. Phase 3C leaves all production Move source unchanged.
 
 The launchpad is an early implementation and is **not audited or mainnet-ready**.
-The fee policy and native Digital Asset launchpad passed 82 Move tests and real
+The fee policy and native Digital Asset launchpad pass 82 Move tests and real
 testnet Gate A: creator launch, independent buyer mint, owner/counter/event checks
-and exact 5% settlement. The browser-originated mint gate, 35 TypeScript/Node tests,
-14 frontend tests, workspace typecheck and production build pass. Storage and
-mainnet acceptance remain incomplete.
+and exact 5% settlement. The current local suite also passes 120 marketplace Move
+tests, 87 TypeScript/Node tests, 96 frontend tests, workspace typecheck, and the
+production build. Storage and mainnet acceptance remain incomplete.
 See [TESTNET_ACCEPTANCE.md](TESTNET_ACCEPTANCE.md) for exact transactions and limits.
+
+## Reporting a vulnerability
+
+Do not open a public issue for a suspected vulnerability or include private keys,
+seed phrases, credentials, or a working exploit in public content. Use
+[GitHub private vulnerability reporting](https://github.com/bitdealer91/VEYTOS/security/advisories/new)
+to share the affected component, impact, reproduction steps, and a safe proof of
+concept. If private reporting is temporarily unavailable, contact the repository
+owner through their GitHub profile first and wait for a private channel before
+sending technical details.
+
+Security reports should cover code in this repository. Aptos protocol, wallet,
+provider, and third-party dependency vulnerabilities should also be reported to the
+responsible upstream project.
+
+## Dependency advisory status
+
+As of 2026-10-13, `npm audit --audit-level=high` reports no high or critical
+advisories. It still reports six moderate paths to `uuid@9.0.1` through the latest
+available `@aptos-labs/wallet-adapter-react@8.3.3` dependency chain. npm proposes a
+breaking downgrade of the wallet adapter rather than an upstream-compatible patch,
+so that automated change is intentionally not applied. Recheck the Aptos wallet
+adapter chain before public mainnet release.
 
 ## Trust boundaries
 
@@ -53,9 +76,10 @@ and verify published metadata. Do not describe this development package as immut
 
 ## Marketplace threat model
 
-The V2 fee policy, shared lifecycle and isolated escrow implementation passed 73
-marketplace Move tests and live Aptos testnet Gate D. It remains unaudited,
-upgradeable and not mainnet-ready. V1 settlement is now implemented; the counts in this historical paragraph predate it. See
+The fee policy, shared lifecycle, V1 escrow, and isolated V2 escrow implementation
+pass 120 marketplace Move tests. Live Aptos testnet gates cover representative V1
+and V2 list/cancel/buy paths. The packages remain unaudited, upgradeable, and not
+mainnet-ready. See
 `docs/MARKETPLACE_ARCHITECTURE.md` and `docs/MARKETPLACE_TESTNET_ACCEPTANCE.md`.
 
 - **Fake listings and ownership claims:** entry functions derive identity and owner
@@ -138,13 +162,12 @@ Source defaults are V1=0 and V2=926400 octas; V1 testnet acceptance configured
 Never commit private keys, wallet recovery phrases, database URLs, API credentials,
 session tokens or `.aptos` profiles. `.env.example` has no credentials. CLI profiles
 must be stored outside the repository. Gate A requires disposable keys in an
-external owner-only file, resolved through `MINTOS_TESTNET_ACCOUNTS_FILE`; it rejects
+external owner-only file, resolved through `VEYTOS_TESTNET_ACCOUNTS_FILE`; it rejects
 paths or symlinks resolving inside the repository. No key material belongs in `.env`.
 The ignored transaction journal contains signed transactions, not keys. Treat it
 as operator data: a pending signed transaction can be broadcast until expiration.
-Do not publish real signing keys in vulnerability reports. Until a dedicated private
-security contact exists, use a private channel to the repository owner; public issues
-are unsuitable for exploitable details.
+Do not publish real signing keys in vulnerability reports. Follow the private
+reporting process above; public issues are unsuitable for exploitable details.
 
 ## Incident controls
 
