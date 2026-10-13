@@ -26,7 +26,7 @@ function DropTiming({ drop, status }: { drop: Drop; status: ReturnType<typeof dr
 
 function MarketplaceTable({ items }: { items: MarketplaceCollectionSummary[] }) {
   return <div className="home-market-list">
-    <div className="home-market-list-head" aria-hidden="true"><span>Collection</span><span>Floor</span><span>24h volume</span><span>Listed</span><span /></div>
+    <div className="home-market-list-head" aria-hidden="true"><span>Collection</span><span>Floor</span><span>Listed</span><span>24h volume</span><span className="home-market-extra">24h sales</span><span className="home-market-extra">Supply</span><span /></div>
     <ol>{items.map((collection, index) => {
         const change = floorChange(collection.floorPrice, collection.floor24hAgo);
         const share = listedShare(collection.activeListings, collection.supply);
@@ -35,8 +35,10 @@ function MarketplaceTable({ items }: { items: MarketplaceCollectionSummary[] }) 
             <span className="home-market-name"><strong>{collection.name}</strong><small>{collection.native ? 'VEYTOS native' : 'Aptos collection'}</small></span>{collection.verified && <BadgeCheck size={14} aria-label="Verified VEYTOS collection" />}
           </span>
           <span className="home-market-metric"><small className="home-market-metric-label">Floor</small><strong>{collection.floorPrice ? <PriceDisplay octas={collection.floorPrice} /> : <span className="market-dash">—</span>}</strong>{change && <small className={`market-trend ${change.trend}`}>{change.label}</small>}</span>
-          <span className="home-market-metric"><small className="home-market-metric-label">24h volume</small><strong><PriceDisplay octas={collection.volume24h} /></strong><small>{collection.sales24h} {collection.sales24h === '1' ? 'sale' : 'sales'}</small></span>
           <span className="home-market-metric"><small className="home-market-metric-label">Listed</small><strong>{collection.activeListings}</strong>{share && <small>{share}</small>}</span>
+          <span className="home-market-metric"><small className="home-market-metric-label">24h volume</small><strong><PriceDisplay octas={collection.volume24h} /></strong></span>
+          <span className="home-market-metric home-market-extra"><small className="home-market-metric-label">24h sales</small><strong>{collection.sales24h}</strong></span>
+          <span className="home-market-metric home-market-extra"><small className="home-market-metric-label">Supply</small><strong>{collection.supply ?? <span className="market-dash">—</span>}</strong></span>
           <span className="home-row-open" aria-hidden="true"><ArrowRight size={16} /></span>
         </Link></li>})}</ol>
   </div>;

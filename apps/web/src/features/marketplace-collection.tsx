@@ -168,7 +168,7 @@ export function MarketplaceCollectionTrading({ collectionKey, items, events, inv
   }, [account, effectiveItems, max, min, query, sort, status]);
   const names = useMemo(() => new Map(effectiveItems.map((item) => [item.assetKey, item.name])), [effectiveItems]);
   return <section className={`market-trading-shell ${activityCollapsed ? 'activity-collapsed' : ''}`}>
-    <aside className="market-filter-panel"><div className="market-panel-title"><span className="eyebrow">REFINE INVENTORY</span><h2><SlidersHorizontal size={15} />Filters</h2></div><Filters prefix="desktop" {...{ status, setStatus, min, setMin, max, setMax, items: effectiveItems, account }} /></aside>
+    <aside className="market-filter-panel"><div className="market-filter-sticky"><div className="market-panel-title"><span className="eyebrow">REFINE INVENTORY</span><h2><SlidersHorizontal size={15} />Filters</h2></div><Filters prefix="desktop" {...{ status, setStatus, min, setMin, max, setMax, items: effectiveItems, account }} /></div></aside>
     <div className="market-items-panel">
       <div className="market-items-heading"><div><span className="eyebrow">TRADING INVENTORY</span><h2>Items</h2></div><span>{visible.length} shown</span></div>
       <details className="market-mobile-filters"><summary><SlidersHorizontal size={15} />Filters</summary><Filters prefix="mobile" {...{ status, setStatus, min, setMin, max, setMax, items: effectiveItems, account }} /></details>
