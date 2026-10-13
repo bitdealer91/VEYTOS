@@ -730,3 +730,13 @@ main:has(>.home-dashboard)+.footer{margin-top:0}
 .market-metric-stack .market-trend.flat{color:var(--color-text-muted)}
 .market-hero-stats .market-metric-stack{align-items:flex-start}
 .market-hero-stats .market-metric-stack small{font-size:9px}
+
+/* Keep the collection hero and trading inventory on one desktop grid. */
+.market-collection-page{min-width:0;max-width:100%;overflow-x:clip}
+.market-collection-hero{margin-inline:0}
+.market-trading-shell{width:100%;max-width:100%;min-width:0}
+.market-metric-stack .market-trend{font-size:11px;font-weight:650}
+.market-hero-stats .market-metric-stack .market-trend{font-size:11px}
+
+/* Preserve the one-pixel screen-reader box inside marketplace filter rails. */
+.market-filter-groups legend.sr-only{width:1px;margin:-1px}
