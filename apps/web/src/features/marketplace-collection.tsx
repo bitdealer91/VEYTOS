@@ -13,6 +13,7 @@ import {
 } from '@/lib/marketplace-session';
 import { Artwork } from '@/components/artwork';
 import { PriceDisplay } from '@/components/ui';
+import { floorChange, listedShare } from '@/lib/marketplace-metrics';
 
 type Status = 'all' | 'listed' | 'owned';
 type Sort = 'price-asc' | 'price-desc' | 'recent';
@@ -63,8 +64,9 @@ function projectedItems(items: MarketplaceInventoryItem[], listings: Marketplace
   return [...merged.values()];
 }
 
-export function MarketplaceCollectionStats({ collectionKey, items, floorPrice, activeListings, supply, totalVolume }: {
-  collectionKey: string; items: MarketplaceInventoryItem[]; floorPrice: string | null; activeListings: string; supply: string | null; totalVolume: string;
+export function MarketplaceCollectionStats({ collectionKey, items, floorPrice, floor24hAgo, activeListings, supply, totalVolume, volume24h, sales24h }: {
+  collectionKey: string; items: MarketplaceInventoryItem[]; floorPrice: string | null; floor24hAgo: string | null; activeListings: string; supply: string | null;
+  totalVolume: string; volume24h: string; sales24h: string;
 }) {
   const projection = useMarketplaceSessionProjection(collectionKey);
   const effective = useMemo(() => projectedItems(items, projection.listings, projection.terminals), [items, projection]);
@@ -79,11 +81,13 @@ export function MarketplaceCollectionStats({ collectionKey, items, floorPrice, a
   const effectiveFloor = listed === 0n ? null : completeListingWindow
     ? effectiveListed.reduce<string | null>((lowest, item) => !item.price || (lowest && BigInt(lowest) <= BigInt(item.price)) ? lowest : item.price, null)
     : floorPrice;
+  const change = floorChange(effectiveFloor, floor24hAgo);
+  const share = listedShare(listed, supply);
   return <dl className="market-hero-stats">
-    <div><dt>Floor price</dt><dd>{effectiveFloor ? <PriceDisplay octas={effectiveFloor} /> : '—'}</dd></div>
-    <div><dt>Listed</dt><dd>{listed.toString()}</dd></div>
+    <div><dt>Floor price</dt><dd><span className="market-metric-stack">{effectiveFloor ? <PriceDisplay octas={effectiveFloor} /> : '—'}{change && <small className={`market-trend ${change.trend}`}>{change.label}</small>}</span></dd></div>
+    <div><dt>Listed</dt><dd><span className="market-metric-stack"><span>{listed.toString()}</span>{share && <small>{share}</small>}</span></dd></div>
     {supply !== null && <div><dt>Total supply</dt><dd>{supply}</dd></div>}
-    <div><dt>Total volume</dt><dd><PriceDisplay octas={totalVolume} /></dd></div>
+    <div><dt>Total volume</dt><dd><span className="market-metric-stack"><PriceDisplay octas={totalVolume} /><small><PriceDisplay octas={volume24h} /> · 24h{BigInt(sales24h) > 0n ? ` · ${sales24h} ${sales24h === '1' ? 'sale' : 'sales'}` : ''}</small></span></dd></div>
   </dl>;
 }
 

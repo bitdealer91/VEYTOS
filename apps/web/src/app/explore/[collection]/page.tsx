@@ -33,8 +33,9 @@ export default async function Page({ params }: { params: Promise<{ collection: s
           <CollectionLinks uri={collection.metadataUri} links={collection.links} />
         </div>
       </div>
-      <MarketplaceCollectionStats collectionKey={collection.key} items={result.items} floorPrice={collection.floorPrice}
-        activeListings={collection.activeListings} supply={collection.supply} totalVolume={collection.totalVolume} />
+      <MarketplaceCollectionStats collectionKey={collection.key} items={result.items} floorPrice={collection.floorPrice} floor24hAgo={collection.floor24hAgo}
+        activeListings={collection.activeListings} supply={collection.supply} totalVolume={collection.totalVolume}
+        volume24h={collection.volume24h} sales24h={collection.sales24h} />
     </header>
     {result.metadataFailed && <p className="market-local-notice">Some optional collection media or profile details are unavailable. Indexed listings are unaffected.</p>}
     {result.failed && <p className="market-local-notice error">Marketplace inventory is temporarily unavailable. No stale listing state is shown.</p>}

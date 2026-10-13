@@ -59,6 +59,7 @@ export type MarketplaceCollectionSummary = {
   verified: boolean;
   native: boolean;
   floorPrice: string | null;
+  floor24hAgo: string | null;
   activeListings: string;
   volume24h: string;
   sales24h: string;
@@ -84,6 +85,7 @@ type CollectionAggregateRow = {
   collection_key: string;
   standard: 'v1' | 'v2';
   floor_price: string | null;
+  floor_24h_ago: string | null;
   active_listings: string;
   volume_24h: string;
   sales_24h: string;
@@ -202,6 +204,7 @@ function enrichCollection(aggregate: CollectionAggregateRow, metadata: Map<strin
     verified: nativeRecord?.verified || false,
     native: !!nativeRecord || !!launchpadRecord,
     floorPrice: aggregate.floor_price,
+    floor24hAgo: aggregate.floor_24h_ago,
     activeListings: aggregate.active_listings,
     volume24h: aggregate.volume_24h,
     sales24h: aggregate.sales_24h,
@@ -214,7 +217,7 @@ function enrichCollection(aggregate: CollectionAggregateRow, metadata: Map<strin
 
 function emptyAggregate(identity: CollectionIdentity): CollectionAggregateRow {
   return {
-    collection_key: identityKey(identity), standard: identity.standard, floor_price: null, active_listings: '0',
+    collection_key: identityKey(identity), standard: identity.standard, floor_price: null, floor_24h_ago: null, active_listings: '0',
     volume_24h: '0', sales_24h: '0', total_volume: '0', last_activity: null,
   };
 }
@@ -272,6 +275,18 @@ export const marketplaceCollections = cache(async (options: { sort?: string; lim
       ), active AS (
         SELECT collection_key,count(*) AS active_listings,min(price_octas) AS floor_price
         FROM marketplace_listings WHERE network=$1 AND module_address=$2 AND status='ACTIVE' GROUP BY collection_key
+      ), historical_active AS (
+        SELECT l.collection_key,min(l.price_octas) AS floor_24h_ago
+        FROM marketplace_listings l
+        JOIN marketplace_events started ON started.network=l.network AND started.module_address=l.module_address
+          AND started.listing_id=l.listing_id AND started.event_type='LISTED' AND started.transaction_version=l.listed_version
+        WHERE l.network=$1 AND l.module_address=$2 AND started.chain_timestamp<=now()-interval '24 hours'
+          AND NOT EXISTS (
+            SELECT 1 FROM marketplace_events terminal
+            WHERE terminal.network=l.network AND terminal.module_address=l.module_address AND terminal.listing_id=l.listing_id
+              AND terminal.event_type IN ('CANCELLED','PURCHASED') AND terminal.chain_timestamp<=now()-interval '24 hours'
+          )
+        GROUP BY l.collection_key
       ), purchases AS (
         SELECT collection_key,
           coalesce(sum(gross_price_octas) FILTER (WHERE chain_timestamp>=now()-interval '24 hours'),0) AS volume_24h,
@@ -282,10 +297,10 @@ export const marketplaceCollections = cache(async (options: { sort?: string; lim
         SELECT collection_key,max(chain_timestamp) AS last_activity
         FROM marketplace_events WHERE network=$1 AND module_address=$2 GROUP BY collection_key
       )
-      SELECT k.collection_key,k.standard,a.floor_price,coalesce(a.active_listings,0) AS active_listings,
+      SELECT k.collection_key,k.standard,a.floor_price,h.floor_24h_ago,coalesce(a.active_listings,0) AS active_listings,
              coalesce(p.volume_24h,0) AS volume_24h,coalesce(p.sales_24h,0) AS sales_24h,
              coalesce(p.total_volume,0) AS total_volume,r.last_activity
-      FROM collection_keys k LEFT JOIN active a USING(collection_key)
+      FROM collection_keys k LEFT JOIN active a USING(collection_key) LEFT JOIN historical_active h USING(collection_key)
       LEFT JOIN purchases p USING(collection_key) LEFT JOIN recent r USING(collection_key)
       LIMIT $3`, [network, marketplaceAddress, 100]);
       projectionRows = result.rows;
@@ -350,6 +365,16 @@ export const marketplaceCollection = cache(async (key: string) => {
       pool.query<CollectionAggregateRow>(`
         SELECT $3::text AS collection_key,$4::text AS standard,
           (SELECT min(price_octas)::text FROM marketplace_listings WHERE network=$1 AND module_address=$2 AND collection_key=$3 AND status='ACTIVE') AS floor_price,
+          (SELECT min(l.price_octas)::text
+           FROM marketplace_listings l
+           JOIN marketplace_events started ON started.network=l.network AND started.module_address=l.module_address
+             AND started.listing_id=l.listing_id AND started.event_type='LISTED' AND started.transaction_version=l.listed_version
+           WHERE l.network=$1 AND l.module_address=$2 AND l.collection_key=$3 AND started.chain_timestamp<=now()-interval '24 hours'
+             AND NOT EXISTS (
+               SELECT 1 FROM marketplace_events terminal
+               WHERE terminal.network=l.network AND terminal.module_address=l.module_address AND terminal.listing_id=l.listing_id
+                 AND terminal.event_type IN ('CANCELLED','PURCHASED') AND terminal.chain_timestamp<=now()-interval '24 hours'
+             )) AS floor_24h_ago,
           (SELECT count(*)::text FROM marketplace_listings WHERE network=$1 AND module_address=$2 AND collection_key=$3 AND status='ACTIVE') AS active_listings,
           (SELECT coalesce(sum(gross_price_octas),0)::text FROM marketplace_events WHERE network=$1 AND module_address=$2 AND collection_key=$3 AND event_type='PURCHASED' AND chain_timestamp>=now()-interval '24 hours') AS volume_24h,
           (SELECT count(*)::text FROM marketplace_events WHERE network=$1 AND module_address=$2 AND collection_key=$3 AND event_type='PURCHASED' AND chain_timestamp>=now()-interval '24 hours') AS sales_24h,

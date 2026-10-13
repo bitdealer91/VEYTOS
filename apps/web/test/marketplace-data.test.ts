@@ -32,16 +32,18 @@ test('collection discovery derives only real fixed-price projection metrics', as
   mocks.query.mockImplementation((sql: string) => {
     if (sql.includes('WITH collection_keys')) return Promise.resolve({ rows: [{
       collection_key: `v2:${mocks.collectionAddress}`, standard: 'v2', floor_price: '12000000', active_listings: '2',
-      volume_24h: '30000000', sales_24h: '1', total_volume: '50000000', last_activity: '2026-10-04T00:00:00.000Z',
+      floor_24h_ago: '10000000', volume_24h: '30000000', sales_24h: '1', total_volume: '50000000', last_activity: '2026-10-04T00:00:00.000Z',
     }] });
     return Promise.resolve({ rows: [] });
   });
   const result = await marketplaceCollections({ sort: 'volume' });
-  expect(result.items[0]).toMatchObject({ floorPrice: '12000000', activeListings: '2', volume24h: '30000000', sales24h: '1' });
+  expect(result.items[0]).toMatchObject({ floorPrice: '12000000', floor24hAgo: '10000000', activeListings: '2', volume24h: '30000000', sales24h: '1' });
   const sql = String(mocks.query.mock.calls[0]?.[0]);
   expect(sql).toContain("event_type='PURCHASED'");
   expect(sql).toContain("interval '24 hours'");
   expect(sql).toContain("status='ACTIVE'");
+  expect(sql).toContain("started.chain_timestamp<=now()-interval '24 hours'");
+  expect(sql).toContain("terminal.event_type IN ('CANCELLED','PURCHASED')");
   expect(sql).not.toMatch(/offer|bid/i);
 });
 

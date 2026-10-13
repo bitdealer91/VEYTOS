@@ -54,7 +54,7 @@ test('confirmed purchase hides a stale indexed Buy card and corrects collection 
   localStorage.setItem('veytos:marketplace-terminals:testnet:0xmarket', JSON.stringify([{
     assetKey: 'listed', collectionKey: 'v2:test', transactionVersion: '21', owner: buyer, status: 'SOLD',
   }]));
-  render(<><MarketplaceCollectionStats collectionKey="v2:test" items={items} floorPrice="100000000" activeListings="1" supply="2" totalVolume="100000000" />
+  render(<><MarketplaceCollectionStats collectionKey="v2:test" items={items} floorPrice="100000000" floor24hAgo="100000000" activeListings="1" supply="2" totalVolume="100000000" volume24h="100000000" sales24h="1" />
     <MarketplaceCollectionTrading collectionKey="v2:test" items={items} events={events} inventoryFailed={false} activityFailed={false} /></>);
   fireEvent.click(screen.getAllByRole('radio', { name: /All/ })[0]);
   expect((await screen.findAllByText('Not listed')).length).toBe(2);

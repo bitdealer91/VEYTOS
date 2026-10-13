@@ -721,3 +721,12 @@ main:has(>.home-dashboard)+.footer{margin-top:0}
 .market-price-range input:focus{border-color:#ff745e88;outline:0;box-shadow:0 0 0 2px #ff745e12}
 .market-price-range>span{padding-bottom:10px;text-align:center}
 @media(max-width:1180px) and (min-width:701px){.market-trading-shell,.market-trading-shell.activity-collapsed{grid-template-columns:220px minmax(0,1fr)}}
+
+/* Marketplace collection metric context */
+.market-metric-stack{display:inline-flex;flex-direction:column;align-items:flex-end;gap:3px;white-space:nowrap}
+.market-metric-stack small{color:var(--color-text-muted);font-size:9px;font-weight:500;line-height:1.2;letter-spacing:0}
+.market-metric-stack .market-trend.up{color:var(--color-success)}
+.market-metric-stack .market-trend.down{color:var(--color-error)}
+.market-metric-stack .market-trend.flat{color:var(--color-text-muted)}
+.market-hero-stats .market-metric-stack{align-items:flex-start}
+.market-hero-stats .market-metric-stack small{font-size:9px}
