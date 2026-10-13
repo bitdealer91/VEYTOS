@@ -25,31 +25,20 @@ function DropTiming({ drop, status }: { drop: Drop; status: ReturnType<typeof dr
 }
 
 function MarketplaceTable({ items }: { items: MarketplaceCollectionSummary[] }) {
-  return <div className="home-market-table-wrap">
-    <table className="home-market-table">
-      <thead><tr>
-        <th scope="col"><span className="sr-only">Rank</span></th>
-        <th scope="col">Collection</th>
-        <th scope="col">Floor price</th>
-        <th scope="col">24h volume</th>
-        <th scope="col">Listed</th>
-        <th scope="col"><span className="sr-only">Open</span></th>
-      </tr></thead>
-      <tbody>{items.map((collection, index) => {
+  return <div className="home-market-list">
+    <div className="home-market-list-head" aria-hidden="true"><span>Collection</span><span>Floor</span><span>24h volume</span><span>Listed</span><span /></div>
+    <ol>{items.map((collection, index) => {
         const change = floorChange(collection.floorPrice, collection.floor24hAgo);
         const share = listedShare(collection.activeListings, collection.supply);
-        return <tr key={collection.key}>
-        <td className="home-market-rank">{index + 1}</td>
-        <td><Link className="home-market-identity" href={collectionHref(collection)}>
-          <span className="home-market-avatar"><Artwork uri={collection.metadataUri} name={collection.name} /></span>
-          <span className="home-market-name"><strong>{collection.name}</strong>{collection.verified && <BadgeCheck size={14} aria-label="Verified VEYTOS collection" />}</span>
-        </Link></td>
-        <td className="numeric"><span className="market-metric-stack">{collection.floorPrice ? <PriceDisplay octas={collection.floorPrice} /> : <span className="market-dash">—</span>}{change && <small className={`market-trend ${change.trend}`}>{change.label}</small>}</span></td>
-        <td className="numeric"><PriceDisplay octas={collection.volume24h} /></td>
-        <td className="numeric"><span className="market-metric-stack"><span>{collection.activeListings}</span>{share && <small>{share}</small>}</span></td>
-        <td><Link className="home-row-open" href={collectionHref(collection)} aria-label={`Open ${collection.name}`}><ArrowRight size={16} /></Link></td>
-      </tr>})}</tbody>
-    </table>
+        return <li key={collection.key}><Link className="home-market-row" href={collectionHref(collection)}>
+          <span className="home-market-identity"><span className="home-market-rank">{String(index + 1).padStart(2, '0')}</span><span className="home-market-avatar"><Artwork uri={collection.metadataUri} name={collection.name} /></span>
+            <span className="home-market-name"><strong>{collection.name}</strong><small>{collection.native ? 'VEYTOS native' : 'Aptos collection'}</small></span>{collection.verified && <BadgeCheck size={14} aria-label="Verified VEYTOS collection" />}
+          </span>
+          <span className="home-market-metric"><small className="home-market-metric-label">Floor</small><strong>{collection.floorPrice ? <PriceDisplay octas={collection.floorPrice} /> : <span className="market-dash">—</span>}</strong>{change && <small className={`market-trend ${change.trend}`}>{change.label}</small>}</span>
+          <span className="home-market-metric"><small className="home-market-metric-label">24h volume</small><strong><PriceDisplay octas={collection.volume24h} /></strong><small>{collection.sales24h} {collection.sales24h === '1' ? 'sale' : 'sales'}</small></span>
+          <span className="home-market-metric"><small className="home-market-metric-label">Listed</small><strong>{collection.activeListings}</strong>{share && <small>{share}</small>}</span>
+          <span className="home-row-open" aria-hidden="true"><ArrowRight size={16} /></span>
+        </Link></li>})}</ol>
   </div>;
 }
 

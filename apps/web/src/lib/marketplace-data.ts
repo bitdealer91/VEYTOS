@@ -270,8 +270,10 @@ export const marketplaceCollections = cache(async (options: { sort?: string; lim
     if (pool && marketplaceAddress) {
       const result = await pool.query<CollectionAggregateRow>(`
       WITH collection_keys AS (
-        SELECT collection_key,standard FROM marketplace_listings WHERE network=$1 AND module_address=$2
-        UNION SELECT collection_key,standard FROM marketplace_events WHERE network=$1 AND module_address=$2
+        SELECT collection_key,standard FROM marketplace_listings
+        WHERE network=$1 AND module_address=$2 AND status='ACTIVE'
+        UNION SELECT collection_key,standard FROM marketplace_events
+        WHERE network=$1 AND module_address=$2 AND event_type='PURCHASED'
       ), active AS (
         SELECT collection_key,count(*) AS active_listings,min(price_octas) AS floor_price
         FROM marketplace_listings WHERE network=$1 AND module_address=$2 AND status='ACTIVE' GROUP BY collection_key
