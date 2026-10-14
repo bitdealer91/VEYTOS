@@ -1,6 +1,6 @@
 # Security invariants
 
-Status: internal preparation only; no independent external audit has been completed. Mainnet release remains blocked. Latest defensive remediation: `4ae4c8f`, 2026-10-14.
+Status: internal preparation only; no independent external audit has been completed. Mainnet release remains blocked. Latest defensive remediation: `98419a8`, 2026-10-14.
 
 These 38 predicates are audit obligations, not claims of formal proof. “Cannot” is conditional on unchanged package code, Aptos VM atomicity and framework semantics. External V2 capabilities, framework governance and compatible upgrades are explicit exceptions to unconditional custody claims. Tests are mapped separately in [TEST_COVERAGE_MATRIX.md](TEST_COVERAGE_MATRIX.md).
 
@@ -150,7 +150,7 @@ A delivery/payment abort rolls back all principal, custody and listing mutations
 
 ## A02
 
-LIST/CANCEL/BUY authorization derives from direct-chain state and signer, not frontend/database assertions. The legacy LIST entry functions are permanently fail-closed; supported clients must use `list_with_terms`.
+LIST/CANCEL/BUY authorization derives from direct-chain state and signer, not frontend/database assertions. The legacy LIST entry functions are permanently fail-closed. Supported clients must invoke package-only `list_with_terms` directly as the transaction entry function so the complete expected economic tuple is top-level signed input; external contract wrappers cannot invoke it.
 
 ## A03
 

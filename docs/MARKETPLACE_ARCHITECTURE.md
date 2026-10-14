@@ -95,10 +95,13 @@ records all four values and actual recipients.
 ## Royalty policy
 
 Royalty terms are read from chain during listing and snapshotted with the listing.
-The seller therefore signs known economics, and a creator cannot raise or redirect
-royalties on an already escrowed asset. Cancellation and relisting pick up current
-terms. This is VEYTOS settlement policy; neither Aptos standard enforces royalties
-on every protocol-wide transfer.
+The seller directly invokes the package-only LIST entry function and signs the full
+expected fee, reimbursement and royalty tuple as top-level transaction arguments.
+The contract compares that tuple before custody, so a creator cannot silently change
+the listing terms or route the call through an external Move wrapper. A creator also
+cannot raise or redirect royalties on an already escrowed asset. Cancellation and
+relisting pick up current terms. This is VEYTOS settlement policy; neither Aptos
+standard enforces royalties on every protocol-wide transfer.
 
 For V1, construct the full `TokenId`, call `token::get_royalty`, then read payee,
 numerator and denominator from the returned TokenData royalty. Read it per token

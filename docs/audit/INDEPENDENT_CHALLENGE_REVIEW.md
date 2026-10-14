@@ -1,13 +1,13 @@
 # Independent security challenge review
 
-Date: 2026-09-28, with a defensive follow-up on 2026-10-14. Reviewed branch: `feature/audit-readiness` at `54450c0`, with security-test commit `88ccd57` immediately below it. Baseline main: `d77a27b`. Remediation follow-ups: V1 exploit evidence `a294f3a`, V1 production fix `edbac21`, client/acceptance preparation `4480ced`, [Aptos Testnet V1 evidence](../evidence/marketplace-v1-creator-burn-remediation-testnet.json), and seller-authorized LIST terms plus wrapper-safe marketplace indexing in `4ae4c8f`.
+Date: 2026-09-28, with defensive follow-ups on 2026-10-14. Reviewed branch: `feature/audit-readiness` at `54450c0`, with security-test commit `88ccd57` immediately below it. Baseline main: `d77a27b`. Remediation follow-ups: V1 exploit evidence `a294f3a`, V1 production fix `edbac21`, client/acceptance preparation `4480ced`, [Aptos Testnet V1 evidence](../evidence/marketplace-v1-creator-burn-remediation-testnet.json), seller-authorized LIST terms plus wrapper-safe marketplace indexing in `4ae4c8f`, and package-only protected LIST visibility in `98419a8`.
 
 This is an independent challenge of the audit-readiness package, not an external audit report. Production Move sources and manifests were reviewed as authoritative where documentation differed. The original review made no production change and added one exploit regression. The later, separately committed remediation narrows V1 support and is recorded without deleting the original finding.
 
 ## Executive decision
 
 - **READY FOR EXTERNAL AUDIT: YES.** The code, trust boundaries, evidence and known gaps are sufficiently organized for intake. The audit scope must include both the original creator-burn exploit and remediation commits/evidence.
-- **READY FOR PUBLIC TESTNET BETA: NO for the new artifact until `4ae4c8f` is deployed and its LIST/CANCEL/RELIST/BUY plus stale-term aborts are accepted on Testnet.** The previously accepted V1 artifact does not contain the new seller-term binding. Supported V1 remains limited on chain to property_version=0, maximum=1, exact ownership, creator-burn absent or well-formed false, and the existing withdrawal/royalty/economic predicates.
+- **READY FOR PUBLIC TESTNET BETA: NO for the new artifact until `98419a8` is deployed and its LIST/CANCEL/RELIST/BUY plus stale-term and legacy-ABI aborts are accepted on Testnet.** The previously accepted V1 artifact does not contain the new seller-term binding or wrapper restriction. Supported V1 remains limited on chain to property_version=0, maximum=1, exact ownership, creator-burn absent or well-formed false, and the existing withdrawal/royalty/economic predicates.
 - **READY FOR MAINNET: NO.** The V1 creator-burn finding is remediated for the restricted supported subset, but no external audit is complete; both packages remain compatible; governance is proposed rather than implemented; current-mainnet framework behavior, V2 dossiers, public beta and operational gates remain incomplete.
 
 Finding inventory after the follow-up: **0 CRITICAL, 4 HIGH, 1 MEDIUM, 2 LOW, 2 INFORMATIONAL**. Two HIGH findings are **REMEDIATED IN SOURCE** and retained for history; the new artifact still requires Testnet acceptance and external review.
@@ -28,17 +28,17 @@ The branch changes no production `.move` file or Move manifest relative to `d77a
 
 ### HIGH — LIST did not bind the seller to fee, reimbursement, or royalty terms
 
-**Status: REMEDIATED IN SOURCE (`4ae4c8f`); TESTNET ACCEPTANCE PENDING.**
+**Status: REMEDIATED IN SOURCE (`4ae4c8f`, wrapper-visibility closure `98419a8`); TESTNET ACCEPTANCE PENDING.**
 
 - **Affected module:** the former `marketplace::settlement_v1::list` and `marketplace::settlement_v2::list` entry functions, with snapshot construction in `marketplace::marketplace::create_listing`.
 - **Preconditions:** the seller reviews one economic tuple; before execution, marketplace administration changes fee/reimbursement or a V1 creator/V2 royalty mutator changes royalty state.
 - **Failure/exploit path:** the old signed payload contained only asset identity and price. Execution read the changed live values and created a valid listing with terms the seller did not authorize. A buyer could settle before the seller cancelled.
 - **Impact:** seller proceeds or royalty destination could differ from the reviewed transaction while custody and sale remained valid.
-- **Existing mitigation:** `4ae4c8f` disables both legacy LIST entry functions and adds `list_with_terms`. The seller signs expected fee bps, storage reimbursement and exact royalty tuple; authoritative Move code compares all values before custody and aborts with `ELISTING_TERMS_CHANGED` on any mismatch. The frontend refreshes and compares the same tuple, and reconciliation verifies the committed snapshot.
-- **Recommended action:** deploy only the remediated artifact, execute Testnet stale-fee, stale-storage and stale-royalty committed-abort acceptance for both standards, then include the exact source/bytecode in external audit. Never re-enable the old ABI.
+- **Existing mitigation:** `4ae4c8f` disables both legacy LIST entry functions and adds `list_with_terms`. The seller signs expected fee bps, storage reimbursement and exact royalty tuple; authoritative Move code compares all values before custody and aborts with `ELISTING_TERMS_CHANGED` on any mismatch. A repeat audit found that `public entry` visibility allowed an external wrapper to read changed live terms and pass them on the seller's behalf. `98419a8` narrows both protected functions to `public(package) entry`; they remain directly invocable as transaction entry functions and by package tests, but an external-address wrapper cannot call them. The frontend refreshes and compares the same tuple, and reconciliation verifies the committed snapshot.
+- **Recommended action:** deploy only the remediated artifact, execute Testnet stale-fee, stale-storage and stale-royalty committed-abort acceptance for both standards, then include the exact source/bytecode in external audit. Never re-enable the old ABI or broaden protected LIST visibility.
 - **Blocks external audit:** **No**; the remediation is ready to audit.
 - **Blocks mainnet:** **Yes** until Testnet acceptance, external review and release-bytecode verification are complete.
-- **Reproducibility:** Move tests `audit_v1_fee_change_before_listing_is_rejected`, `audit_v1_royalty_change_before_listing_is_rejected`, `audit_v2_storage_change_before_listing_is_rejected`, `audit_v2_royalty_change_before_listing_is_rejected`, and both legacy-ABI rejection tests. Local marketplace suite: 126/126.
+- **Reproducibility:** Move tests `audit_v1_fee_change_before_listing_is_rejected`, `audit_v1_royalty_change_before_listing_is_rejected`, `audit_v2_storage_change_before_listing_is_rejected`, `audit_v2_royalty_change_before_listing_is_rejected`, and both legacy-ABI rejection tests. `marketplace-list-visibility.test.ts` locks both protected entry functions to package visibility. An external `0x42` wrapper compiled before the fix and fails after it with `package function ... cannot be called from a different address` for V1 and V2. Local suites: marketplace 126/126 and Node/TypeScript 91/91.
 
 ### HIGH — Token V1 creator-burn authority survives sale
 
