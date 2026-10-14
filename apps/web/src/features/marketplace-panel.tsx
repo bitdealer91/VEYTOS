@@ -44,6 +44,7 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
   const confirmedVersionRef = useRef<string | undefined>(undefined);
   const [transition, setTransition] = useState<ExplicitTransition>(null);
   const [terminalStatus, setTerminalStatus] = useState<'SOLD' | null>(null);
+  const [preparing, setPreparing] = useState(false);
   const walletScope = useRef<string | null>(null);
   const initialDialogOpened = useRef(false);
   const currentWalletScope = `${account || 'disconnected'}:${wallet.network?.chainId ?? 'unknown'}`;
@@ -97,7 +98,7 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
     queryFn: () => marketChain().eligibility(nft, account!, currentOwner, { retries: 0 }), enabled: !!account && owner && !active && !explicitTransition && !authoritativeStateUnavailable,
   });
   const config = configQuery.data;
-  const locked = isUnresolved(phase) || explicitTransition || authoritativeStateUnavailable;
+  const locked = preparing || isUnresolved(phase) || explicitTransition || authoritativeStateUnavailable;
   const rightNetwork = networkMatches(config.chainId, wallet.network?.chainId);
   const paused = marketplacePaused(config, nft.standard);
   const royalty = listing ? { numerator: listing.royaltyNumerator, denominator: listing.royaltyDenominator }
@@ -247,8 +248,10 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
     } catch(error) { reportClientError(error,'marketplace_reconciliation');setTransition(null); setPhase('unknown'); setMessage('Chain reconciliation is temporarily unavailable. Keep this hash and check again.'); }
   }
   async function submit() {
-    if (!account || signing.current || !marketplaceAddress) return;
+    if (!account || signing.current || preparing || !marketplaceAddress) return;
     signing.current = true;
+    setPreparing(true);
+    setMessage(action === 'buy' ? 'Verifying the current listing and price on Aptos…' : action === 'cancel' ? 'Verifying the current listing on Aptos…' : 'Verifying current ownership and marketplace availability…');
     dialog.current?.close();
     let value: PendingMarketplaceTransaction | null = null;
     let requested = false;
@@ -300,7 +303,7 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
       const rejected = definitiveRejection(error);
       if (value?.hash || (requested && !rejected)) { setPhase('unknown'); setMessage(value?.hash ? 'The transaction hash is retained for reconciliation.' : 'No hash was returned. Submission is not confirmed; check wallet activity before another action.'); }
       else { setPhase('failure'); setMessage(marketplaceErrorMessage(error, stage)); if (requested) clear(); }
-    } finally { signing.current = false; }
+    } finally { signing.current = false; setPreparing(false); }
   }
   function review(next: Action) {
     toast.dismiss(`market:${assetRoute}`);setAction(next); setMessage(''); setPhase('review'); dialog.current?.showModal();
@@ -311,6 +314,10 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
   const transitionMessage = transition === 'list' ? 'Updating listing…'
     : transition === 'cancel' ? 'Returning NFT…'
     : transition === 'buy' ? 'Confirming purchase…'
+    : preparing && phase === 'wallet' ? 'Waiting for wallet confirmation…'
+    : preparing && action === 'buy' ? 'Checking current price and listing…'
+    : preparing && action === 'cancel' ? 'Checking current listing…'
+    : preparing ? 'Checking ownership and marketplace availability…'
     : null;
   return <aside className="market-panel">
     <span className="eyebrow">SECONDARY MARKET</span>

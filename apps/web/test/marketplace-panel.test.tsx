@@ -418,6 +418,25 @@ test('duplicate LIST remains disabled while wallet submission is unresolved', as
   expect(mocks.wallet.signAndSubmitTransaction).toHaveBeenCalledTimes(1);
 });
 
+test('BUY locks immediately while the authoritative preflight is still running', async () => {
+  mocks.wallet.account.address.toString = () => buyer;
+  let releasePause!: (value: { globalPaused: boolean; v1Paused: boolean; v2Paused: boolean }) => void;
+  mocks.pauseState.mockReturnValue(new Promise((resolve) => { releasePause = resolve; }));
+  mount(nft, listing);
+  fireEvent.click(await screen.findByRole('button', { name: 'Buy now' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Confirm in wallet' }));
+
+  const buy = screen.getByRole('button', { name: 'Buy now' });
+  expect(buy.hasAttribute('disabled')).toBe(true);
+  expect(screen.getByText('Checking current price and listing…')).toBeTruthy();
+  expect(mocks.wallet.signAndSubmitTransaction).not.toHaveBeenCalled();
+
+  releasePause({ globalPaused: false, v1Paused: false, v2Paused: false });
+  mocks.wallet.signAndSubmitTransaction.mockReturnValue(new Promise(() => {}));
+  await screen.findByText('Waiting for wallet confirmation…');
+  expect(mocks.wallet.signAndSubmitTransaction).toHaveBeenCalledTimes(1);
+});
+
 test('CANCEL reconciliation immediately restores owner and removes the seller action', async () => {
   const hash = `0x${'3'.repeat(64)}`;
   mount(nft, listing);
