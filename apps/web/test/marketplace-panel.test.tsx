@@ -204,7 +204,7 @@ test('a committed LIST shows an action-specific transition while authoritative r
   fireEvent.click(screen.getByRole('button', { name: 'Confirm in wallet' }));
   expect(await screen.findByText('Updating listing…')).toBeTruthy();
   expect(screen.queryByText('Updating marketplace state…')).toBe(null);
-  expect(screen.getByRole('button', { name: 'Review listing' }).hasAttribute('disabled')).toBe(true);
+  expect(screen.getByRole('button', { name: 'Checking ownership and availability…' }).hasAttribute('disabled')).toBe(true);
 });
 
 test('buyer can relist a purchased V2 object despite stale Indexer owner and quantity', async () => {
@@ -414,7 +414,7 @@ test('duplicate LIST remains disabled while wallet submission is unresolved', as
   fireEvent.click(screen.getByRole('button', { name: 'Review listing' }));
   fireEvent.click(screen.getByRole('button', { name: 'Confirm in wallet' }));
   await screen.findByText(/Review this transaction/);
-  expect(screen.getByRole('button', { name: 'Review listing' }).hasAttribute('disabled')).toBe(true);
+  expect(screen.getByRole('button', { name: 'Waiting for wallet confirmation…' }).hasAttribute('disabled')).toBe(true);
   expect(mocks.wallet.signAndSubmitTransaction).toHaveBeenCalledTimes(1);
 });
 
@@ -426,14 +426,14 @@ test('BUY locks immediately while the authoritative preflight is still running',
   fireEvent.click(await screen.findByRole('button', { name: 'Buy now' }));
   fireEvent.click(screen.getByRole('button', { name: 'Confirm in wallet' }));
 
-  const buy = screen.getByRole('button', { name: 'Buy now' });
+  const buy = screen.getByRole('button', { name: 'Checking current price and listing…' });
   expect(buy.hasAttribute('disabled')).toBe(true);
-  expect(screen.getByText('Checking current price and listing…')).toBeTruthy();
+  expect(screen.queryByText('Checking current price and listing…', { selector: '.notice' })).toBe(null);
   expect(mocks.wallet.signAndSubmitTransaction).not.toHaveBeenCalled();
 
   releasePause({ globalPaused: false, v1Paused: false, v2Paused: false });
   mocks.wallet.signAndSubmitTransaction.mockReturnValue(new Promise(() => {}));
-  await screen.findByText('Waiting for wallet confirmation…');
+  expect(await screen.findByRole('button', { name: 'Waiting for wallet confirmation…' })).toBeTruthy();
   expect(mocks.wallet.signAndSubmitTransaction).toHaveBeenCalledTimes(1);
 });
 

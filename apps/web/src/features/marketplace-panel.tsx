@@ -314,11 +314,11 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
   const transitionMessage = transition === 'list' ? 'Updating listing…'
     : transition === 'cancel' ? 'Returning NFT…'
     : transition === 'buy' ? 'Confirming purchase…'
-    : preparing && phase === 'wallet' ? 'Waiting for wallet confirmation…'
-    : preparing && action === 'buy' ? 'Checking current price and listing…'
-    : preparing && action === 'cancel' ? 'Checking current listing…'
-    : preparing ? 'Checking ownership and marketplace availability…'
     : null;
+  const preparingLabel = phase === 'wallet' ? 'Waiting for wallet confirmation…'
+    : action === 'buy' ? 'Checking current price and listing…'
+    : action === 'cancel' ? 'Checking current listing…'
+    : 'Checking ownership and availability…';
   return <aside className="market-panel">
     <span className="eyebrow">SECONDARY MARKET</span>
     <h2>{active ? <PriceDisplay octas={listing.price} /> : owner ? 'List this NFT' : terminalStatus === 'SOLD' ? 'Sold' : 'Not listed'}</h2>
@@ -336,9 +336,9 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
     {active && <dl><div><dt>Storage reimbursement</dt><dd><PriceDisplay octas={listing.storageReimbursement} /></dd></div></dl>}
     {!wallet.connected ? <WalletButton label="Connect wallet" />
       : !rightNetwork ? <p className="notice warning" role="alert">Switch your wallet to Aptos {network} to trade.</p>
-      : selected === 'list' && owner ? <button className="button primary" disabled={locked || paused || !economics || eligibility.isLoading || eligibility.data?.eligible === false} onClick={() => review('list')}>Review listing</button>
-      : selected === 'cancel' ? <button className="button primary" disabled={locked} onClick={() => review('cancel')}>Cancel listing</button>
-      : selected === 'buy' ? <button className="button primary" disabled={locked || paused} onClick={() => review('buy')}>Buy now</button>
+      : selected === 'list' && owner ? <button className="button primary" disabled={locked || paused || !economics || eligibility.isLoading || eligibility.data?.eligible === false} onClick={() => review('list')}>{preparing ? preparingLabel : 'Review listing'}</button>
+      : selected === 'cancel' ? <button className="button primary" disabled={locked} onClick={() => review('cancel')}>{preparing ? preparingLabel : 'Cancel listing'}</button>
+      : selected === 'buy' ? <button className="button primary" disabled={locked || paused} onClick={() => review('buy')}>{preparing ? preparingLabel : 'Buy now'}</button>
       : null}
     {!active && owner && eligibility.data && !eligibility.data.eligible && <p className="notice error">{eligibility.data.reasons[0]}</p>}
     {!active && wallet.connected && rightNetwork && !owner && !explicitTransition && <p className="notice">Only the current owner can list this NFT.</p>}
