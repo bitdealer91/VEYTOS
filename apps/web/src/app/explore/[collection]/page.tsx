@@ -4,10 +4,10 @@ import { BadgeCheck } from 'lucide-react';
 import { Artwork } from '@/components/artwork';
 import { CollectionLinks } from '@/components/collection-links';
 import { WalletAddress } from '@/components/chain-ui';
+import { VeytosLaunchTag } from '@/components/ui';
 import { MarketplaceCollectionStats, MarketplaceCollectionTrading } from '@/features/marketplace-collection';
 import { marketplaceCollection, parseMarketplaceCollectionKey } from '@/lib/marketplace-data';
 import { gatewayUrl } from '@/lib/metadata';
-import { network } from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Marketplace Collection' };
@@ -28,7 +28,7 @@ export default async function Page({ params }: { params: Promise<{ collection: s
       <div className="market-hero-shade" />
       <div className="market-hero-identity"><div className="market-hero-avatar"><Artwork uri={collection.metadataUri} name={collection.name} large /></div>
         <div className="market-hero-copy"><div className="market-hero-title"><h1>{collection.name}</h1>{collection.verified && <BadgeCheck aria-label="Verified VEYTOS collection" />}</div>
-          <div className="market-hero-byline"><span>By {collection.creatorName || <WalletAddress address={collection.creator} />}</span><span className="aptos-chip">Aptos {network}</span>{collection.native && <span className="native-mark"><i />VEYTOS native</span>}</div>
+          <div className="market-hero-byline"><span>By {collection.creatorName || <WalletAddress address={collection.creator} />}</span>{collection.native && <VeytosLaunchTag />}</div>
           {collection.description && <p>{collection.description}</p>}
           <CollectionLinks uri={collection.metadataUri} links={collection.links} />
         </div>

@@ -4,7 +4,7 @@ import { dropStatus } from '@veytos/aptos/domain';
 import type { Drop } from '@veytos/aptos/types';
 import { Artwork } from '@/components/artwork';
 import { Countdown, DropActionLabel, DropStatus, MintProgress } from '@/components/chain-ui';
-import { PriceDisplay } from '@/components/ui';
+import { PriceDisplay, VeytosLaunchTag } from '@/components/ui';
 import { discovery } from '@/lib/data';
 import { marketplaceCollections, type MarketplaceCollectionSummary } from '@/lib/marketplace-data';
 import { floorChange, listedShare } from '@/lib/marketplace-metrics';
@@ -32,7 +32,7 @@ function MarketplaceTable({ items }: { items: MarketplaceCollectionSummary[] }) 
         const share = listedShare(collection.activeListings, collection.supply);
         return <li key={collection.key}><Link className="home-market-row" href={collectionHref(collection)}>
           <span className="home-market-identity"><span className="home-market-rank">{String(index + 1).padStart(2, '0')}</span><span className="home-market-avatar"><Artwork uri={collection.metadataUri} name={collection.name} /></span>
-            <span className="home-market-name"><strong>{collection.name}</strong><small>{collection.native ? 'VEYTOS native' : 'Aptos collection'}</small></span>{collection.verified && <BadgeCheck size={14} aria-label="Verified VEYTOS collection" />}
+            <span className="home-market-name"><strong>{collection.name}</strong>{collection.native ? <VeytosLaunchTag /> : <small>Aptos collection</small>}</span>{collection.verified && <BadgeCheck size={14} aria-label="Verified VEYTOS collection" />}
           </span>
           <span className="home-market-metric"><small className="home-market-metric-label">Floor</small><strong>{collection.floorPrice ? <PriceDisplay octas={collection.floorPrice} /> : <span className="market-dash">—</span>}</strong>{change && <small className={`market-trend ${change.trend}`}>{change.label}</small>}</span>
           <span className="home-market-metric"><small className="home-market-metric-label">Listed</small><strong>{collection.activeListings}</strong>{share && <small>{share}</small>}</span>

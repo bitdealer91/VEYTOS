@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { ArrowUpRight, BadgeCheck } from 'lucide-react';
 import type { MarketplaceCollectionSummary } from '@/lib/marketplace-data';
 import { Artwork } from './artwork';
-import { PriceDisplay } from './ui';
+import { PriceDisplay, VeytosLaunchTag } from './ui';
 import { floorChange, listedShare } from '@/lib/marketplace-metrics';
 
 function collectionHref(key: string) {
@@ -26,8 +26,8 @@ export function MarketplaceCollectionsTable({ items }: { items: MarketplaceColle
       return <tr key={collection.key}>
       <td><Link className="market-collection-identity" href={collectionHref(collection.key)}>
         <span className="market-collection-avatar"><Artwork uri={collection.metadataUri} name={collection.name} /></span>
-        <span className="market-collection-copy"><span><strong>{collection.name}</strong>{collection.verified && <BadgeCheck size={14} aria-label="Verified VEYTOS collection" />}</span>
-          <small>{collection.creatorName || `${collection.creator.slice(0, 8)}…${collection.creator.slice(-4)}`}{collection.native && <em>VEYTOS native</em>}</small>
+        <span className="market-collection-copy"><span><strong>{collection.name}</strong>{collection.verified && <BadgeCheck size={14} aria-label="Verified VEYTOS collection" />}{collection.native && <VeytosLaunchTag />}</span>
+          <small>{collection.creatorName || `${collection.creator.slice(0, 8)}…${collection.creator.slice(-4)}`}</small>
         </span>
       </Link></td>
       <td className="numeric"><span className="market-metric-stack">{collection.floorPrice ? <PriceDisplay octas={collection.floorPrice} /> : <span className="market-dash">—</span>}{change && <small className={`market-trend ${change.trend}`}>{change.label}</small>}</span></td>
