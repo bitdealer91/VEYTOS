@@ -368,8 +368,16 @@ try {
   assert.equal(gross, expectedFee + expectedRoyalty + expectedSellerProceeds);
 
   const firstList = await entry("list-first", seller, {
-    function: `${moduleAddress}::settlement_v2::list`,
-    functionArguments: [tokenAddress, gross.toString()],
+    function: `${moduleAddress}::settlement_v2::list_with_terms`,
+    functionArguments: [
+      tokenAddress,
+      gross.toString(),
+      "200",
+      storageReimbursement.toString(),
+      roles.royaltyRecipient,
+      "750",
+      "10000",
+    ],
   });
   const firstListed = firstList.events.find((event) => event.type.endsWith("::marketplace::NFTListed"));
   assert(firstListed, "First NFTListed event missing");
@@ -409,8 +417,16 @@ try {
   assert.equal(await balance(royaltyRecipient, cancel.version), royaltyAfterFirstList);
 
   const secondList = await entry("list-second", seller, {
-    function: `${moduleAddress}::settlement_v2::list`,
-    functionArguments: [tokenAddress, gross.toString()],
+    function: `${moduleAddress}::settlement_v2::list_with_terms`,
+    functionArguments: [
+      tokenAddress,
+      gross.toString(),
+      "200",
+      storageReimbursement.toString(),
+      roles.royaltyRecipient,
+      "750",
+      "10000",
+    ],
   });
   const secondListed = secondList.events.find((event) => event.type.endsWith("::marketplace::NFTListed"));
   assert(secondListed, "Second NFTListed event missing");

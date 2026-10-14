@@ -80,7 +80,7 @@ beforeEach(() => {
   mocks.config.mockResolvedValue(config); mocks.eligibility.mockResolvedValue({ eligible: true, reasons: [], royalty: { payee: seller, numerator: '750', denominator: '10000' } });
   mocks.pauseState.mockResolvedValue({ globalPaused: false, v1Paused: false, v2Paused: false });
   mocks.assetState.mockResolvedValue({ listing: null, owner: seller, ledgerVersion: '2' });
-  mocks.listPayload.mockReturnValue({ function: `${moduleAddress}::settlement_v2::list`, functionArguments: [] });
+  mocks.listPayload.mockReturnValue({ function: `${moduleAddress}::settlement_v2::list_with_terms`, functionArguments: [] });
 });
 
 test('listing review shows exact fee, royalty, proceeds and storage reimbursement', async () => {

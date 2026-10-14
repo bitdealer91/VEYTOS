@@ -212,8 +212,19 @@ async function expectListRejection(name: string, nameOfToken: string, version: b
     const transaction = await aptos.transaction.build.simple({
       sender: seller.accountAddress,
       data: {
-        function: `${moduleAddress}::settlement_v1::list`,
-        functionArguments: [roles.seller, collectionName, nameOfToken, version.toString(), "10000000"],
+        function: `${moduleAddress}::settlement_v1::list_with_terms`,
+        functionArguments: [
+          roles.seller,
+          collectionName,
+          nameOfToken,
+          version.toString(),
+          "10000000",
+          "200",
+          "0",
+          roles.royaltyRecipient,
+          "750",
+          "10000",
+        ],
       },
       options: { maxGasAmount: 100_000 },
     });
@@ -426,9 +437,20 @@ try {
   const expectedSellerProceeds = 9_050_000n;
   assert.equal(gross, expectedFee + expectedRoyalty + expectedSellerProceeds);
 
-  const listArgs = [roles.seller, collectionName, tokenName, propertyVersion.toString(), gross.toString()];
+  const safeListArguments = (storageReimbursement: bigint) => [
+    roles.seller,
+    collectionName,
+    tokenName,
+    propertyVersion.toString(),
+    gross.toString(),
+    "200",
+    storageReimbursement.toString(),
+    roles.royaltyRecipient,
+    "750",
+    "10000",
+  ];
   const firstList = await entry("list-first", seller, {
-    function: `${moduleAddress}::settlement_v1::list`, functionArguments: listArgs,
+    function: `${moduleAddress}::settlement_v1::list_with_terms`, functionArguments: safeListArguments(0n),
   });
   const firstListed = firstList.events.find((event) => event.type.endsWith("::marketplace::NFTListed"));
   assert(firstListed, "First NFTListed missing");
@@ -459,7 +481,7 @@ try {
     functionArguments: [refund.toString()],
   });
   const secondList = await entry("list-second", seller, {
-    function: `${moduleAddress}::settlement_v1::list`, functionArguments: listArgs,
+    function: `${moduleAddress}::settlement_v1::list_with_terms`, functionArguments: safeListArguments(refund),
   });
   const secondListed = secondList.events.find((event) => event.type.endsWith("::marketplace::NFTListed"));
   assert(secondListed, "Second NFTListed missing");

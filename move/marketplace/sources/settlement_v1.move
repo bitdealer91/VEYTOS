@@ -64,7 +64,7 @@ module marketplace::settlement_v1 {
         abort EUNSAFE_LIST_ABI
     }
 
-    public entry fun list_with_terms(
+    public(package) entry fun list_with_terms(
         seller: &signer,
         creator: address,
         collection_name: String,
