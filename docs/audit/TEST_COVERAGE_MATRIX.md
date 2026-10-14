@@ -1,8 +1,8 @@
 # Test coverage matrix
 
-Status: internal preparation only; no independent external audit has been completed. Mainnet release remains blocked. Baseline: main `d77a27b`, 2026-09-26.
+Status: internal preparation only; no independent external audit has been completed. Mainnet release remains blocked. Latest defensive remediation: `4ae4c8f`, 2026-10-14.
 
-Reviewed against `docs/MARKETPLACE_CONTRACT_TEST_PLAN.md`, `SECURITY.md`, `ARCHITECTURE.md`, both packages' production source and existing Move test modules. Baseline: 82 launchpad + 100 marketplace = 182; Phase 3C adds focused marketplace tests. A matching scenario prefix is not sufficient evidence.
+Reviewed against `docs/MARKETPLACE_CONTRACT_TEST_PLAN.md`, `SECURITY.md`, `ARCHITECTURE.md`, both packages' production source and existing Move test modules. Current local suite: 82 launchpad + 126 marketplace = 208. A matching scenario prefix is not sufficient evidence.
 
 “Covered” means direct executable assertions exercise the stated behavior in representative unit fixtures, not exhaustive proof. “Partially covered” means a subset, source inspection, generic abort, or incomplete state/evidence assertions. “Not covered” means no relevant executable unit test. Expected-abort unit tests cannot inspect committed post-abort state, so they do not establish validator-level rollback or gas/refund behavior.
 
@@ -54,15 +54,15 @@ Module: `marketplace_tests`. Tests: `g13_immutable_price`, `g12_wrong_expected_p
 
 ## M05 — covered
 
-Module: `marketplace_tests`. Tests: `g14_fee_snapshot`, `g15_recipient_rotation`.
+Module: `marketplace_tests; settlement_v1_tests; settlement_v2_tests`. Tests: `g14_fee_snapshot`, `g15_recipient_rotation`, `audit_v1_fee_change_before_listing_is_rejected`, `audit_v2_storage_change_before_listing_is_rejected`, `audit_v1_legacy_list_abi_is_disabled`, `audit_v2_legacy_list_abi_is_disabled`. Seller-signed LIST terms and the stored snapshot are both checked.
 
 ## M06 — covered
 
-Module: `settlement_v1_tests; settlement_v2_tests`. Tests: `v111_mutable_royalty_uses_listing_snapshot`, `v212_mutable_royalty_snapshot`.
+Module: `settlement_v1_tests; settlement_v2_tests`. Tests: `v111_mutable_royalty_uses_listing_snapshot`, `v212_mutable_royalty_snapshot`, `audit_v1_royalty_change_before_listing_is_rejected`, `audit_v2_royalty_change_before_listing_is_rejected`. Mutation before LIST cannot silently change seller-authorized terms; mutation after LIST cannot change the stored snapshot.
 
 ## M07 — covered
 
-Module: `marketplace_fee_policy_tests`. Tests: `f15_combined_conservation`, `f16_excessive_deductions`, `f17_u64_boundary`, `audit_u128_product_boundary`.
+Module: `marketplace_fee_policy_tests`; client parity in `packages/aptos/test/marketplace.test.ts`. Tests: `f15_combined_conservation`, `f16_excessive_deductions`, `f17_u64_boundary`, `audit_u128_product_boundary`, plus zero-seller-proceeds SDK rejection.
 
 ## M08 — partially covered
 

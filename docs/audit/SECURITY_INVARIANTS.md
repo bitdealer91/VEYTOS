@@ -1,6 +1,6 @@
 # Security invariants
 
-Status: internal preparation only; no independent external audit has been completed. Mainnet release remains blocked. Baseline: main `d77a27b`, 2026-09-26.
+Status: internal preparation only; no independent external audit has been completed. Mainnet release remains blocked. Latest defensive remediation: `4ae4c8f`, 2026-10-14.
 
 These 38 predicates are audit obligations, not claims of formal proof. “Cannot” is conditional on unchanged package code, Aptos VM atomicity and framework semantics. External V2 capabilities, framework governance and compatible upgrades are explicit exceptions to unconditional custody claims. Tests are mapped separately in [TEST_COVERAGE_MATRIX.md](TEST_COVERAGE_MATRIX.md).
 
@@ -50,11 +50,11 @@ Price has no update path; changing price requires cancel/relist with a new ID.
 
 ## M05
 
-The exact fee-bps snapshot is used after admin changes; treasury address is intentionally read at purchase time.
+LIST succeeds only when the authoritative fee-bps and per-standard storage reimbursement exactly match the values signed by the seller. The accepted values are snapshotted; treasury address is intentionally read at purchase time.
 
 ## M06
 
-Exact royalty payee/numerator/denominator snapshot is honored despite later native mutation.
+LIST succeeds only when the authoritative royalty payee/numerator/denominator exactly match the values signed by the seller. The accepted snapshot is honored despite later native mutation.
 
 ## M07
 
@@ -150,7 +150,7 @@ A delivery/payment abort rolls back all principal, custody and listing mutations
 
 ## A02
 
-LIST/CANCEL/BUY authorization derives from direct-chain state and signer, not frontend/database assertions.
+LIST/CANCEL/BUY authorization derives from direct-chain state and signer, not frontend/database assertions. The legacy LIST entry functions are permanently fail-closed; supported clients must use `list_with_terms`.
 
 ## A03
 

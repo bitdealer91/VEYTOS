@@ -1,16 +1,16 @@
 # Independent security challenge review
 
-Date: 2026-09-28. Reviewed branch: `feature/audit-readiness` at `54450c0`, with security-test commit `88ccd57` immediately below it. Baseline main: `d77a27b`. Remediation follow-up: exploit evidence `a294f3a`, production fix `edbac21`, client/acceptance preparation `4480ced`, and [Aptos Testnet remediation evidence](../evidence/marketplace-v1-creator-burn-remediation-testnet.json).
+Date: 2026-09-28, with a defensive follow-up on 2026-10-14. Reviewed branch: `feature/audit-readiness` at `54450c0`, with security-test commit `88ccd57` immediately below it. Baseline main: `d77a27b`. Remediation follow-ups: V1 exploit evidence `a294f3a`, V1 production fix `edbac21`, client/acceptance preparation `4480ced`, [Aptos Testnet V1 evidence](../evidence/marketplace-v1-creator-burn-remediation-testnet.json), and seller-authorized LIST terms plus wrapper-safe marketplace indexing in `4ae4c8f`.
 
 This is an independent challenge of the audit-readiness package, not an external audit report. Production Move sources and manifests were reviewed as authoritative where documentation differed. The original review made no production change and added one exploit regression. The later, separately committed remediation narrows V1 support and is recorded without deleting the original finding.
 
 ## Executive decision
 
 - **READY FOR EXTERNAL AUDIT: YES.** The code, trust boundaries, evidence and known gaps are sufficiently organized for intake. The audit scope must include both the original creator-burn exploit and remediation commits/evidence.
-- **READY FOR PUBLIC TESTNET BETA: YES.** Supported V1 is limited on chain to property_version=0, maximum=1, exact ownership, creator-burn absent or well-formed false, and the existing withdrawal/royalty/economic predicates. Every other V1 configuration remains fail-closed. This is not approval for value-bearing use.
+- **READY FOR PUBLIC TESTNET BETA: NO for the new artifact until `4ae4c8f` is deployed and its LIST/CANCEL/RELIST/BUY plus stale-term aborts are accepted on Testnet.** The previously accepted V1 artifact does not contain the new seller-term binding. Supported V1 remains limited on chain to property_version=0, maximum=1, exact ownership, creator-burn absent or well-formed false, and the existing withdrawal/royalty/economic predicates.
 - **READY FOR MAINNET: NO.** The V1 creator-burn finding is remediated for the restricted supported subset, but no external audit is complete; both packages remain compatible; governance is proposed rather than implemented; current-mainnet framework behavior, V2 dossiers, public beta and operational gates remain incomplete.
 
-Finding inventory: **0 CRITICAL, 3 HIGH, 1 MEDIUM, 1 LOW, 2 INFORMATIONAL**; one HIGH below is now **REMEDIATED** and retained for history.
+Finding inventory after the follow-up: **0 CRITICAL, 4 HIGH, 1 MEDIUM, 2 LOW, 2 INFORMATIONAL**. Two HIGH findings are **REMEDIATED IN SOURCE** and retained for history; the new artifact still requires Testnet acceptance and external review.
 
 ## Baseline reproduced
 
@@ -25,6 +25,20 @@ The initial checkout was clean on `feature/audit-readiness`. `git log` showed `5
 The branch changes no production `.move` file or Move manifest relative to `d77a27b`. The audit package's historical validation record is reproducible, but it is not deployed-bytecode or current-mainnet proof.
 
 ## Security findings
+
+### HIGH — LIST did not bind the seller to fee, reimbursement, or royalty terms
+
+**Status: REMEDIATED IN SOURCE (`4ae4c8f`); TESTNET ACCEPTANCE PENDING.**
+
+- **Affected module:** the former `marketplace::settlement_v1::list` and `marketplace::settlement_v2::list` entry functions, with snapshot construction in `marketplace::marketplace::create_listing`.
+- **Preconditions:** the seller reviews one economic tuple; before execution, marketplace administration changes fee/reimbursement or a V1 creator/V2 royalty mutator changes royalty state.
+- **Failure/exploit path:** the old signed payload contained only asset identity and price. Execution read the changed live values and created a valid listing with terms the seller did not authorize. A buyer could settle before the seller cancelled.
+- **Impact:** seller proceeds or royalty destination could differ from the reviewed transaction while custody and sale remained valid.
+- **Existing mitigation:** `4ae4c8f` disables both legacy LIST entry functions and adds `list_with_terms`. The seller signs expected fee bps, storage reimbursement and exact royalty tuple; authoritative Move code compares all values before custody and aborts with `ELISTING_TERMS_CHANGED` on any mismatch. The frontend refreshes and compares the same tuple, and reconciliation verifies the committed snapshot.
+- **Recommended action:** deploy only the remediated artifact, execute Testnet stale-fee, stale-storage and stale-royalty committed-abort acceptance for both standards, then include the exact source/bytecode in external audit. Never re-enable the old ABI.
+- **Blocks external audit:** **No**; the remediation is ready to audit.
+- **Blocks mainnet:** **Yes** until Testnet acceptance, external review and release-bytecode verification are complete.
+- **Reproducibility:** Move tests `audit_v1_fee_change_before_listing_is_rejected`, `audit_v1_royalty_change_before_listing_is_rejected`, `audit_v2_storage_change_before_listing_is_rejected`, `audit_v2_royalty_change_before_listing_is_rejected`, and both legacy-ABI rejection tests. Local marketplace suite: 126/126.
 
 ### HIGH — Token V1 creator-burn authority survives sale
 
@@ -85,6 +99,10 @@ The original review stopped before production modification. Remediation was revi
 - **Recommended action:** calibrate V1/V2 separately using current FeeStatement evidence, identity sizes and actual gas-payer model; define who economically owns the protocol refund; monitor and revise only future snapshots.
 - **Blocks external audit:** **No**.
 - **Blocks mainnet:** **Yes** until calibrated and accepted as policy.
+
+### LOW — Entry-function filtering could omit wrapper-mediated marketplace events
+
+**Status: REMEDIATED IN SOURCE (`4ae4c8f`).** The old off-chain indexer selected transactions by top-level `entry_function_contract_address`; a wrapper could invoke VEYTOS and emit genuine VEYTOS events without matching that field. The indexer now discovers the four authoritative marketplace table handles and queries indexed table writes, which covers LIST/CANCEL/BUY regardless of the outer entry function. Historical Testnet evidence confirmed all safe LIST/CANCEL/RELIST/BUY versions are returned. Event type and module validation remain mandatory before projection. This was an off-chain completeness issue, not an on-chain authorization bypass. Launchpad discovery remains entry-function based and must be separately migrated if arbitrary wrapper invocation is supported there.
 
 ### INFORMATIONAL — Historical pins do not pin current deployed framework behavior
 
