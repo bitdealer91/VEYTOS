@@ -28,6 +28,7 @@ module marketplace::marketplace {
     const ELISTING_ID_OVERFLOW: u64 = 14;
     const ESTORAGE_REIMBURSEMENT_CHANGED: u64 = 15;
     const ETOTAL_OVERFLOW: u64 = 16;
+    const ELISTING_TERMS_CHANGED: u64 = 17;
 
     const STANDARD_V1: u8 = 1;
     const STANDARD_V2: u8 = 2;
@@ -214,6 +215,40 @@ module marketplace::marketplace {
                 && asset.v1_property_version == property_version,
             ESTANDARD_MISMATCH,
         );
+    }
+
+    /// Fail closed unless the exact economics authorized by the seller still
+    /// match authoritative on-chain policy and royalty state. Settlement
+    /// adapters call this before moving an asset into marketplace custody.
+    public(package) fun assert_listing_terms(
+        asset: &AssetIdentity,
+        price: u64,
+        royalty_payee: address,
+        royalty_numerator: u64,
+        royalty_denominator: u64,
+        expected_fee_bps: u64,
+        expected_storage_reimbursement: u64,
+        expected_royalty_payee: address,
+        expected_royalty_numerator: u64,
+        expected_royalty_denominator: u64,
+    ) acquires State {
+        require_state();
+        assert_standard_open(asset.standard);
+        assert_reviewed_v2(asset);
+        assert!(royalty_denominator > 0, EINVALID_ROYALTY);
+        assert!(royalty_numerator <= royalty_denominator, EINVALID_ROYALTY);
+        assert!(royalty_numerator == 0 || royalty_payee != @0x0, EINVALID_ROYALTY);
+        let fee_bps = marketplace_fee_policy::fee_bps();
+        let storage_reimbursement = marketplace_fee_policy::storage_reimbursement(asset.standard);
+        assert!(
+            fee_bps == expected_fee_bps
+                && storage_reimbursement == expected_storage_reimbursement
+                && royalty_payee == expected_royalty_payee
+                && royalty_numerator == expected_royalty_numerator
+                && royalty_denominator == expected_royalty_denominator,
+            ELISTING_TERMS_CHANGED,
+        );
+        marketplace_fee_policy::quote_sale(price, fee_bps, royalty_numerator, royalty_denominator);
     }
 
     public(package) fun create_listing(

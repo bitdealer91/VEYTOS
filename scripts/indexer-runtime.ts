@@ -26,6 +26,9 @@ export function nextTargetedVersion(start:bigint,versions:bigint[],indexedThroug
   if(versions.length>=pageSize){const last=versions.at(-1);return last===undefined?start:last+1n;}
   return indexedThrough>=start?indexedThrough+1n:start;
 }
+export function mergeTargetedVersions(pageSize:number,...sources:bigint[][]){
+  return [...new Set(sources.flat().map(String))].map(BigInt).sort((left,right)=>left<right?-1:left>right?1:0).slice(0,pageSize);
+}
 export function launchpadEvents(transaction:unknown,moduleAddress:string){
   const tx=transaction as {type?:string;success?:boolean;version?:string;hash?:string;timestamp?:string;events?:Array<{type?:string;data?:unknown}>};
   if(tx.type!=='user_transaction'||!tx.success||!tx.version||!tx.hash||!tx.timestamp)return [];

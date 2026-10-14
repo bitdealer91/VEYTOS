@@ -7,6 +7,7 @@ import type {
   MarketplaceEconomics,
   MarketplaceAssetState,
   MarketplaceListing,
+  MarketplaceListingTerms,
   PendingMarketplaceTransaction,
   TokenIdentity,
 } from './types.ts';
@@ -55,7 +56,7 @@ export function quoteMarketplaceSale(
   }
   const fee = price * feeBps / 10000n;
   const royalty = price * royaltyNumerator / royaltyDenominator;
-  if (fee + royalty > price) throw new Error('Marketplace deductions exceed price');
+  if (fee + royalty >= price) throw new Error('Marketplace deductions leave no seller proceeds');
   const sellerProceeds = price - fee - royalty;
   return { price, fee, royalty, sellerProceeds, storageReimbursement, buyerTotalBeforeGas: price + storageReimbursement };
 }
@@ -68,6 +69,7 @@ export type MarketplacePreparationStage = 'configuration' | 'asset-state' | 'eli
 export function marketplaceErrorMessage(error: unknown, stage: MarketplacePreparationStage) {
   const message = error instanceof Error ? error.message : String(error);
   if (/ECREATOR_BURNABLE|EUNSUPPORTED_PROPERTY_VERSION/i.test(message)) return 'This legacy NFT configuration is not supported for marketplace trading.';
+  if (/ELISTING_TERMS_CHANGED|EUNSAFE_LIST_ABI/i.test(message)) return 'Listing terms changed. Review the current fee, royalty, and storage reimbursement before listing.';
   if (/reject|denied|4001|user cancel/i.test(message)) return 'Request cancelled in your wallet. No transaction was submitted.';
   if (/INSUFFICIENT|insufficient.*balance|balance.*(gas|fee)/i.test(message)) return 'Your balance is too low for the price, storage reimbursement, and gas.';
   if (/EPRICE_CHANGED|EMAX_TOTAL|price changed/i.test(message)) return 'The listing price changed. Review the new price before buying.';
@@ -271,11 +273,18 @@ export function marketplace(aptos: Aptos, packageAddress: string) {
     }, options);
   }
 
-  function listPayload(identity: TokenIdentity, price: string) {
+  function listPayload(identity: TokenIdentity, price: string, terms: MarketplaceListingTerms) {
     const amount = u64.parse(price);
+    const expectedTerms = [
+      u64.parse(terms.feeBps),
+      u64.parse(terms.storageReimbursement),
+      canonical(terms.royaltyPayee),
+      u64.parse(terms.royaltyNumerator),
+      u64.parse(terms.royaltyDenominator),
+    ];
     return identity.standard === 'v2'
-      ? { function: `${module}::settlement_v2::list` as const, functionArguments: [canonical(identity.address), amount] }
-      : { function: `${module}::settlement_v1::list` as const, functionArguments: [canonical(identity.creator), identity.collection, identity.name, u64.parse(identity.propertyVersion), amount] };
+      ? { function: `${module}::settlement_v2::list_with_terms` as const, functionArguments: [canonical(identity.address), amount, ...expectedTerms] }
+      : { function: `${module}::settlement_v1::list_with_terms` as const, functionArguments: [canonical(identity.creator), identity.collection, identity.name, u64.parse(identity.propertyVersion), amount, ...expectedTerms] };
   }
   function cancelPayload(standard: 'v1' | 'v2', listingId: string) {
     return { function: `${module}::settlement_${standard}::cancel` as const, functionArguments: [u64.parse(listingId)] };
@@ -296,14 +305,19 @@ export function marketplace(aptos: Aptos, packageAddress: string) {
     if (tx.hash !== pending.hash || canonical(tx.sender) !== canonical(pending.sender)) throw new Error('Transaction identity mismatch');
     if (!tx.success) return { status: 'failed' as const, message: tx.vm_status };
     const payload = tx.payload as { function?: string; arguments?: unknown[] };
-    const expectedFunction = `${module}::settlement_${pending.identity.standard}::${pending.action}`;
+    const expectedFunction = `${module}::settlement_${pending.identity.standard}::${pending.action === 'list' ? 'list_with_terms' : pending.action}`;
     if (payload.function !== expectedFunction) throw new Error('Transaction action mismatch');
     if (pending.action === 'list') {
       const event = tx.events.find((candidate) => candidate.type === `${module}::marketplace::NFTListed`);
       if (!event || canonical(String(event.data.seller)) !== canonical(pending.sender)) throw new Error('Listing event mismatch');
       const current = await listing(String(event.data.listing_id));
       if (current.status !== 'ACTIVE' || encodeNFTIdentity(current.identity) !== encodeNFTIdentity(pending.identity) ||
-          current.seller !== canonical(pending.sender) || current.price !== pending.expectedPrice) throw new Error('Active listing mismatch');
+          current.seller !== canonical(pending.sender) || current.price !== pending.expectedPrice ||
+          current.feeBps !== pending.expectedFeeBps ||
+          current.storageReimbursement !== pending.expectedStorageReimbursement ||
+          canonical(current.royaltyPayee) !== canonical(pending.expectedRoyaltyPayee || '') ||
+          current.royaltyNumerator !== pending.expectedRoyaltyNumerator ||
+          current.royaltyDenominator !== pending.expectedRoyaltyDenominator) throw new Error('Active listing mismatch');
       if (pending.identity.standard === 'v2') {
         const [token] = await aptos.view<[string]>({ payload: { function: `${module}::settlement_v2::escrow_token`, functionArguments: [current.id] }, options: { ledgerVersion: BigInt(tx.version) } });
         if (canonical(token) !== canonical(pending.identity.address) || !current.escrowAddress) throw new Error('V2 escrow mismatch');

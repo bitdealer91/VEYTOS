@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ShieldCheck, X } from 'lucide-react';
 import type { NormalizedNFT } from '@veytos/aptos/discovery';
 import { encodeNFTIdentity, marketplaceErrorDiagnostic, marketplaceErrorMessage, quoteMarketplaceSale, marketplacePaused, type MarketplacePreparationStage } from '@veytos/aptos/marketplace';
-import type { MarketplaceAssetState, MarketplaceConfig, MarketplaceEconomics, MarketplaceListing, PendingMarketplaceTransaction, TransactionPhase } from '@veytos/aptos/types';
+import type { MarketplaceAssetState, MarketplaceConfig, MarketplaceEconomics, MarketplaceListing, MarketplaceListingTerms, PendingMarketplaceTransaction, TransactionPhase } from '@veytos/aptos/types';
 import { definitiveRejection, transactionTransition } from '@veytos/aptos/recovery';
 import { canonical, isUnresolved, networkMatches, readableError, sameAddress } from '@veytos/aptos/domain';
 import { parseApt } from '../../../../packages/domain/src/money';
@@ -254,13 +254,14 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
     setMessage(action === 'buy' ? 'Verifying the current listing and price on Aptos…' : action === 'cancel' ? 'Verifying the current listing on Aptos…' : 'Verifying current ownership and marketplace availability…');
     dialog.current?.close();
     let value: PendingMarketplaceTransaction | null = null;
+    let approvedTerms: MarketplaceListingTerms | null = null;
     let requested = false;
     let stage: MarketplacePreparationStage = 'configuration';
     try {
       const retrying = () => setMessage('Marketplace data is temporarily unavailable. Retrying…');
-      const freshPause = await marketChain().pauseState({ onRateLimit: retrying });
-      if (!networkMatches(config.chainId, wallet.network?.chainId)) throw new Error('Wrong network');
-      if (action !== 'cancel' && (freshPause.globalPaused || (nft.standard === 'v1' ? freshPause.v1Paused : freshPause.v2Paused))) throw new Error('EPAUSED');
+      const freshConfig = await marketChain().config({ fresh: true, onRateLimit: retrying });
+      if (!networkMatches(freshConfig.chainId, wallet.network?.chainId)) throw new Error('Wrong network');
+      if (action !== 'cancel' && marketplacePaused(freshConfig, nft.standard)) throw new Error('EPAUSED');
       stage = 'asset-state';
       const floor = [confirmedVersionRef.current, assetState.ledgerVersion].filter((version): version is string => !!version)
         .reduce((latest, version) => BigInt(version) > BigInt(latest) ? version : latest, '0');
@@ -271,6 +272,20 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
         const check = await marketChain().eligibility(nft, account, freshAsset.owner, { onRateLimit: retrying });
         if (!check.eligible) throw new Error(check.reasons[0]);
         if (!economics) throw new Error('Invalid price');
+        const reviewedRoyalty = eligibility.data?.royalty;
+        if (!reviewedRoyalty || !check.royalty) throw new Error('ELISTING_TERMS_CHANGED');
+        approvedTerms = {
+          feeBps: config.feeBps,
+          storageReimbursement: nft.standard === 'v1' ? config.v1StorageReimbursement : config.v2StorageReimbursement,
+          royaltyPayee: reviewedRoyalty.payee,
+          royaltyNumerator: reviewedRoyalty.numerator,
+          royaltyDenominator: reviewedRoyalty.denominator,
+        };
+        const freshStorage = nft.standard === 'v1' ? freshConfig.v1StorageReimbursement : freshConfig.v2StorageReimbursement;
+        if (freshConfig.feeBps !== approvedTerms.feeBps || freshStorage !== approvedTerms.storageReimbursement ||
+            canonical(check.royalty.payee) !== canonical(approvedTerms.royaltyPayee) ||
+            check.royalty.numerator !== approvedTerms.royaltyNumerator ||
+            check.royalty.denominator !== approvedTerms.royaltyDenominator) throw new Error('ELISTING_TERMS_CHANGED');
       }
       const reviewedListing = action === 'list' ? null : freshAsset.listing;
       if ((action === 'buy' || action === 'cancel') && !reviewedListing) throw new Error('ELISTING_STALE');
@@ -283,11 +298,15 @@ export function MarketplacePanel({ nft, initialListing, initialConfig, initialAs
       value = {
         action, hash: '', sender: account, listingId: reviewedListing?.id, identity: nft.identity,
         expectedPrice: action === 'list' ? economics?.price.toString() : reviewedListing?.price,
-        expectedStorageReimbursement: reviewedListing?.storageReimbursement,
+        expectedStorageReimbursement: action === 'list' ? approvedTerms?.storageReimbursement : reviewedListing?.storageReimbursement,
+        expectedFeeBps: action === 'list' ? approvedTerms?.feeBps : undefined,
+        expectedRoyaltyPayee: action === 'list' ? approvedTerms?.royaltyPayee : undefined,
+        expectedRoyaltyNumerator: action === 'list' ? approvedTerms?.royaltyNumerator : undefined,
+        expectedRoyaltyDenominator: action === 'list' ? approvedTerms?.royaltyDenominator : undefined,
         network, module: marketplaceAddress,
       };
       stage = 'payload';
-      const data = action === 'list' ? marketChain().listPayload(nft.identity, economics!.price.toString())
+      const data = action === 'list' ? marketChain().listPayload(nft.identity, economics!.price.toString(), approvedTerms!)
         : action === 'cancel' ? marketChain().cancelPayload(nft.standard, reviewedListing!.id) : marketChain().buyPayload(reviewedListing!);
       save(value); requested = true; stage = 'wallet'; setPhase('wallet'); setMessage('Review this transaction in your Aptos wallet.');
       if(action==='list')trackBetaEvent('listing_started',{standard:nft.standard});else if(action==='buy')trackBetaEvent('purchase_started',{standard:nft.standard});

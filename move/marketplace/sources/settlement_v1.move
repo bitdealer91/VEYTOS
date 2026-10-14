@@ -17,6 +17,7 @@ module marketplace::settlement_v1 {
     const EESCROW_MISMATCH: u64 = 8;
     const ECREATOR_BURNABLE: u64 = 9;
     const EUNSUPPORTED_PROPERTY_VERSION: u64 = 10;
+    const EUNSAFE_LIST_ABI: u64 = 11;
 
     const STANDARD_V1: u8 = 1;
 
@@ -53,12 +54,28 @@ module marketplace::settlement_v1 {
     }
 
     public entry fun list(
+        _seller: &signer,
+        _creator: address,
+        _collection_name: String,
+        _token_name: String,
+        _property_version: u64,
+        _price: u64,
+    ) {
+        abort EUNSAFE_LIST_ABI
+    }
+
+    public entry fun list_with_terms(
         seller: &signer,
         creator: address,
         collection_name: String,
         token_name: String,
         property_version: u64,
         price: u64,
+        expected_fee_bps: u64,
+        expected_storage_reimbursement: u64,
+        expected_royalty_payee: address,
+        expected_royalty_numerator: u64,
+        expected_royalty_denominator: u64,
     ) acquires Escrows {
         require_state();
         let seller_address = signer::address_of(seller);
@@ -90,16 +107,29 @@ module marketplace::settlement_v1 {
         assert!(royalty_denominator > 0 && royalty_numerator <= royalty_denominator, EINVALID_ROYALTY);
         assert!(royalty_numerator == 0 || royalty_payee != @0x0, EINVALID_ROYALTY);
 
-        let escrowed = token::withdraw_token(seller, token_id, 1);
-        assert!(token::get_token_amount(&escrowed) == 1, EESCROW_MISMATCH);
-        assert_identity(
-            token::token_id(&escrowed),
+        let identity = marketplace::new_v1_identity(
             creator,
             collection_name,
             token_name,
             property_version,
         );
-        let identity = marketplace::new_v1_identity(
+        marketplace::assert_listing_terms(
+            &identity,
+            price,
+            royalty_payee,
+            royalty_numerator,
+            royalty_denominator,
+            expected_fee_bps,
+            expected_storage_reimbursement,
+            expected_royalty_payee,
+            expected_royalty_numerator,
+            expected_royalty_denominator,
+        );
+
+        let escrowed = token::withdraw_token(seller, token_id, 1);
+        assert!(token::get_token_amount(&escrowed) == 1, EESCROW_MISMATCH);
+        assert_identity(
+            token::token_id(&escrowed),
             creator,
             collection_name,
             token_name,

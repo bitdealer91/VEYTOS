@@ -17,6 +17,7 @@ module marketplace::settlement_v2 {
     const EESCROW_NOT_FOUND: u64 = 7;
     const EESCROW_MISMATCH: u64 = 8;
     const EINVALID_ROYALTY: u64 = 9;
+    const EUNSAFE_LIST_ABI: u64 = 10;
 
     const STANDARD_V2: u8 = 2;
 
@@ -57,7 +58,20 @@ module marketplace::settlement_v2 {
         }
     }
 
-    public entry fun list(seller: &signer, token_address: address, price: u64) acquires Escrows {
+    public entry fun list(_seller: &signer, _token_address: address, _price: u64) {
+        abort EUNSAFE_LIST_ABI
+    }
+
+    public entry fun list_with_terms(
+        seller: &signer,
+        token_address: address,
+        price: u64,
+        expected_fee_bps: u64,
+        expected_storage_reimbursement: u64,
+        expected_royalty_payee: address,
+        expected_royalty_numerator: u64,
+        expected_royalty_denominator: u64,
+    ) acquires Escrows {
         require_state();
         assert!(object::object_exists<Token>(token_address), EINVALID_TOKEN);
         let token_object = object::address_to_object<Token>(token_address);
@@ -69,12 +83,25 @@ module marketplace::settlement_v2 {
         marketplace::assert_v2_collection_reviewed(collection_address);
         let (royalty_payee, royalty_numerator, royalty_denominator) = royalty_terms(token_object);
 
+        let identity = marketplace::new_v2_identity(token_address, collection_address);
+        marketplace::assert_listing_terms(
+            &identity,
+            price,
+            royalty_payee,
+            royalty_numerator,
+            royalty_denominator,
+            expected_fee_bps,
+            expected_storage_reimbursement,
+            expected_royalty_payee,
+            expected_royalty_numerator,
+            expected_royalty_denominator,
+        );
+
         let authority = object::create_unique_onchain_signer();
         let escrow_address = object::address_from_extend_ref(&authority);
         object::transfer(seller, token_object, escrow_address);
         assert!(object::owner(token_object) == escrow_address, EESCROW_MISMATCH);
 
-        let identity = marketplace::new_v2_identity(token_address, collection_address);
         let listing_id = marketplace::create_listing(
             seller_address,
             identity,

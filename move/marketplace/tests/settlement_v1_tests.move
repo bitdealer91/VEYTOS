@@ -77,13 +77,25 @@ module marketplace::settlement_v1_tests {
 
     fun list(seller: &signer, name: vector<u8>, property_version: u64): u64 {
         let id = marketplace::next_listing_id();
-        settlement_v1::list(
+        let token_id = token::create_token_id_raw(
+            @0xa,
+            string::utf8(b"V1 Collection"),
+            string::utf8(name),
+            property_version,
+        );
+        let royalty = token::get_royalty(token_id);
+        settlement_v1::list_with_terms(
             seller,
             @0xa,
             string::utf8(b"V1 Collection"),
             string::utf8(name),
             property_version,
             PRICE,
+            200,
+            0,
+            token::get_royalty_payee(&royalty),
+            token::get_royalty_numerator(&royalty),
+            token::get_royalty_denominator(&royalty),
         );
         id
     }
@@ -127,8 +139,66 @@ module marketplace::settlement_v1_tests {
     fun v104_unowned_token_listing_fails() {
         let (_, seller, _, attacker) = setup();
         mint(&seller, b"one");
-        settlement_v1::list(
+        settlement_v1::list_with_terms(
             &attacker, @0xa, string::utf8(b"V1 Collection"), string::utf8(b"one"), 0, PRICE,
+            200, 0, @0xf, 500, 10000,
+        );
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 11, location = marketplace::settlement_v1)]
+    fun audit_v1_legacy_list_abi_is_disabled() {
+        let (_, seller, _, _) = setup();
+        mint(&seller, b"one");
+        settlement_v1::list(
+            &seller, @0xa, string::utf8(b"V1 Collection"), string::utf8(b"one"), 0, PRICE,
+        );
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 17, location = marketplace::marketplace)]
+    fun audit_v1_royalty_change_before_listing_is_rejected() {
+        let (_, seller, _, _) = setup();
+        let token_id = mint_with(&seller, b"mutable royalty pre-list", 1, 500, 10000, true, false);
+        let (creator, collection_name, token_name, _) = token::get_token_id_fields(&token_id);
+        token::mutate_tokendata_royalty(
+            &seller,
+            token::create_token_data_id(creator, collection_name, token_name),
+            token::create_royalty(1000, 10000, @0xd),
+        );
+        settlement_v1::list_with_terms(
+            &seller,
+            @0xa,
+            string::utf8(b"V1 Collection"),
+            string::utf8(b"mutable royalty pre-list"),
+            0,
+            PRICE,
+            200,
+            0,
+            @0xf,
+            500,
+            10000,
+        );
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 17, location = marketplace::marketplace)]
+    fun audit_v1_fee_change_before_listing_is_rejected() {
+        let (admin, seller, _, _) = setup();
+        mint(&seller, b"fee change");
+        marketplace_fee_policy::set_fee(&admin, 300);
+        settlement_v1::list_with_terms(
+            &seller,
+            @0xa,
+            string::utf8(b"V1 Collection"),
+            string::utf8(b"fee change"),
+            0,
+            PRICE,
+            200,
+            0,
+            @0xf,
+            500,
+            10000,
         );
     }
 

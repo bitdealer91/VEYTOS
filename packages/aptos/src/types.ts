@@ -49,6 +49,13 @@ export type MarketplaceEconomics = {
   storageReimbursement: bigint;
   buyerTotalBeforeGas: bigint;
 };
+export type MarketplaceListingTerms = {
+  feeBps: string;
+  storageReimbursement: string;
+  royaltyPayee: string;
+  royaltyNumerator: string;
+  royaltyDenominator: string;
+};
 export type PendingMarketplaceTransaction = {
   action: 'list' | 'cancel' | 'buy';
   hash: string;
@@ -57,6 +64,10 @@ export type PendingMarketplaceTransaction = {
   identity: TokenIdentity;
   expectedPrice?: string;
   expectedStorageReimbursement?: string;
+  expectedFeeBps?: string;
+  expectedRoyaltyPayee?: string;
+  expectedRoyaltyNumerator?: string;
+  expectedRoyaltyDenominator?: string;
   network: string;
   module: string;
 };

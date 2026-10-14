@@ -56,7 +56,18 @@ module marketplace::settlement_v2_tests {
 
     fun list(seller: &signer, token_address: address): u64 {
         let id = marketplace::next_listing_id();
-        settlement_v2::list(seller, token_address, PRICE);
+        let token_object = object::address_to_object<Token>(token_address);
+        let maybe_royalty = token::royalty(token_object);
+        let (payee, numerator, denominator) = if (option::is_some(&maybe_royalty)) {
+            let value = option::destroy_some(maybe_royalty);
+            (royalty::payee_address(&value), royalty::numerator(&value), royalty::denominator(&value))
+        } else {
+            option::destroy_none(maybe_royalty);
+            (@0x0, 0, 1)
+        };
+        settlement_v2::list_with_terms(
+            seller, token_address, PRICE, 200, 926400, payee, numerator, denominator,
+        );
         id
     }
 
@@ -101,7 +112,7 @@ module marketplace::settlement_v2_tests {
     fun v204_unowned_object() {
         let (_, seller, _, attacker, collection_address) = setup();
         let token_address = mint(&seller, collection_address, b"one");
-        settlement_v2::list(&attacker, token_address, PRICE);
+        settlement_v2::list_with_terms(&attacker, token_address, PRICE, 200, 926400, @0xf, 500, 10000);
     }
 
     #[test]
@@ -112,7 +123,7 @@ module marketplace::settlement_v2_tests {
         let parent = object::create_sticky_object(@0xa);
         let parent_address = object::address_from_constructor_ref(&parent);
         object::transfer(&seller, object::address_to_object<Token>(token_address), parent_address);
-        settlement_v2::list(&seller, token_address, PRICE);
+        settlement_v2::list_with_terms(&seller, token_address, PRICE, 200, 926400, @0xf, 500, 10000);
     }
 
     #[test]
@@ -120,7 +131,9 @@ module marketplace::settlement_v2_tests {
     fun v206_wrong_resource_type() {
         let (_, seller, _, _, _) = setup();
         let plain = object::create_sticky_object(@0xa);
-        settlement_v2::list(&seller, object::address_from_constructor_ref(&plain), PRICE);
+        settlement_v2::list_with_terms(
+            &seller, object::address_from_constructor_ref(&plain), PRICE, 200, 926400, @0xf, 500, 10000,
+        );
     }
 
     #[test]
@@ -146,7 +159,39 @@ module marketplace::settlement_v2_tests {
         );
         let transfer_ref = object::generate_transfer_ref(&constructor);
         object::disable_ungated_transfer(&transfer_ref);
-        settlement_v2::list(&seller, object::address_from_constructor_ref(&constructor), PRICE);
+        settlement_v2::list_with_terms(
+            &seller, object::address_from_constructor_ref(&constructor), PRICE, 200, 926400, @0xf, 500, 10000,
+        );
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 10, location = marketplace::settlement_v2)]
+    fun audit_v2_legacy_list_abi_is_disabled() {
+        let (_, seller, _, _, collection_address) = setup();
+        let token_address = mint(&seller, collection_address, b"legacy abi");
+        settlement_v2::list(&seller, token_address, PRICE);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 17, location = marketplace::marketplace)]
+    fun audit_v2_royalty_change_before_listing_is_rejected() {
+        let (_, seller, _, _, collection_address) = setup();
+        let (token_address, mutator) = mint_mutable_royalty(&seller, collection_address);
+        royalty::update(&mutator, royalty::create(1000, 10000, @0xd));
+        settlement_v2::list_with_terms(
+            &seller, token_address, PRICE, 200, 926400, @0xf, 500, 10000,
+        );
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 17, location = marketplace::marketplace)]
+    fun audit_v2_storage_change_before_listing_is_rejected() {
+        let (admin, seller, _, _, collection_address) = setup();
+        let token_address = mint(&seller, collection_address, b"storage change");
+        marketplace_fee_policy::set_v2_storage_reimbursement(&admin, 900000);
+        settlement_v2::list_with_terms(
+            &seller, token_address, PRICE, 200, 926400, @0xf, 500, 10000,
+        );
     }
 
     #[test]

@@ -11,6 +11,7 @@ const buyer = '0x000000000000000000000000000000000000000000000000000000000000000
 const creator = '0x000000000000000000000000000000000000000000000000000000000000000f';
 const v1 = { standard: 'v1' as const, creator, collection: 'Legacy / Collection', name: 'NFT #1', propertyVersion: '7' };
 const v2 = { standard: 'v2' as const, address: '0x0000000000000000000000000000000000000000000000000000000000000011' };
+const listingTerms = { feeBps: '200', storageReimbursement: '926400', royaltyPayee: creator, royaltyNumerator: '750', royaltyDenominator: '10000' };
 
 test('listing review economics conserve price and expose storage reimbursement', () => {
   const quote = quoteMarketplaceSale(1_000_000_000n, 200n, 750n, 10_000n, 926_400n);
@@ -42,16 +43,17 @@ test('fresh pause precheck decodes the complete configuration view tuple', async
 test('invalid royalty and zero price fail before wallet submission', () => {
   assert.throws(() => quoteMarketplaceSale(0n, 200n, 0n, 1n, 0n));
   assert.throws(() => quoteMarketplaceSale(1n, 200n, 2n, 1n, 0n));
+  assert.throws(() => quoteMarketplaceSale(100n, 0n, 1n, 1n, 0n));
 });
 test('V1 listing payload preserves exact property version', () => {
-  const payload = marketplace({} as Aptos, module).listPayload(v1, '100');
-  assert.equal(payload.function, `${module}::settlement_v1::list`);
-  assert.deepEqual(payload.functionArguments.slice(-2), ['7', '100']);
+  const payload = marketplace({} as Aptos, module).listPayload(v1, '100', listingTerms);
+  assert.equal(payload.function, `${module}::settlement_v1::list_with_terms`);
+  assert.deepEqual(payload.functionArguments, [creator, 'Legacy / Collection', 'NFT #1', '7', '100', '200', '926400', creator, '750', '10000']);
 });
 test('V2 listing payload uses exact object identity', () => {
-  const payload = marketplace({} as Aptos, module).listPayload(v2, '100');
-  assert.equal(payload.function, `${module}::settlement_v2::list`);
-  assert.equal(payload.functionArguments[0], v2.address);
+  const payload = marketplace({} as Aptos, module).listPayload(v2, '100', listingTerms);
+  assert.equal(payload.function, `${module}::settlement_v2::list_with_terms`);
+  assert.deepEqual(payload.functionArguments, [v2.address, '100', '200', '926400', creator, '750', '10000']);
 });
 test('canonical marketplace asset keys distinguish V1 property versions and V2 objects', () => {
   const v1Next = { ...v1, propertyVersion: '8' };
@@ -146,6 +148,7 @@ test('marketplace preparation errors distinguish stale state, price, balance and
   assert.match(marketplaceErrorMessage(new Error('INSUFFICIENT_BALANCE'), 'wallet'), /balance is too low/);
   assert.equal(marketplaceErrorMessage(new Error('Transaction rejected: Move abort ECREATOR_BURNABLE'), 'wallet'), 'This legacy NFT configuration is not supported for marketplace trading.');
   assert.equal(marketplaceErrorMessage(new Error('Move abort: EUNSUPPORTED_PROPERTY_VERSION'), 'wallet'), 'This legacy NFT configuration is not supported for marketplace trading.');
+  assert.match(marketplaceErrorMessage(new Error('Move abort: ELISTING_TERMS_CHANGED'), 'wallet'), /Listing terms changed/);
   assert.match(marketplaceErrorMessage(new Error('Fullnode state is older than the confirmed transaction'), 'asset-state'), /still updating/);
   assert.match(marketplaceErrorMessage(new Error('unexpected encoding'), 'payload'), /No funds were transferred/);
 });
@@ -198,6 +201,23 @@ test('committed transaction failure stays failed without state guessing', async 
   const aptos={getTransactionByHash:async()=>({type:'user_transaction',hash:`0x${'3'.repeat(64)}`,sender:seller,success:false,vm_status:'abort',events:[]})} as unknown as Aptos;
   const result=await marketplace(aptos,module).reconcile({action:'cancel',hash:`0x${'3'.repeat(64)}`,sender:seller,listingId:'1',identity:v1,network:'testnet',module});
   assert.equal(result.status,'failed');
+});
+test('listing reconciliation requires the signed fee, royalty, and reimbursement snapshot', async () => {
+  const hash=`0x${'5'.repeat(64)}`;
+  const escrow=`0x${'6'.repeat(64)}`;
+  const aptos={
+    getTransactionByHash:async()=>({type:'user_transaction',hash,sender:seller,success:true,version:'98',vm_status:'Executed',payload:{function:`${module}::settlement_v2::list_with_terms`},events:[{type:`${module}::marketplace::NFTListed`,data:{listing_id:'1',seller}}]}),
+    getAccountResource:async()=>({owner:escrow}),
+    view:async({payload}:{payload:{function:string}})=>payload.function.endsWith('listing_terms')
+      ? [seller,2,'100','200','926400',creator,'750','10000',1]
+      : payload.function.endsWith('listing_asset')
+        ? [{standard:2,v1_creator:'0x0',v1_collection:'',v1_token:'',v1_property_version:'0',v2_token:v2.address,collection:creator}]
+        : payload.function.endsWith('escrow_address') ? [escrow]
+          : payload.function.endsWith('escrow_token') ? [v2.address] : Promise.reject(new Error('unexpected view')),
+  } as unknown as Aptos;
+  const pending={action:'list' as const,hash,sender:seller,identity:v2,expectedPrice:'100',expectedFeeBps:'200',expectedStorageReimbursement:'926400',expectedRoyaltyPayee:creator,expectedRoyaltyNumerator:'750',expectedRoyaltyDenominator:'10000',network:'testnet',module};
+  assert.equal((await marketplace(aptos,module).reconcile(pending)).status,'success');
+  await assert.rejects(()=>marketplace(aptos,module).reconcile({...pending,expectedFeeBps:'300'}),/Active listing mismatch/);
 });
 test('purchase reconciliation verifies SOLD state, buyer and reviewed economics', async () => {
   const hash=`0x${'4'.repeat(64)}`;

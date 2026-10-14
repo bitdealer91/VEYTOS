@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import pg from 'pg';
 import { canonical } from '@veytos/aptos/domain';
 import { projectMarketplaceTransaction } from '@veytos/aptos/marketplace-events';
-import { aptosFetch,boundedInterval,launchpadEvents,nextTargetedVersion,retryDelay } from './indexer-runtime.ts';
+import { aptosFetch,boundedInterval,launchpadEvents,mergeTargetedVersions,nextTargetedVersion,retryDelay } from './indexer-runtime.ts';
 
 const databaseUrl = process.env.DATABASE_URL;
 assert(databaseUrl, 'DATABASE_URL is required');
@@ -19,10 +19,34 @@ const processor = `marketplace:${moduleAddress}`;
 const pool = new pg.Pool({ connectionString: databaseUrl, max: 2 });
 let stopping=false;process.once('SIGTERM',()=>{stopping=true;});process.once('SIGINT',()=>{stopping=true;});
 const pageSize=100;
-const targetedTransactionsQuery=`query VeytosTransactions($from: bigint!, $addresses: [String!]!, $limit: Int!) {
-  user_transactions(where: {version: {_gte: $from}, entry_function_contract_address: {_in: $addresses}}, order_by: {version: asc}, limit: $limit) { version }
-  processor_status(where: {processor: {_eq: "account_transactions_processor"}}, limit: 1) { last_success_version }
+const targetedTransactionsQuery=`query VeytosTransactions($from: bigint!, $marketplaceHandles: [String!]!, $launchpadAddresses: [String!]!, $limit: Int!) {
+  marketplace: table_items(distinct_on: transaction_version, where: {transaction_version: {_gte: $from}, table_handle: {_in: $marketplaceHandles}}, order_by: [{transaction_version: asc}], limit: $limit) { transaction_version }
+  launchpad: user_transactions(where: {version: {_gte: $from}, entry_function_contract_address: {_in: $launchpadAddresses}}, order_by: {version: asc}, limit: $limit) { version }
+  processor_status(where: {processor: {_in: ["default_processor", "account_transactions_processor"]}}) { processor last_success_version }
 }`;
+let cachedMarketplaceHandles:Promise<string[]>|null=null;
+
+function tableHandle(resource:unknown,type:string){
+  const value=(resource as {type?:unknown,data?:{entries?:{handle?:unknown},listings?:{handle?:unknown},active_assets?:{handle?:unknown}}});
+  if(value.type!==type)return [];
+  return [value.data?.listings?.handle,value.data?.active_assets?.handle,value.data?.entries?.handle]
+    .filter((handle):handle is string=>typeof handle==='string').map(canonical);
+}
+
+function marketplaceHandles(){
+  cachedMarketplaceHandles??=aptosFetch(`${endpoint}/accounts/${moduleAddress}/resources`,{},apiKey).then(async response=>{
+    if(!response.ok){const error=new Error(`Marketplace resource fetch failed: ${response.status}`) as Error&{response?:Response};error.response=response;throw error;}
+    const resources=await response.json() as unknown[];
+    const handles=resources.flatMap(resource=>[
+      ...tableHandle(resource,`${moduleAddress}::marketplace::State`),
+      ...tableHandle(resource,`${moduleAddress}::settlement_v1::Escrows`),
+      ...tableHandle(resource,`${moduleAddress}::settlement_v2::Escrows`),
+    ]);
+    assert.equal(handles.length,4,'Marketplace table handles are unavailable');
+    return handles;
+  }).catch(error=>{cachedMarketplaceHandles=null;throw error;});
+  return cachedMarketplaceHandles;
+}
 
 async function checkpoint(client: pg.PoolClient) {
   const result = await client.query<{ next_version: string }>(
@@ -35,15 +59,27 @@ async function checkpoint(client: pg.PoolClient) {
 }
 
 async function targetedBatch(start:bigint,transactionInterval:number){
-  const response=await aptosFetch(indexerEndpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({query:targetedTransactionsQuery,variables:{from:start.toString(),addresses:[moduleAddress,...(launchpadAddress?[launchpadAddress]:[])],limit:pageSize}})},indexerApiKey);
+  const handles=await marketplaceHandles();
+  const response=await aptosFetch(indexerEndpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({query:targetedTransactionsQuery,variables:{from:start.toString(),marketplaceHandles:handles,launchpadAddresses:launchpadAddress?[launchpadAddress]:[],limit:pageSize}})},indexerApiKey);
   if(!response.ok){const error=new Error(`Indexer transaction query failed: ${response.status}`) as Error&{response?:Response};error.response=response;throw error;}
-  const body=await response.json() as {data?:{user_transactions?:Array<{version?:string|number}>,processor_status?:Array<{last_success_version?:string|number}>},errors?:Array<{message?:string}>};
+  const body=await response.json() as {data?:{marketplace?:Array<{transaction_version?:string|number}>,launchpad?:Array<{version?:string|number}>,processor_status?:Array<{processor?:string,last_success_version?:string|number}>},errors?:Array<{message?:string}>};
   if(body.errors?.length)throw new Error(`Indexer transaction query failed: ${body.errors.map(error=>error.message||'GraphQL error').join('; ')}`);
-  const rows=body.data?.user_transactions;
-  const status=body.data?.processor_status?.[0]?.last_success_version;
-  assert(Array.isArray(rows),'Indexer transaction query returned no rows');
-  assert(status!==undefined&&/^\d+$/.test(String(status)),'Account transaction processor status is unavailable');
-  const versions=rows.map(row=>{const value=String(row.version);assert(/^\d+$/.test(value),'Indexed transaction version is invalid');return BigInt(value);});
+  const marketplaceRows=body.data?.marketplace;
+  const launchpadRows=body.data?.launchpad;
+  const statuses=body.data?.processor_status;
+  assert(Array.isArray(marketplaceRows)&&Array.isArray(launchpadRows),'Indexer transaction query returned no rows');
+  assert(Array.isArray(statuses),'Indexer processor status is unavailable');
+  const statusByProcessor=new Map(statuses.map(row=>[row.processor,String(row.last_success_version)]));
+  const defaultStatus=statusByProcessor.get('default_processor');
+  const accountStatus=statusByProcessor.get('account_transactions_processor');
+  assert(defaultStatus&&/^\d+$/.test(defaultStatus),'Default processor status is unavailable');
+  assert(accountStatus&&/^\d+$/.test(accountStatus),'Account transaction processor status is unavailable');
+  const decode=(value:unknown)=>{const text=String(value);assert(/^\d+$/.test(text),'Indexed transaction version is invalid');return BigInt(text);};
+  const versions=mergeTargetedVersions(
+    pageSize,
+    marketplaceRows.map(row=>decode(row.transaction_version)),
+    launchpadRows.map(row=>decode(row.version)),
+  );
   for(let index=1;index<versions.length;index++)assert(versions[index]!>versions[index-1]!,'Indexed transaction versions are not strictly ordered');
   const transactions:unknown[]=[];
   for(const version of versions){
@@ -52,7 +88,7 @@ async function targetedBatch(start:bigint,transactionInterval:number){
     transactions.push(await transactionResponse.json());
     if(transactionInterval&&version!==versions.at(-1))await new Promise(resolve=>setTimeout(resolve,transactionInterval));
   }
-  const indexedThrough=BigInt(String(status));
+  const indexedThrough=BigInt(defaultStatus)<BigInt(accountStatus)?BigInt(defaultStatus):BigInt(accountStatus);
   return {transactions,next:nextTargetedVersion(start,versions,indexedThrough,pageSize),indexedThrough};
 }
 
