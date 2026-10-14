@@ -1,5 +1,11 @@
 import { isIpfsUri } from '../../../../packages/domain/src/metadata';
 import { config } from './config';
+const metadataOverrides:Readonly<Record<string,string>>={
+  // The launchpad intentionally discards collection mutator refs at finalization.
+  // This presentation-only metadata keeps the immutable on-chain URI intact.
+  'ipfs://Qmavebva4JGmH4cxpZfZkrfJy3FuC1SAKLQGmRrLng7P9B':'ipfs://QmUSfN4DbdQxw1XcSgRG5HZFFbxS5soHtfUuodqGiGuWPc',
+};
+export function displayMetadataUri(uri:string){return metadataOverrides[uri]??uri;}
 export function gatewayUrl(uri: string) {
   if(isIpfsUri(uri)){const gateway=new URL(config.NEXT_PUBLIC_IPFS_GATEWAY);if(gateway.protocol!=='https:')return null;return `${gateway.href.replace(/\/$/,'')}/${uri.slice(7)}`;}
   if(uri.startsWith('ar://')){const gateway=new URL(config.NEXT_PUBLIC_ARWEAVE_GATEWAY);if(gateway.protocol!=='https:')return null;return `${gateway.href.replace(/\/$/,'')}/${uri.slice(5)}`;}
@@ -8,7 +14,7 @@ export function gatewayUrl(uri: string) {
 export type CollectionMetadata={image:string|null;description:string|null;website:string|null;x:string|null;discord:string|null};
 function httpsUrl(value:unknown){if(typeof value!=='string')return null;try{const url=new URL(value);return url.protocol==='https:'?url.href:null;}catch{return null;}}
 export async function loadMetadata(uri: string):Promise<CollectionMetadata> {
-  const url=gatewayUrl(uri);if(!url)throw new Error('Metadata unavailable');
+  const url=gatewayUrl(displayMetadataUri(uri));if(!url)throw new Error('Metadata unavailable');
   const response=await fetch(url,{signal:AbortSignal.timeout(6500),redirect:'error',referrerPolicy:'no-referrer'});
   if(!response.ok||!response.body)throw new Error('Metadata unavailable');
   const reader=response.body.getReader();const chunks:Uint8Array[]=[];let size=0;
