@@ -1,6 +1,6 @@
 # Test coverage matrix
 
-Status: internal preparation only; no independent external audit has been completed. Mainnet release remains blocked. Latest defensive remediation: `98419a8`, 2026-10-14.
+Status: internal preparation only; no independent external audit has been completed. Mainnet release remains blocked. Latest defensive remediation: `98419a8`; matching Testnet bytecode and restricted acceptance recorded 2026-10-18.
 
 Reviewed against `docs/MARKETPLACE_CONTRACT_TEST_PLAN.md`, `SECURITY.md`, `ARCHITECTURE.md`, both packages' production source and existing Move test modules. Current local suite: 82 launchpad + 126 marketplace = 208. A matching scenario prefix is not sufficient evidence.
 
@@ -54,7 +54,7 @@ Module: `marketplace_tests`. Tests: `g13_immutable_price`, `g12_wrong_expected_p
 
 ## M05 — covered
 
-Module: `marketplace_tests; settlement_v1_tests; settlement_v2_tests`; source-visibility regression in `scripts/test/marketplace-list-visibility.test.ts`. Tests: `g14_fee_snapshot`, `g15_recipient_rotation`, `audit_v1_fee_change_before_listing_is_rejected`, `audit_v2_storage_change_before_listing_is_rejected`, `audit_v1_legacy_list_abi_is_disabled`, `audit_v2_legacy_list_abi_is_disabled`, plus package-only checks for both protected LIST entry functions. Seller-signed LIST terms and the stored snapshot are checked. External-wrapper compilation was also manually confirmed to fail for V1 and V2 after `98419a8`.
+Module: `marketplace_tests; settlement_v1_tests; settlement_v2_tests`; source-visibility regression in `scripts/test/marketplace-list-visibility.test.ts`. Tests: `g14_fee_snapshot`, `g15_recipient_rotation`, `audit_v1_fee_change_before_listing_is_rejected`, `audit_v2_storage_change_before_listing_is_rejected`, `audit_v1_legacy_list_abi_is_disabled`, `audit_v2_legacy_list_abi_is_disabled`, plus package-only checks for both protected LIST entry functions. Seller-signed LIST terms and the stored snapshot are checked. External-wrapper compilation was manually confirmed to fail for V1 and V2 after `98419a8`. [Testnet acceptance](../MARKETPLACE_POST_REMEDIATION_TESTNET_ACCEPTANCE.md) confirmed matching deployed bytecode, direct protected LIST transactions, exact snapshots, stale-term committed aborts and both disabled legacy entry functions.
 
 ## M06 — covered
 

@@ -1,0 +1,414 @@
+{
+  "network": "testnet",
+  "chainId": 2,
+  "verifiedAt": "2026-10-18T19:43:40.657Z",
+  "moduleAddress": "0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91",
+  "roles": {
+    "admin": "0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91",
+    "originalCreator": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+    "holder": "0xc2c1bf1b5e5413aa466c7edd7fb196be10e052d949eb8056a61e2badd91d54d5",
+    "treasury": "0xed6fc41816b13e2151a8e4a66c72247b7b927c264c84976bda91d918d23049aa",
+    "royaltyRecipient": "0xdf06f553f91c6f861b1569da5b89d0c436fe3885310da962053386e678d972d9"
+  },
+  "transactions": {
+    "approve-v2-collection": {
+      "hash": "0x0f90c6ce956facc7c5e26d5c6ac36ac1f727576196d6f13d0607e8d787d70604",
+      "version": "104959106",
+      "success": true,
+      "vmStatus": "Executed successfully",
+      "gasUsed": "4333",
+      "gasUnitPrice": "100",
+      "events": [
+        {
+          "type": "0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91::marketplace::V2CollectionPolicyUpdated",
+          "data": {
+            "collection": "0x287dea5ae1c96817a211877faf19b38d1884fb4a59305101db44fc32fb609e61",
+            "provenance": 1,
+            "reviewed": true
+          }
+        }
+      ]
+    },
+    "v1-list": {
+      "hash": "0x1912f1d33fe1ef3d6845a33f9b0532546c695287ae73ef5dd0d736d836ad9ede",
+      "version": "104959241",
+      "success": true,
+      "vmStatus": "Executed successfully",
+      "gasUsed": "14740",
+      "gasUnitPrice": "100",
+      "events": [
+        {
+          "type": "0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91::marketplace::NFTListed",
+          "data": {
+            "asset": {
+              "collection": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+              "standard": 1,
+              "v1_collection": "VEYTOS V1 Creator Burn Safety",
+              "v1_creator": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+              "v1_property_version": "0",
+              "v1_token": "Safe Legacy NFT #1",
+              "v2_token": "0x0"
+            },
+            "fee_bps": "200",
+            "gross_price": "10000000",
+            "listing_id": "24",
+            "royalty_denominator": "10000",
+            "royalty_numerator": "750",
+            "royalty_payee": "0xdf06f553f91c6f861b1569da5b89d0c436fe3885310da962053386e678d972d9",
+            "seller": "0xc2c1bf1b5e5413aa466c7edd7fb196be10e052d949eb8056a61e2badd91d54d5",
+            "storage_reimbursement": "933600",
+            "timestamp": "1792352628"
+          }
+        }
+      ]
+    },
+    "v1-cancel": {
+      "hash": "0x7f429c5be09652fab3d170ad5cef4b6e80e74cf8fb8ad2eea1a0394f9780f8fe",
+      "version": "104959343",
+      "success": true,
+      "vmStatus": "Executed successfully",
+      "gasUsed": "4991",
+      "gasUnitPrice": "100",
+      "events": [
+        {
+          "type": "0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91::marketplace::ListingCancelled",
+          "data": {
+            "asset": {
+              "collection": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+              "standard": 1,
+              "v1_collection": "VEYTOS V1 Creator Burn Safety",
+              "v1_creator": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+              "v1_property_version": "0",
+              "v1_token": "Safe Legacy NFT #1",
+              "v2_token": "0x0"
+            },
+            "listing_id": "24",
+            "seller": "0xc2c1bf1b5e5413aa466c7edd7fb196be10e052d949eb8056a61e2badd91d54d5",
+            "timestamp": "1792352631"
+          }
+        }
+      ]
+    },
+    "v1-relist": {
+      "hash": "0x626d733e2e8e479c11955b667f15f61183ebb3f789694db6c0cf7b2225d762c0",
+      "version": "104959461",
+      "success": true,
+      "vmStatus": "Executed successfully",
+      "gasUsed": "14740",
+      "gasUnitPrice": "100",
+      "events": [
+        {
+          "type": "0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91::marketplace::NFTListed",
+          "data": {
+            "asset": {
+              "collection": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+              "standard": 1,
+              "v1_collection": "VEYTOS V1 Creator Burn Safety",
+              "v1_creator": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+              "v1_property_version": "0",
+              "v1_token": "Safe Legacy NFT #1",
+              "v2_token": "0x0"
+            },
+            "fee_bps": "200",
+            "gross_price": "10000000",
+            "listing_id": "25",
+            "royalty_denominator": "10000",
+            "royalty_numerator": "750",
+            "royalty_payee": "0xdf06f553f91c6f861b1569da5b89d0c436fe3885310da962053386e678d972d9",
+            "seller": "0xc2c1bf1b5e5413aa466c7edd7fb196be10e052d949eb8056a61e2badd91d54d5",
+            "storage_reimbursement": "933600",
+            "timestamp": "1792352633"
+          }
+        }
+      ]
+    },
+    "v1-buy": {
+      "hash": "0x129626a0bf63af78a349a6278aecd8fa56e304e50e1789a24be3ceb197a2cf57",
+      "version": "104959631",
+      "success": true,
+      "vmStatus": "Executed successfully",
+      "gasUsed": "5067",
+      "gasUnitPrice": "100",
+      "events": [
+        {
+          "type": "0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91::marketplace::NFTPurchased",
+          "data": {
+            "asset": {
+              "collection": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+              "standard": 1,
+              "v1_collection": "VEYTOS V1 Creator Burn Safety",
+              "v1_creator": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+              "v1_property_version": "0",
+              "v1_token": "Safe Legacy NFT #1",
+              "v2_token": "0x0"
+            },
+            "buyer": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+            "gross_price": "10000000",
+            "listing_id": "25",
+            "platform_fee": "200000",
+            "platform_fee_recipient": "0xed6fc41816b13e2151a8e4a66c72247b7b927c264c84976bda91d918d23049aa",
+            "royalty": "750000",
+            "royalty_recipient": "0xdf06f553f91c6f861b1569da5b89d0c436fe3885310da962053386e678d972d9",
+            "seller": "0xc2c1bf1b5e5413aa466c7edd7fb196be10e052d949eb8056a61e2badd91d54d5",
+            "seller_proceeds": "9050000",
+            "storage_reimbursement": "933600",
+            "timestamp": "1792352637"
+          }
+        }
+      ]
+    },
+    "v1-reject-creator-burn": {
+      "hash": "0x9d400d46ac60fdf874d7487f74fa82cfc26d7fc26cf409100226c3824cd3b6da",
+      "version": "104959849",
+      "success": false,
+      "vmStatus": "Move abort in 0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91::settlement_v1: ECREATOR_BURNABLE(0x9): ",
+      "gasUsed": "86",
+      "gasUnitPrice": "100",
+      "events": []
+    },
+    "v1-reject-nonzero-version": {
+      "hash": "0xd227a8d72fdd08468ebeefcb140f7dbe73971a852a2aa7958e1ee5615aa57ef3",
+      "version": "104959999",
+      "success": false,
+      "vmStatus": "Move abort in 0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91::settlement_v1: EUNSUPPORTED_PROPERTY_VERSION(0xa): ",
+      "gasUsed": "81",
+      "gasUnitPrice": "100",
+      "events": []
+    },
+    "v1-reject-stale-terms": {
+      "hash": "0xe0811fed3fa259597769846c05f415dec85b221164bf87ae8feb421de0e8702a",
+      "version": "104960131",
+      "success": false,
+      "vmStatus": "Move abort in 0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91::marketplace: ELISTING_TERMS_CHANGED(0x11): ",
+      "gasUsed": "111",
+      "gasUnitPrice": "100",
+      "events": []
+    },
+    "v2-list": {
+      "hash": "0x197805f31c748295c222b672f6f544003a87519a9f9ab0e9542409e343c6cee2",
+      "version": "104960271",
+      "success": true,
+      "vmStatus": "Executed successfully",
+      "gasUsed": "14471",
+      "gasUnitPrice": "100",
+      "events": [
+        {
+          "type": "0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91::marketplace::NFTListed",
+          "data": {
+            "asset": {
+              "collection": "0x287dea5ae1c96817a211877faf19b38d1884fb4a59305101db44fc32fb609e61",
+              "standard": 2,
+              "v1_collection": "",
+              "v1_creator": "0x0",
+              "v1_property_version": "0",
+              "v1_token": "",
+              "v2_token": "0x9d7c6696d0aada3a845f38b91c1faa8d5c24568cefa79dee82a71d717155026e"
+            },
+            "fee_bps": "200",
+            "gross_price": "10000000",
+            "listing_id": "26",
+            "royalty_denominator": "10000",
+            "royalty_numerator": "750",
+            "royalty_payee": "0xdf06f553f91c6f861b1569da5b89d0c436fe3885310da962053386e678d972d9",
+            "seller": "0xc2c1bf1b5e5413aa466c7edd7fb196be10e052d949eb8056a61e2badd91d54d5",
+            "storage_reimbursement": "926400",
+            "timestamp": "1792352652"
+          }
+        }
+      ]
+    },
+    "v2-cancel": {
+      "hash": "0x5ebf9c40832fae37bef8fb16d6f57bb37c26f101fbd315c8c1d71f6c40b814e7",
+      "version": "104960388",
+      "success": true,
+      "vmStatus": "Executed successfully",
+      "gasUsed": "111",
+      "gasUnitPrice": "100",
+      "events": [
+        {
+          "type": "0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91::marketplace::ListingCancelled",
+          "data": {
+            "asset": {
+              "collection": "0x287dea5ae1c96817a211877faf19b38d1884fb4a59305101db44fc32fb609e61",
+              "standard": 2,
+              "v1_collection": "",
+              "v1_creator": "0x0",
+              "v1_property_version": "0",
+              "v1_token": "",
+              "v2_token": "0x9d7c6696d0aada3a845f38b91c1faa8d5c24568cefa79dee82a71d717155026e"
+            },
+            "listing_id": "26",
+            "seller": "0xc2c1bf1b5e5413aa466c7edd7fb196be10e052d949eb8056a61e2badd91d54d5",
+            "timestamp": "1792352655"
+          }
+        }
+      ]
+    },
+    "v2-relist": {
+      "hash": "0x397318e4289974af9dde444d10b3f79681a651c1b594a2405f2502871d572e38",
+      "version": "104960510",
+      "success": true,
+      "vmStatus": "Executed successfully",
+      "gasUsed": "14471",
+      "gasUnitPrice": "100",
+      "events": [
+        {
+          "type": "0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91::marketplace::NFTListed",
+          "data": {
+            "asset": {
+              "collection": "0x287dea5ae1c96817a211877faf19b38d1884fb4a59305101db44fc32fb609e61",
+              "standard": 2,
+              "v1_collection": "",
+              "v1_creator": "0x0",
+              "v1_property_version": "0",
+              "v1_token": "",
+              "v2_token": "0x9d7c6696d0aada3a845f38b91c1faa8d5c24568cefa79dee82a71d717155026e"
+            },
+            "fee_bps": "200",
+            "gross_price": "10000000",
+            "listing_id": "27",
+            "royalty_denominator": "10000",
+            "royalty_numerator": "750",
+            "royalty_payee": "0xdf06f553f91c6f861b1569da5b89d0c436fe3885310da962053386e678d972d9",
+            "seller": "0xc2c1bf1b5e5413aa466c7edd7fb196be10e052d949eb8056a61e2badd91d54d5",
+            "storage_reimbursement": "926400",
+            "timestamp": "1792352657"
+          }
+        }
+      ]
+    },
+    "v2-buy": {
+      "hash": "0x3d8fb070266b0fee031008a2c92df11efb0983fb7075a1d8ebad8ddde4efbab7",
+      "version": "104960647",
+      "success": true,
+      "vmStatus": "Executed successfully",
+      "gasUsed": "187",
+      "gasUnitPrice": "100",
+      "events": [
+        {
+          "type": "0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91::marketplace::NFTPurchased",
+          "data": {
+            "asset": {
+              "collection": "0x287dea5ae1c96817a211877faf19b38d1884fb4a59305101db44fc32fb609e61",
+              "standard": 2,
+              "v1_collection": "",
+              "v1_creator": "0x0",
+              "v1_property_version": "0",
+              "v1_token": "",
+              "v2_token": "0x9d7c6696d0aada3a845f38b91c1faa8d5c24568cefa79dee82a71d717155026e"
+            },
+            "buyer": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+            "gross_price": "10000000",
+            "listing_id": "27",
+            "platform_fee": "200000",
+            "platform_fee_recipient": "0xed6fc41816b13e2151a8e4a66c72247b7b927c264c84976bda91d918d23049aa",
+            "royalty": "750000",
+            "royalty_recipient": "0xdf06f553f91c6f861b1569da5b89d0c436fe3885310da962053386e678d972d9",
+            "seller": "0xc2c1bf1b5e5413aa466c7edd7fb196be10e052d949eb8056a61e2badd91d54d5",
+            "seller_proceeds": "9050000",
+            "storage_reimbursement": "926400",
+            "timestamp": "1792352660"
+          }
+        }
+      ]
+    },
+    "v2-reject-stale-terms": {
+      "hash": "0xb5654f952162a241f47ad3cd96989a5951b5c9980584cc8278eea7354c072bcc",
+      "version": "104960850",
+      "success": false,
+      "vmStatus": "Move abort in 0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91::marketplace: ELISTING_TERMS_CHANGED(0x11): ",
+      "gasUsed": "103",
+      "gasUnitPrice": "100",
+      "events": []
+    },
+    "v1-reject-legacy-list": {
+      "hash": "0xfddfc3f7833035d6639b1023528188b7b963584f91ae0c72aa67cbf8e42e8724",
+      "version": "104963152",
+      "success": false,
+      "vmStatus": "Move abort in 0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91::settlement_v1: EUNSAFE_LIST_ABI(0xb): ",
+      "gasUsed": "30",
+      "gasUnitPrice": "100",
+      "events": []
+    },
+    "v2-reject-legacy-list": {
+      "hash": "0x4ebd974eac51219f65f4359f67a12afe279c278be1e8d7191ce34468c4a36b2f",
+      "version": "104963257",
+      "success": false,
+      "vmStatus": "Move abort in 0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91::settlement_v2: EUNSAFE_LIST_ABI(0xa): ",
+      "gasUsed": "30",
+      "gasUnitPrice": "100",
+      "events": []
+    }
+  },
+  "configuration": {
+    "feeBps": "200",
+    "v1Storage": "933600",
+    "v2Storage": "926400",
+    "v2CollectionReviewed": true,
+    "v2Provenance": 1
+  },
+  "economics": {
+    "gross": "10000000",
+    "platformFee": "200000",
+    "royalty": "750000",
+    "sellerProceeds": "9050000"
+  },
+  "final": {
+    "nextListingId": "28",
+    "v1SafeOwner": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+    "v1UnsafeOwner": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+    "v1NonzeroOwner": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2",
+    "v2Owner": "0x51223eb03eebd08713fee79d982ef98ab715094e90575451a9d7afcb12a40eb2"
+  },
+  "sourceCommit": "98419a8",
+  "packageUpgrade": {
+    "hash": "0x0f14e111368793bf27a8b2411146369f27438ce285627ea1e4f40634139e933a",
+    "version": "104592915",
+    "success": true,
+    "vmStatus": "Executed successfully",
+    "gasUsed": "5958",
+    "upgradeNumberBefore": "0",
+    "upgradeNumberAfter": "1",
+    "sourceDigest": "FAFA24C8D748FAB1AC662211147926321242B632B64EC8DD1596E0CE6F9E84CF"
+  },
+  "deployedModules": [
+    {
+      "name": "marketplace",
+      "sha256": "7e99b34c8d5ddb81cbd6bfb280976f764ff74c68ecf9e983a5c1fd9c554ef26d",
+      "matchesPublished": true
+    },
+    {
+      "name": "marketplace_fee_policy",
+      "sha256": "5b27255bb68789dfb05c22a37630cdda6ee36feb72b8a28f4c488981f75c0f5a",
+      "matchesPublished": true
+    },
+    {
+      "name": "settlement_v1",
+      "sha256": "c2784cbec147b3a9cc4e15f563134e3bb23b625d922b949c6b0e82f3799b8b8f",
+      "matchesPublished": true
+    },
+    {
+      "name": "settlement_v2",
+      "sha256": "1b41ec40bdebf2bf08f40adfd6fab0abe47178b94e6d8761a3b86be8cb15b72b",
+      "matchesPublished": true
+    }
+  ],
+  "abi": {
+    "settlementV1ListWithTerms": {
+      "visibility": "friend",
+      "isEntry": true,
+      "externalWrapperCallable": false
+    },
+    "settlementV2ListWithTerms": {
+      "visibility": "friend",
+      "isEntry": true,
+      "externalWrapperCallable": false
+    }
+  },
+  "limitations": [
+    "Testnet evidence only; no mainnet transaction was submitted.",
+    "External audit is not complete.",
+    "The package remains compatible-upgradeable on Testnet.",
+    "Third-party V2 collections still require independent retained-capability review."
+  ]
+}

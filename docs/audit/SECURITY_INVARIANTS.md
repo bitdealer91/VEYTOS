@@ -1,6 +1,6 @@
 # Security invariants
 
-Status: internal preparation only; no independent external audit has been completed. Mainnet release remains blocked. Latest defensive remediation: `98419a8`, 2026-10-14.
+Status: internal preparation only; no independent external audit has been completed. Mainnet release remains blocked. Latest defensive remediation: `98419a8`; matching Testnet bytecode and restricted acceptance recorded 2026-10-18.
 
 These 38 predicates are audit obligations, not claims of formal proof. “Cannot” is conditional on unchanged package code, Aptos VM atomicity and framework semantics. External V2 capabilities, framework governance and compatible upgrades are explicit exceptions to unconditional custody claims. Tests are mapped separately in [TEST_COVERAGE_MATRIX.md](TEST_COVERAGE_MATRIX.md).
 

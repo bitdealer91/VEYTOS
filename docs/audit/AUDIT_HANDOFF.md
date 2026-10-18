@@ -47,7 +47,11 @@ V2 transfers exact token to a unique per-listing signer address controlled by a 
 
 Please focus on capability reachability, package-visible helper assumptions, atomic delivery/payment failures, account/recipient aliases, extreme arithmetic including reimbursement, V1 malformed and delegated states, V2 provenance and mutable behavior, state-growth/gas limits, and governance. The coverage matrix marks partial/uncovered obligations rather than treating test count as completion.
 
-## Existing testnet evidence (historical, not rerun here)
+## Existing testnet evidence
+
+- [Post-remediation marketplace acceptance](../MARKETPLACE_POST_REMEDIATION_TESTNET_ACCEPTANCE.md), [JSON](../evidence/marketplace-post-remediation-testnet-2026-10-18.json): 2026-10-18; package `0x6402e274769885692940cf139d8ee9978d79192e3315e2088fd586c2d9173f91`, upgrade number 1; exact deployed bytecode match, package-only protected LIST ABI, V1/V2 LIST/CANCEL/RELIST/BUY, exact economics, creator-burn/nonzero/stale-term and legacy-ABI committed aborts.
+
+Historical evidence below predates the current accepted marketplace artifact:
 
 - [Launchpad Gate A](../../TESTNET_ACCEPTANCE.md), [JSON](../evidence/testnet-acceptance.json): 2026-09-23; package `0x5e802dc2d3105fbf967541d9cd64f5d34a18ebb473a4d40ddb26c8f727e9db28`; publication, mint, balances/events and framework pin recorded.
 - [V2 acceptance](../MARKETPLACE_TESTNET_ACCEPTANCE.md), [hardened JSON](../evidence/marketplace-v2-hardening-testnet.json): 2026-09-24; package `0x0cf2b5af2e168b4ba7f002f705e7f1c1954284756286167800e2b6b11ae6ab64`; lifecycle and FeeStatement evidence.
